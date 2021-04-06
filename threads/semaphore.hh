@@ -23,7 +23,6 @@
 #include "thread.hh"
 #include "lib/list.hh"
 
-
 /// This class defines a “semaphore”, which has a positive integer as its
 /// value.
 ///
@@ -68,5 +67,13 @@ private:
 
 };
 
+///Struct to pass Semaphores with a name as parameters to threads
+typedef struct _semaphoreParam {
+    Semaphore* semaphore;
+    void* debugName;
+}* SemaphoreParam;
+
+void SemaphoreParamDestructor(SemaphoreParam semaphoreParam);
+SemaphoreParam SemaphoreParamConstructor(void* debugName, Semaphore* semaphore);
 
 #endif

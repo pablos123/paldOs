@@ -30,7 +30,8 @@ typedef struct {
 static const Test TESTS[] = {
     { &ThreadTestSimple,   "simple",   "Simple thread interleaving" },
     { &ThreadTestGarden,   "garden",   "Ornamental garden" },
-    { &ThreadTestProdCons, "prodcons", "Producer/Consumer" }
+    { &ThreadTestGardenSemaphore, "gardensemaphore", "Ornamental garden with semaphores"},
+    { &ThreadTestProdCons, "prodcons", "Producer/Consumer" },
 };
 static const unsigned NUM_TESTS = sizeof TESTS / sizeof TESTS[0];
 

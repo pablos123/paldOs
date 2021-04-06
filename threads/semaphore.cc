@@ -23,6 +23,7 @@
 
 #include "semaphore.hh"
 #include "system.hh"
+#include <stdlib.h>
 
 
 /// Initialize a semaphore, so that it can be used for synchronization.
@@ -90,4 +91,20 @@ Semaphore::V()
     value++;
 
     interrupt->SetLevel(oldLevel);
+}
+
+///Semaphore param library
+
+SemaphoreParam SemaphoreParamConstructor(void* debugName, Semaphore* semaphore) {
+    SemaphoreParam semaphoreParam = (SemaphoreParam)malloc(sizeof(struct _semaphoreParam));
+    semaphoreParam->debugName = debugName;
+    semaphoreParam->semaphore = semaphore;
+    
+    return semaphoreParam;
+}
+
+
+void SemaphoreParamDestructor(SemaphoreParam semaphoreParam) {
+    free(semaphoreParam);
+    return;
 }
