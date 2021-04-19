@@ -17,7 +17,6 @@
 #ifndef NACHOS_THREADS_LOCK__HH
 #define NACHOS_THREADS_LOCK__HH
 
-
 /// This class defines a “lock”.
 ///
 /// A lock can have two states: free and busy. Only two operations are
@@ -29,6 +28,8 @@
 ///
 /// For convenience, nobody but the thread that holds the lock can free it.
 /// There is no operation for reading the state of the lock.
+#include "semaphore.hh"
+
 class Lock {
 public:
 
@@ -57,8 +58,18 @@ private:
     /// For debugging.
     const char *name;
 
-    // Add other needed fields here.
+    Semaphore* lock;
+
+    Thread* lockOwner;
 };
 
+///Struct to pass Locks with a name as parameters to threads
+typedef struct _lockParam {
+    Lock* lock;
+    void* debugName;
+}* LockParam;
+
+void LockParamDestructor(LockParam semaphoreParam);
+LockParam LockParamConstructor(void* debugName, Lock* lock);
 
 #endif

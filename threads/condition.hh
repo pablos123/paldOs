@@ -62,11 +62,24 @@ public:
     ~Condition();
 
     const char *GetName() const;
+    Lock* GetLock();
 
     /// The three operations on condition variables.
     ///
     /// The thread that invokes any of these operations must hold the
     /// corresponding lock; otherwise an error must occur.
+
+    // condicion true
+    // mando broadcast //despertas tooodos los threads y haces que compitan por el lock
+    //                 //agarran el lockk y ponen la condicino en false.
+    // candado->adquire; se ejecuta esto primero. adquiero el candado
+    // Wait() aca entro uno (o mas pero supongo que no), hasta que se cumpla la condicion
+    // candado->adquire;
+    //  //espera a que se cumpla la condicion
+    // ejecutan cosas 
+    // condicion es true //ponele que el contador es 50 y queria 50. 
+    // mando signal 
+    // wait ok
 
     void Wait();
     void Signal();
@@ -75,6 +88,10 @@ public:
 private:
 
     const char *name;
+
+    Lock* conditionLock;
+
+    List<Semaphore *>* queue;
 
     // Other needed fields are to be added here.
 };

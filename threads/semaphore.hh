@@ -47,6 +47,7 @@ public:
 
     /// For debugging.
     const char *GetName() const;
+    
 
     /// The only public operations on the semaphore.
     ///

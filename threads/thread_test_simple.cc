@@ -8,6 +8,7 @@
 #include "thread_test_simple.hh"
 #include "system.hh"
 #include "semaphore.hh"
+#include "condition.hh"
 #include "lib/utility.hh"
 
 #include <stdio.h>

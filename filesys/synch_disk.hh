@@ -13,7 +13,6 @@
 #include "threads/lock.hh"
 #include "threads/semaphore.hh"
 
-
 /// The following class defines a "synchronous" disk abstraction.
 ///
 /// As with other I/O devices, the raw physical disk is an asynchronous

@@ -12,5 +12,7 @@ void ThreadTestGarden();
 
 void ThreadTestGardenSemaphore();
 
+void ThreadTestGardenLocks();
+
 
 #endif
