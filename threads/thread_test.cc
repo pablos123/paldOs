@@ -31,8 +31,9 @@ static const Test TESTS[] = {
     { &ThreadTestSimple,   "simple",   "Simple thread interleaving" },
     { &ThreadTestGarden,   "garden",   "Ornamental garden" },
     { &ThreadTestGardenSemaphore, "gardensemaphore", "Ornamental garden with semaphores"},
-    { &ThreadTestProdCons, "prodcons", "Producer/Consumer" },
+    { &ThreadTestProdCons, "prodcons", "Producer/Consumer  NO FUNCIONA DEL TODO (working...)" },
     { &ThreadTestGardenLocks, "gardenlocks", "Ornamental Garden with locks" },
+    { &ThreadTestChannel, "channeltest", "Chanel Test"},
 };
 static const unsigned NUM_TESTS = sizeof TESTS / sizeof TESTS[0];
 

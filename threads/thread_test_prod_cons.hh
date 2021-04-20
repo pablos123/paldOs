@@ -10,5 +10,6 @@
 
 void ThreadTestProdCons();
 
+void ThreadTestChannel();
 
 #endif

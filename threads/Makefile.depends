@@ -59,7 +59,9 @@ thread_test_prod_cons.o: ../threads/thread_test_prod_cons.cc \
  ../threads/thread_test_prod_cons.hh ../threads/condition.hh \
  ../threads/lock.hh ../threads/semaphore.hh ../threads/thread.hh \
  ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh ../lib/debug_opts.hh \
- ../machine/system_dep.hh ../lib/list.hh ../lib/utility.hh
+ ../machine/system_dep.hh ../lib/list.hh ../lib/utility.hh \
+ ../threads/system.hh ../threads/scheduler.hh ../machine/interrupt.hh \
+ ../machine/statistics.hh ../machine/timer.hh ../threads/channel.hh
 thread_test_simple.o: ../threads/thread_test_simple.cc \
  ../threads/thread_test_simple.hh ../threads/system.hh \
  ../threads/thread.hh ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh \
@@ -96,6 +98,11 @@ preemptive.o: ../threads/preemptive.cc ../threads/preemptive.hh \
  ../machine/system_dep.hh ../threads/scheduler.hh ../lib/list.hh \
  ../lib/utility.hh ../machine/interrupt.hh ../machine/statistics.hh \
  ../machine/timer.hh
+channel.o: ../threads/channel.cc ../threads/channel.hh \
+ ../threads/condition.hh ../threads/lock.hh ../threads/semaphore.hh \
+ ../threads/thread.hh ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh \
+ ../lib/debug_opts.hh ../machine/system_dep.hh ../lib/list.hh \
+ ../lib/utility.hh
 condition.o: ../threads/condition.hh ../threads/lock.hh \
  ../threads/semaphore.hh ../threads/thread.hh ../lib/utility.hh \
  ../lib/assert.hh ../lib/debug.hh ../lib/debug_opts.hh \
@@ -141,3 +148,7 @@ statistics.o: ../machine/statistics.hh
 timer.o: ../machine/timer.hh ../lib/utility.hh ../lib/assert.hh \
  ../lib/debug.hh ../lib/debug_opts.hh ../machine/system_dep.hh
 preemptive.o: ../threads/preemptive.hh
+channel.o: ../threads/channel.hh ../threads/condition.hh \
+ ../threads/lock.hh ../threads/semaphore.hh ../threads/thread.hh \
+ ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh ../lib/debug_opts.hh \
+ ../machine/system_dep.hh ../lib/list.hh ../lib/utility.hh

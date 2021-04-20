@@ -29,6 +29,11 @@ private:
 
     /// For debugging.
     const char *name;
+    List<int>* buzon;
+    //Lock lock; esto no lo necesitamos porque lo seteamos en el constructor
+    Lock* lock;
+    Condition* conditionForReceivers;
+    Condition* conditionForSenders;
 };
 
 #endif //NACHOS_THREADS_CHANNEL__HH

@@ -20,9 +20,12 @@
 #include "thread.hh"
 #include "switch.h"
 #include "system.hh"
+#include "lock.hh"
+#include "channel.hh"
 
 #include <inttypes.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 
 /// This is put at the top of the execution stack, for detecting stack
@@ -40,12 +43,16 @@ IsThreadStatus(ThreadStatus s)
 /// `Thread::Fork`.
 ///
 /// * `threadName` is an arbitrary string, useful for debugging.
-Thread::Thread(const char *threadName)
+Thread::Thread(const char *threadName, bool isJoinable)
 {
     name     = threadName;
     stackTop = nullptr;
     stack    = nullptr;
     status   = JUST_CREATED;
+    joinable = isJoinable;
+ 
+    joinChannel = new Channel("Join Channel");
+
 #ifdef USER_PROGRAM
     space    = nullptr;
 #endif
@@ -158,6 +165,9 @@ Thread::Finish()
     interrupt->SetLevel(INT_OFF);
     ASSERT(this == currentThread);
 
+    if (joinable){
+        joinChannel->Send(0);
+    }
     DEBUG('t', "Finishing thread \"%s\"\n", GetName());
 
     threadToBeDestroyed = currentThread;
@@ -227,6 +237,18 @@ Thread::Sleep()
     }
 
     scheduler->Run(nextThread);  // Returns when we have been signalled.
+}
+
+void Thread::Join(){
+    ASSERT(joinable);
+
+    int* value = (int*)malloc(sizeof(int));
+
+    joinChannel->Receive(value);
+    if(value == 0)
+        printf("Received 0... joining thread :)");
+    free(value);
+    return;
 }
 
 /// ThreadFinish, InterruptEnable

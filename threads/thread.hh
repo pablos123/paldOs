@@ -40,6 +40,7 @@
 
 
 #include "lib/utility.hh"
+class Channel;
 
 #ifdef USER_PROGRAM
 #include "machine/machine.hh"
@@ -97,7 +98,7 @@ private:
 public:
 
     /// Initialize a `Thread`.
-    Thread(const char *debugName);
+    Thread(const char *debugName, bool joinable = false);
 
     /// Deallocate a Thread.
     ///
@@ -116,7 +117,11 @@ public:
     /// Put the thread to sleep and relinquish the processor.
     void Sleep();
 
-    /// The thread is done executing.
+    //Blocks the callee until the thread has finished
+
+    void Join();
+
+    /// The thread is done executing. 
     void Finish();
 
     /// Check if thread has overflowed its stack.
@@ -144,9 +149,14 @@ private:
     /// Allocate a stack for thread.  Used internally by `Fork`.
     void StackAllocate(VoidFunctionPtr func, void *arg);
 
+    //This is true if the thread is going to be joinable;
+    bool joinable;
+
+    Channel* joinChannel;
+
 #ifdef USER_PROGRAM
     /// User-level CPU register state.
-    ///
+    ///m
     /// A thread running a user program actually has *two* sets of CPU
     /// registers -- one for its state while executing user code, one for its
     /// state while executing kernel code.

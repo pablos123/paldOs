@@ -22,7 +22,7 @@
 /// Note -- without a correct implementation of `Condition::Wait`, the test
 /// case in the network assignment will not work!
 
-Condition::Condition(const char* debugName, Lock* lock)
+Condition::Condition(const char* debugName, Lock* lock) //tener en cuenta que no se libera la memoria ocupada por el lock.
 {
     this->name = debugName;
     this->conditionLock = lock;
@@ -31,7 +31,8 @@ Condition::Condition(const char* debugName, Lock* lock)
 
 Condition::~Condition()
 {
-    this->queue->~List();
+    delete queue;
+    //delete lock; lo sacamos pq esto fue pasado como parámetro asi que deberían encargarse ahí
     delete this;
 }
 
@@ -59,7 +60,7 @@ Condition::Wait()
     conditionLock->Release(); //aca hago el yield que es lo mismo //si no hago el yield en release esto es un bardo
     new_semaphore->P(); //lo mandamos a dormir
     
-    //ver si borrar acá el semaforo o en el destructor creo que ya esta xddx
+    delete new_semaphore;
     
     conditionLock->Acquire();
 }

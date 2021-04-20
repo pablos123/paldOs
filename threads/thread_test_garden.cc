@@ -136,6 +136,7 @@ TurnstileLocks(void* lockParam)
         count = temp + 1;
         printf("Turnstile %u, %d\n", *n, count);
         lock->Release();
+        currentThread->Yield();
     }
     printf("Turnstile %u finished. Count is now %u.\n", *n, count);
     done[*n] = true;
