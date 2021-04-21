@@ -15,6 +15,7 @@
 /// limitation of liability and disclaimer of warranty provisions.
 
 #include "condition.hh"
+#include "system.hh"
 
 
 /// Dummy functions -- so we can compile our later assignments.
@@ -32,7 +33,6 @@ Condition::Condition(const char* debugName, Lock* lock) //tener en cuenta que no
 Condition::~Condition()
 {
     delete queue;
-    //delete lock; lo sacamos pq esto fue pasado como parámetro asi que deberían encargarse ahí
     delete this;
 }
 
@@ -51,6 +51,7 @@ Condition::GetLock() {
 void
 Condition::Wait()
 {
+    DEBUG('t', "Thread %s waiting...\n", currentThread->GetName());
     ASSERT(conditionLock->IsHeldByCurrentThread()); //tiene que tener agarrado el candado
     //conditionLock->Release(); //si es dueño del candado entonces lo libera
     Semaphore* new_semaphore = new Semaphore("dummy", 0); //esto lo iniciamos en 0 para dormir.
@@ -77,8 +78,7 @@ Condition::Signal()
 void
 Condition::Broadcast()
 {
-    Semaphore* sem;
-    for(; sem != nullptr; sem = queue->Pop()) {
-        sem->V();
+    while(!queue->IsEmpty()) {
+        Signal();
     }
 }

@@ -67,8 +67,9 @@ TurnstileSemaphore(void *param)
 
 
     for (unsigned i = 0; i < ITERATIONS_PER_TURNSTILE; i++) {
-        int temp = count;
+        
         semaphore->P(); //sleep() del actual si el value es 0
+        int temp = count;
         count = temp + 1;
         semaphore->V(); //marca el ultimo hilo de la pila como ready
         currentThread->Yield(); //es necesario pasarle el control a otro hilo, en este caso en particular

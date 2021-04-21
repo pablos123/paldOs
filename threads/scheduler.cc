@@ -48,7 +48,12 @@ Scheduler::ReadyToRun(Thread *thread)
     DEBUG('t', "Putting thread %s on ready list\n", thread->GetName());
 
     thread->SetStatus(READY);
+#ifdef MULTILEVEL_PRIORITY_QUEUE
+    readyList->SortedInsertInverted(thread, thread->GetPriority());
+#else
     readyList->Append(thread);
+#endif
+    
 }
 
 /// Return the next thread to be scheduled onto the CPU.
@@ -140,4 +145,11 @@ Scheduler::Print()
 {
     printf("Ready list contents:\n");
     readyList->Apply(ThreadPrint);
+}
+
+size_t 
+Scheduler::GetMaxPriority(){
+    if(readyList->IsEmpty()) return currentThread->GetPriority();
+    Thread* highestThread = readyList->Head();
+    return highestThread->GetPriority();
 }

@@ -30,6 +30,8 @@ Lock::Lock(const char *debugName)
 
     this->lockOwner = nullptr; //nadie es dueño del lock... todavia
 
+    this->currentPriority = 0;
+
 } //esto parece que tambien pero no me acuerdo 
 
 Lock::~Lock()
@@ -48,6 +50,21 @@ void
 Lock::Acquire()
 {
     ASSERT(!this->IsHeldByCurrentThread());
+#ifdef MULTILEVEL_PRIORITY_QUEUE
+/*  
+    Herencia de propiedades:
+    obtengo la propiedad del proceso de mayor prioridad
+    guardo la prioridad del actual (el de baja prioridad, por ej)
+    guardo dentro de la prioridad del actual como prioridad mayor
+    antes del release bajo la prioridad del actual y la dejo como la que tenía originalmente
+
+*/
+    currentPriority = currentThread->GetPriority();
+    size_t maxPriority = scheduler->GetMaxPriority();
+
+    currentThread->SetPriority(maxPriority);
+#endif
+
     this->lock->P(); //Primero resto el semaforo dado que puede pasar que no pueda entrar pero cambio el dueño igual
                     //therefore hay alta explotacion con el assert
     this->lockOwner = currentThread;
@@ -58,6 +75,7 @@ Lock::Release()
 {
     ASSERT(this->IsHeldByCurrentThread());
     this->lock->V();
+    currentThread->SetPriority(currentPriority);
     this->lockOwner = nullptr; //esto es representativo para la funcion del lock :)ç
                                //aunque no es necesario. Si es necesario! :D aldu la mas grande
     //currentThread->Yield(); lo sacamos ya que en las variables de condicion, en Wait() se llama a

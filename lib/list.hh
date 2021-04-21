@@ -75,6 +75,8 @@ public:
     /// Put item into list.
     void SortedInsert(Item item, int sortKey);
 
+    void SortedInsertInverted(Item item, int sortKey);
+
     /// Remove first item from list.
     Item SortedPop(int *keyPtr);
 
@@ -276,6 +278,32 @@ List<Item>::SortedInsert(Item item, int sortKey)
     } else {  // Look for first elt in list bigger than item.
         for (ListNode *ptr = first; ptr->next != nullptr; ptr = ptr->next) {
             if (sortKey < ptr->next->key) {
+                element->next = ptr->next;
+                ptr->next = element;
+                return;
+            }
+        }
+        last->next = element;  // Item goes at end of list.
+        last = element;
+    }
+}
+
+template <class Item>
+void
+List<Item>::SortedInsertInverted(Item item, int sortKey)
+{
+    ListNode *element = new ListNode(item, sortKey);
+
+    if (IsEmpty()) {  // If list is empty, put.
+        first = element;
+        last = element;
+    } else if (sortKey > first->key) {
+        // Item goes on front of list.
+        element->next = first;
+        first = element;
+    } else {  // Look for first elt in list smaller than item.
+        for (ListNode *ptr = first; ptr->next != nullptr; ptr = ptr->next) {
+            if (sortKey > ptr->next->key) {
                 element->next = ptr->next;
                 ptr->next = element;
                 return;

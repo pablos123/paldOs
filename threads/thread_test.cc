@@ -14,6 +14,7 @@
 #include "thread_test_garden.hh"
 #include "thread_test_prod_cons.hh"
 #include "thread_test_simple.hh"
+#include "test.hh"
 #include "lib/utility.hh"
 
 #include <stdio.h>
@@ -34,6 +35,7 @@ static const Test TESTS[] = {
     { &ThreadTestProdCons, "prodcons", "Producer/Consumer  NO FUNCIONA DEL TODO (working...)" },
     { &ThreadTestGardenLocks, "gardenlocks", "Ornamental Garden with locks" },
     { &ThreadTestChannel, "channeltest", "Chanel Test"},
+    { &MultilevelPriorityQueueTest, "mlevelqueue", "Test para multicolas con prioridad"},
 };
 static const unsigned NUM_TESTS = sizeof TESTS / sizeof TESTS[0];
 

@@ -43,13 +43,14 @@ IsThreadStatus(ThreadStatus s)
 /// `Thread::Fork`.
 ///
 /// * `threadName` is an arbitrary string, useful for debugging.
-Thread::Thread(const char *threadName, bool isJoinable)
+Thread::Thread(const char *threadName, bool isJoinable, size_t priorityParam)
 {
     name     = threadName;
     stackTop = nullptr;
     stack    = nullptr;
     status   = JUST_CREATED;
     joinable = isJoinable;
+    priority = priorityParam;
  
     joinChannel = new Channel("Join Channel");
 
@@ -75,6 +76,20 @@ Thread::~Thread()
         SystemDep::DeallocBoundedArray((char *) stack,
                                        STACK_SIZE * sizeof *stack);
     }
+}
+
+//Gets the thread's priority
+size_t
+Thread::GetPriority()
+{
+    return priority;
+}
+
+//Sets the thread's priority
+void
+Thread::SetPriority(size_t newPriority)
+{
+    priority = newPriority;
 }
 
 /// Invoke `(*func)(arg)`, allowing caller and callee to execute

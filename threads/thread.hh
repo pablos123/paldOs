@@ -98,7 +98,7 @@ private:
 public:
 
     /// Initialize a `Thread`.
-    Thread(const char *debugName, bool joinable = false);
+    Thread(const char *debugName, bool joinable = false, size_t priority = 0);
 
     /// Deallocate a Thread.
     ///
@@ -131,6 +131,10 @@ public:
 
     const char *GetName() const;
 
+    size_t GetPriority();
+
+    void SetPriority(size_t);
+
     void Print() const;
 
 private:
@@ -151,6 +155,9 @@ private:
 
     //This is true if the thread is going to be joinable;
     bool joinable;
+
+    //Priority of the thread
+    size_t priority;
 
     Channel* joinChannel;
 

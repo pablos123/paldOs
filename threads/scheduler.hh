@@ -39,11 +39,15 @@ public:
     // Print contents of ready list.
     void Print();
 
+    //Gets the priority of the highest priority thread in the ready to run processes list
+
+    size_t GetMaxPriority();
+
 private:
 
     // Queue of threads that are ready to run, but not running.
     List<Thread*> *readyList;
-
+    
 };
 
 

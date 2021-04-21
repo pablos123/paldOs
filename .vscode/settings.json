@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "mutex": "cpp",
-        "condition_variable": "cpp"
+        "condition_variable": "cpp",
+        "thread": "cpp"
     }
 }
