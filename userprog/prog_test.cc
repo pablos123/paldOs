@@ -11,6 +11,7 @@
 
 #include "address_space.hh"
 #include "machine/console.hh"
+#include "machine/synch_console.hh"
 #include "threads/semaphore.hh"
 #include "threads/system.hh"
 
@@ -50,6 +51,7 @@ StartProcess(const char *filename)
 /// completes.
 
 static Console   *console;
+static SynchConsole* synchConsole;
 static Semaphore *readAvail;
 static Semaphore *writeDone;
 
@@ -85,6 +87,29 @@ ConsoleTest(const char *in, const char *out)
         char ch = console->GetChar();
         console->PutChar(ch);  // Echo it!
         writeDone->P();        // Wait for write to finish.
+        if (ch == 'q') {
+            return;  // If `q`, then quit.
+        }
+    }
+}
+
+/// Test the syncronous console by echoing characters typed at the input onto the
+/// output.
+///
+/// Stop when the user types a `q`.
+void
+SynchConsoleTest(const char *in, const char *out)
+{
+    synchConsole   = new SynchConsole(in, out);
+    // readAvail = new Semaphore("read avail", 0);
+    // writeDone = new Semaphore("write done", 0);
+
+    for (;;) {
+        
+        char ch = synchConsole->ReadConsole();
+
+        synchConsole->WriteConsole(ch);  // Echo it!
+        
         if (ch == 'q') {
             return;  // If `q`, then quit.
         }

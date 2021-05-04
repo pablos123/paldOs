@@ -58,7 +58,7 @@ THREAD_HDR = threads/condition.hh             \
              machine/timer.hh                 \
              threads/preemptive.hh            \
              threads/channel.hh               \
-             threads/test.hh
+             threads/test.hh				  
 
 THREAD_SRC = threads/main.cc                  \
              threads/condition.cc             \
@@ -100,7 +100,10 @@ USERPROG_HDR = userprog/address_space.hh            \
                machine/instruction.hh               \
                machine/machine.hh                   \
                machine/mmu.hh                       \
-               machine/translation_entry.hh
+               machine/translation_entry.hh         \
+			   machine/synch_console.hh
+
+
 USERPROG_SRC = userprog/address_space.cc            \
                userprog/args.cc                     \
                userprog/debugger.cc                 \
@@ -117,7 +120,8 @@ USERPROG_SRC = userprog/address_space.cc            \
                machine/instruction.cc               \
                machine/machine.cc                   \
                machine/mips_sim.cc                  \
-               machine/mmu.cc
+               machine/mmu.cc                       \
+			   machine/synch_console.cc
 
 VMEM_HDR =
 VMEM_SRC =

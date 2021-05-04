@@ -56,6 +56,7 @@ Thread::Thread(const char *threadName, bool isJoinable, size_t priorityParam)
 
 #ifdef USER_PROGRAM
     space    = nullptr;
+    openedFilesTable = new Table<OpenFile*>;
 #endif
 }
 
@@ -345,6 +346,11 @@ Thread::RestoreUserState()
     for (unsigned i = 0; i < NUM_TOTAL_REGS; i++) {
         machine->WriteRegister(i, userRegisters[i]);
     }
+}
+
+Table<OpenFile*>*
+Thread::GetOpenedFilesTable() {
+    return openedFilesTable;
 }
 
 #endif

@@ -38,13 +38,15 @@
 #ifndef NACHOS_THREADS_THREAD__HH
 #define NACHOS_THREADS_THREAD__HH
 
-
 #include "lib/utility.hh"
+
+
 class Channel;
 
 #ifdef USER_PROGRAM
 #include "machine/machine.hh"
 #include "userprog/address_space.hh"
+#include "lib/table.hh"
 #endif
 
 #include <stdint.h>
@@ -168,6 +170,7 @@ private:
     /// registers -- one for its state while executing user code, one for its
     /// state while executing kernel code.
     int userRegisters[NUM_TOTAL_REGS];
+    Table<OpenFile*> *openedFilesTable;    //tabla de los archivos abiertos del hilo 
 
 public:
 
@@ -179,6 +182,8 @@ public:
 
     // User code this thread is running.
     AddressSpace *space;
+
+    Table<OpenFile*>* GetOpenedFilesTable();
 #endif
 };
 

@@ -25,6 +25,7 @@
 #include "transfer.hh"
 #include "syscall.h"
 #include "filesys/directory_entry.hh"
+#include "filesys/open_file.hh"
 #include "threads/system.hh"
 
 #include <stdio.h>
@@ -76,7 +77,7 @@ DefaultHandler(ExceptionType et)
 /// * the result of the system call, if any, must be put back into `r2`.
 ///
 /// And do not forget to increment the program counter before returning. (Or
-/// else you will loop making the same system call forever!)
+/// else you will loop making the same system call forever!) :D
 static void
 SyscallHandler(ExceptionType _et)
 {
@@ -101,14 +102,158 @@ SyscallHandler(ExceptionType _et)
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
                       FILE_NAME_MAX_LEN);
             }
+            if(!fileSystem->Create(filename, 0)){
+                DEBUG('e', "Error: File not created.\n");
+            }
 
-            DEBUG('e', "`Create` requested for file `%s`.\n", filename);
+            DEBUG('e', "File `%s` created.\n", filename);
+            break;
+        }
+
+        case SC_REMOVE:{
+            int filenameAddr = machine->ReadRegister(4);
+            if (filenameAddr == 0) {
+                DEBUG('e', "Error: address to filename string is null.\n");
+            }
+
+            char filename[FILE_NAME_MAX_LEN + 1];
+            if (!ReadStringFromUser(filenameAddr,
+                                    filename, sizeof filename)) {
+                DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
+                      FILE_NAME_MAX_LEN);
+            }
+            if(!fileSystem->Remove(filename)){
+                DEBUG('e', "Error: File not removed.\n");
+            }
+
+            DEBUG('e', "File `%s` removed.\n", filename);
+            break;
+
+        }
+
+        case SC_EXIT: {
+            int status = machine->ReadRegister(4);
+
+            DEBUG('e', "The program finished with status %d.\n", status);
+
+            currentThread->Finish();
+
+        }
+
+        case SC_OPEN: {
+            int filenameAddr = machine->ReadRegister(4);
+
+            if (filenameAddr == 0) {
+                DEBUG('e', "Error: address to filename string is null.\n");
+            }
+
+            char filename[FILE_NAME_MAX_LEN + 1];
+
+            if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
+            DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
+                    FILE_NAME_MAX_LEN);
+            }
+
+            OpenFile* openedFile = fileSystem->Open(filename);
+
+            if(openedFile == nullptr){
+                DEBUG('e', "Error: File not opened.\n");
+            }
+            
+            int fileDescriptor = currentThread->GetOpenedFilesTable()->Add(openedFile);
+            if(fileDescriptor < 0) {
+                DEBUG('e', "Error: File not added to table");
+            }
+            
+            DEBUG('e', "File opened successfully!. Index assigned: %d \n", fileDescriptor);
+    
             break;
         }
 
         case SC_CLOSE: {
             int fid = machine->ReadRegister(4);
             DEBUG('e', "`Close` requested for id %u.\n", fid);
+
+            if(fid < 0){
+                DEBUG('e', "Invalid file descriptor ID \n");    //to avoid the assert in Remove function
+            }
+
+            OpenFile* file = currentThread->GetOpenedFilesTable()->Remove(fid);
+            if(file == nullptr) {
+                DEBUG('e', "Error: File not closed. ID wasn't present in the table");
+            }
+            
+            else{
+            DEBUG('e', "File closed successfully!\n");
+            }
+
+            break;
+        }
+
+        case SC_READ: {
+            int fid = machine->ReadRegister(4);
+            int nbytes = machine->ReadRegister(5);
+            int usrStringAddr = machine->ReadRegister(6);
+
+            if (usrStringAddr == 0) {
+                DEBUG('e', "Error: address string is null.\n");
+            }    
+            if (nbytes <= 0){
+                DEBUG('e', "Error: invalid number of bytes.\n");
+            }
+            if(fid < 0){
+                DEBUG('e', "Invalid file descriptor ID \n");    //to avoid the assert in Remove function
+            }
+
+            OpenFile* file = currentThread->GetOpenedFilesTable()->Get(fid);
+
+            if(file == nullptr) {
+                DEBUG('e', "Error in read: Not a file\n");
+            }
+
+            char buffer[nbytes + 1];
+
+            int bytesReaded = file->Read(buffer, nbytes);
+
+            if(bytesReaded <= 0) {
+                DEBUG('e', "error in read: wrong bytes readed");
+            }
+            
+            WriteBufferToUser(buffer, usrStringAddr, nbytes);
+            break;
+        }
+
+        case SC_WRITE: {
+            int fid = machine->ReadRegister(4);
+            int nbytes = machine->ReadRegister(5);
+            int usrStringAddr = machine->ReadRegister(6);
+
+            if (usrStringAddr == 0) {
+                DEBUG('e', "Error: address string is null.\n");
+            }    
+            if (nbytes <= 0){
+                DEBUG('e', "Error: invalid number of bytes.\n");
+            }
+            if(fid < 0){
+                DEBUG('e', "Invalid file descriptor ID \n");    //to avoid the assert in Remove function
+            }
+
+            OpenFile* file = currentThread->GetOpenedFilesTable()->Get(fid);
+
+            if(file == nullptr) {
+                DEBUG('e', "Error in write: Not a file\n");
+            }
+
+            char buffer[nbytes + 1];
+
+            ReadBufferFromUser(usrStringAddr, buffer, nbytes);
+
+            int bytesReaded = file->Write(buffer, nbytes);
+
+            if(bytesReaded <= 0) {
+                DEBUG('e', "error in read: wrong bytes readed");
+            }
+
             break;
         }
 
