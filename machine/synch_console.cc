@@ -76,10 +76,10 @@ SynchConsole::WriteConsole(char ch)
 {
     //ASSERT(ch != nullptr);
 
-    //lock->Acquire();  // not only one disk I/O at a time: en este caso un hilo queriendo escribir no deberia bloquear a un hilo queriendo leer.
+    lock->Acquire();  // not only one disk I/O at a time: en este caso un hilo queriendo escribir no deberia bloquear a un hilo queriendo leer.
     console->PutChar(ch);
     writeDone->P();   // wait for interrupt
-    //lock->Release();
+    lock->Release();
 }
 
 /// Gets the private attribute console

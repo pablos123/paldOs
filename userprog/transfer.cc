@@ -6,6 +6,7 @@
 #include "transfer.hh"
 #include "lib/utility.hh"
 #include "threads/system.hh"
+#include <stdio.h>
 
 
 void ReadBufferFromUser(int userAddress, char *outBuffer,

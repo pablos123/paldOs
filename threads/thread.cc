@@ -57,6 +57,8 @@ Thread::Thread(const char *threadName, bool isJoinable, size_t priorityParam)
 #ifdef USER_PROGRAM
     space    = nullptr;
     openedFilesTable = new Table<OpenFile*>;
+    openedFilesTable->Add(nullptr); //for console input
+    openedFilesTable->Add(nullptr); //for console output
 #endif
 }
 

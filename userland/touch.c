@@ -8,10 +8,28 @@
 int
 main(int argc, char *argv[])
 {
-    if (argc < 2) {
-        Write(ARGC_ERROR, sizeof(ARGC_ERROR) - 1, CONSOLE_OUTPUT);
+    if (1) { //file test
+        //Write(ARGC_ERROR, sizeof(ARGC_ERROR) - 1, CONSOLE_OUTPUT);
+        char string[] = {'f','i','l','e','1'};
+        Create(string);
+        
+        int fileid = Open(string);
+
+        int writedbytes = Write("hola como estas", sizeof("hola como estas") - 1, fileid);
+
+        char buffer[sizeof("hola como estas") - 1];
+
+        int bytesreaded = Read(buffer, writedbytes, fileid);
+
+        Write(buffer, sizeof("hola como estas") - 1, CONSOLE_OUTPUT);
+
+        Remove(string);
+
         Exit(1);
     }
+
+    Write(argv[0], sizeof(ARGC_ERROR) - 1, CONSOLE_OUTPUT);
+    Write(argv[1], sizeof(ARGC_ERROR) - 1, CONSOLE_OUTPUT);
 
     int success = 1;
     for (unsigned i = 0; i < argc; i++) {

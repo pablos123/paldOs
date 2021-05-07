@@ -162,7 +162,7 @@ main(int argc, char **argv)
         }
         else if (!strcmp(*argv, "-tsc")) {  // Test the console.
             if (argc == 1) {
-                SynchConsoleTest(nullptr, nullptr);
+                SynchConsoleTest(nullptr, nullptr); 
             } else {
                 ASSERT(argc > 2);
                 SynchConsoleTest(*(argv + 1), *(argv + 2));
