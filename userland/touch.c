@@ -19,6 +19,10 @@ main(int argc, char *argv[])
 
         char buffer[sizeof("hola como estas") - 1];
 
+        Close(fileid); // para que el puntero vuelva al principio
+        
+        fileid = Open(string); // para que el puntero vuelva al principio
+
         int bytesreaded = Read(buffer, writedbytes, fileid);
 
         Write(buffer, sizeof("hola como estas") - 1, CONSOLE_OUTPUT);
