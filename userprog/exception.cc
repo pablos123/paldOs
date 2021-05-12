@@ -64,6 +64,40 @@ DefaultHandler(ExceptionType et)
     ASSERT(false);
 }
 
+
+///
+/// Run a user program.
+///
+/// Open the executable, load it into memory, and jump to it.
+///
+
+static void
+StartProcess(void *filenamevoid)
+{
+    char* filename = (char*)filenamevoid;
+
+    ASSERT(filename != nullptr);
+
+    OpenFile *executable = fileSystem->Open(filename);
+    if (executable == nullptr) {
+        printf("Unable to open file %s\n", filename);
+        return;
+    }
+
+    AddressSpace *space = new AddressSpace(executable);
+    currentThread->space = space;
+
+    delete executable;
+
+    space->InitRegisters();  // Set the initial register values.
+    space->RestoreState();   // Load page table register.
+
+    machine->Run();  // Jump to the user progam.
+    ASSERT(false);   // `machine->Run` never returns; the address space
+                    // exits by doing the system call `Exit`.
+}
+
+
 /// Handle a system call exception.
 ///
 /// * `et` is the kind of exception.  The list of possible exceptions is in
@@ -91,6 +125,44 @@ SyscallHandler(ExceptionType _et)
             DEBUG('e', "Shutdown, initiated by user program.\n");
             interrupt->Halt();
             break;
+
+        //TODO: liberar la memoria del bitmap
+        case SC_EXIT: {
+            int status = machine->ReadRegister(4);
+
+            DEBUG('e', "The program finished with status %d.\n", status);
+
+            currentThread->Finish();
+        }
+
+        case SC_EXEC: {
+            int processAddr = machine->ReadRegister(4);
+
+            if (processAddr == 0) {
+                DEBUG('e', "Error: address to filename string is null.\n");
+                machine->WriteRegister(2, 1);
+            }
+
+            char processname[FILE_NAME_MAX_LEN + 1];
+            if (!ReadStringFromUser(processAddr,
+                                    processname, sizeof processname)) {
+                DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
+                      FILE_NAME_MAX_LEN);
+                machine->WriteRegister(2, 1);
+            }
+
+            //se podria hacer mas robusto checkeando mas cosas....
+            Thread *newThread = new Thread("newProcess",true);
+            SpaceId spaceId = runningProccesses->Add(newThread); 
+            newThread->Fork(StartProcess, (void *) processname);
+
+            
+            //hacer tabla para meter con key= spaceId el thread, entonces cuando hago join hago join de esa key.
+
+            machine->WriteRegister(2, spaceId);
+            currentThread->Yield(); //esto no estoy seguro, perdon si está mal yay
+            break;
+        }
 
         case SC_CREATE: {
             int filenameAddr = machine->ReadRegister(4);
@@ -142,13 +214,6 @@ SyscallHandler(ExceptionType _et)
 
         }
 
-        case SC_EXIT: {
-            int status = machine->ReadRegister(4);
-
-            DEBUG('e', "The program finished with status %d.\n", status);
-
-            currentThread->Finish();
-        }
 
         case SC_OPEN: {
             int filenameAddr = machine->ReadRegister(4);
@@ -220,14 +285,24 @@ SyscallHandler(ExceptionType _et)
                 machine->WriteRegister(2, 0);
             }
 
-            if(!currentThread->GetOpenedFilesTable()->HasKey(fid)) {
+            char buffer[nbytes + 1];
+
+            if(fid == CONSOLE_INPUT) {
+                SynchConsole* console = new SynchConsole(nullptr, nullptr);
+                for(int i = 0; i < nbytes; i++) {
+                    buffer[i] = console->ReadConsole();
+                }
+                
+                //delete console; adonde hacer esto??
+                WriteBufferToUser(buffer, usrStringAddr, nbytes);
+                machine->WriteRegister(2, nbytes);
+                break;
+            } else if(!currentThread->GetOpenedFilesTable()->HasKey(fid)) {
                 DEBUG('e', "Error in read: Not an opened file\n");
                 machine->WriteRegister(2, 0);
             } else {
                 OpenFile* file = currentThread->GetOpenedFilesTable()->Get(fid);
-
-                char buffer[nbytes + 1];        
-
+        
                 int bytesReaded = file->Read(buffer, nbytes);
 
                 printf("Readed: %s, nrobytes: %d de %d, fromfileid: %d, fileaddr: %p\n", buffer, bytesReaded, nbytes, fid, file);
@@ -271,6 +346,8 @@ SyscallHandler(ExceptionType _et)
                 for(int i = 0; i < nbytes; i++) {
                     console->WriteConsole(buffer[i]);
                 }
+                
+                //delete console; adonde hacer esto??
                 machine->WriteRegister(2, nbytes);
                 break;
             } else if(!currentThread->GetOpenedFilesTable()->HasKey(fid)) {

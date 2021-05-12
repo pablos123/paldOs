@@ -16,6 +16,7 @@
 
 #include "filesys/file_system.hh"
 #include "machine/translation_entry.hh"
+#include "lib/bitmap.hh"
 
 
 const unsigned USER_STACK_SIZE = 1024;  ///< Increase this as necessary!
@@ -47,6 +48,7 @@ public:
     void SaveState();
     void RestoreState();
 
+    //SpaceId spaceId; //adress space identifier ????
 private:
 
     /// Assume linear page table translation for now!

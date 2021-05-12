@@ -9,9 +9,11 @@
 #include "system.hh"
 #include "preemptive.hh"
 
+
 #ifdef USER_PROGRAM
 #include "userprog/debugger.hh"
 #include "userprog/exception.hh"
+#include "machine/mmu.hh"
 #endif
 
 #include <stdlib.h>
@@ -44,6 +46,9 @@ SynchDisk *synchDisk;
 
 #ifdef USER_PROGRAM  // Requires either *FILESYS* or *FILESYS_STUB*.
 Machine *machine;  ///< User program memory and registers.
+Bitmap *addressesBitMap;        ///< The bitmap to search and allocate processes into memory,
+                              ///< this is used for the implementation of multiprgramming.
+Table<Thread*> *runningProccesses;                              
 #endif
 
 #ifdef NETWORK
@@ -228,6 +233,7 @@ Initialize(int argc, char **argv)
 #ifdef USER_PROGRAM
     Debugger *d = debugUserProg ? new Debugger : nullptr;
     machine = new Machine(d);  // This must come first.
+    addressesBitMap = new Bitmap(NUM_PHYS_PAGES);
     SetExceptionHandlers();
 #endif
 
