@@ -164,6 +164,24 @@ SyscallHandler(ExceptionType _et)
             break;
         }
 
+        case SC_JOIN: {
+            SpaceId spaceId = machine->ReadRegister(4);
+
+            if(! runningProccesses->HasKey(spaceId)){
+                DEBUG('e',"Error en Join: id del proceso inexistente");
+                machine->WriteRegister(2,-1);
+            }
+
+            Thread* process = runningProccesses->Get(spaceId);
+            // exitStatus = process->Join();
+            int exitStatus = 777;
+            process->Join();
+
+            machine->WriteRegister(2, exitStatus);
+
+            break;
+        }
+
         case SC_CREATE: {
             int filenameAddr = machine->ReadRegister(4);
             if (filenameAddr == 0) {
