@@ -1,4 +1,4 @@
-/// Routines to manage threads.
+/// Routines to manage threads. 
 ///
 /// There are four main operations:
 ///
@@ -178,13 +178,13 @@ Thread::Print() const
 /// NOTE: we disable interrupts, so that we do not get a time slice between
 /// setting `threadToBeDestroyed`, and going to sleep.
 void
-Thread::Finish()
+Thread::Finish(int st)
 {
     interrupt->SetLevel(INT_OFF);
     ASSERT(this == currentThread);
 
     if (joinable){
-        joinChannel->Send(0);
+        joinChannel->Send(st);
     }
     DEBUG('t', "Finishing thread \"%s\"\n", GetName());
 
@@ -257,16 +257,16 @@ Thread::Sleep()
     scheduler->Run(nextThread);  // Returns when we have been signalled.
 }
 
-void Thread::Join(){
+int Thread::Join(){
     ASSERT(joinable);
 
     int* value = (int*)malloc(sizeof(int));
 
     joinChannel->Receive(value);
-    if(value == 0)
-        printf("Received 0... joining thread :)");
+    int st = *value;
+    printf("Received %d... joining thread :)", st);
     free(value);
-    return;
+    return st;
 }
 
 /// ThreadFinish, InterruptEnable

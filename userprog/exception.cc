@@ -132,7 +132,7 @@ SyscallHandler(ExceptionType _et)
 
             DEBUG('e', "The program finished with status %d.\n", status);
 
-            currentThread->Finish();
+            currentThread->Finish(status);
         }
 
         case SC_EXEC: {
@@ -173,9 +173,7 @@ SyscallHandler(ExceptionType _et)
             }
 
             Thread* process = runningProccesses->Get(spaceId);
-            // exitStatus = process->Join();
-            int exitStatus = 777;
-            process->Join();
+            int exitStatus = process->Join();
 
             machine->WriteRegister(2, exitStatus);
 

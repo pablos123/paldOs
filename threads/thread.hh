@@ -119,12 +119,12 @@ public:
     /// Put the thread to sleep and relinquish the processor.
     void Sleep();
 
-    //Blocks the callee until the thread has finished
+    //Blocks the callee until the thread has finished. Returns the exit status.
 
-    void Join();
+    int Join();
 
     /// The thread is done executing. 
-    void Finish();
+    void Finish(int status = 0);
 
     /// Check if thread has overflowed its stack.
     void CheckOverflow() const;

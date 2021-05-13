@@ -52,46 +52,72 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
           // set its pages to be read-only.
     }
 
+    
+    for(unsigned i = 0; i < numPages; i++) {
+      DEBUG('a', "use el bit %u\n",
+            pageTable[i].physicalPage);
+    }
+
     char *mainMemory = machine->GetMMU()->mainMemory; // lo que hace aca es agarrar el principio de la memoria, pero yo no quiero el principio
 
-    // Zero out the entire address space, to zero the unitialized data
-    // segment and the stack segment.
-    for(unsigned i = 0; i < numPages; i++) {
-      memset(mainMemory + pageTable[i].physicalPage, 0, PAGE_SIZE);
-    }
+    // // Zero out the entire address space, to zero the unitialized data
+    // // segment and the stack segment.
+    // for(unsigned i = 0; i < numPages; i++) {
+    //   memset(&mainMemory[pageTable[i].physicalPage * PAGE_SIZE], 0, PAGE_SIZE); //esto esta andando tambien
+    // }
     
-    //memset(mainMemory, 0, size);  //rellenar con 0 SOLO las paginas de este proceso (no desde main memory)
+    memset(mainMemory, 0, size);  //rellenar con 0 SOLO las paginas de este proceso (no desde main memory)
 
     // Then, copy in the code and data segments into memory.
-    uint32_t codeSize = exe.GetCodeSize(); //aldu esta loca y deberíamos saber si esto es multiplo de page_size
+    uint32_t codeSize = exe.GetCodeSize();
     uint32_t initDataSize = exe.GetInitDataSize();
-    unsigned i = 0;
 
+    DEBUG('a', "Datasize %u\n",
+      initDataSize);
+
+    unsigned codePages = DivRoundUp(codeSize, PAGE_SIZE);
+    DEBUG('a', "code pages: %u, %u\n", codePages, PAGE_SIZE);
+    
     if (codeSize > 0) {
-        uint32_t virtualAddr = exe.GetCodeAddr();
+        uint32_t virtualAddr = exe.GetCodeAddr(); //ya no es necesario...
+
         DEBUG('a', "Initializing code segment, at 0x%X, size %u\n",
               virtualAddr, codeSize);
-        for(uint32_t totalRead = 0; totalRead < codeSize; i++) {
-          if(codeSize - totalRead > PAGE_SIZE)
-            exe.ReadCodeBlock(&mainMemory[pageTable[i].physicalPage], PAGE_SIZE, 0);
-          else
-            exe.ReadCodeBlock(&mainMemory[pageTable[i].physicalPage], codeSize - totalRead, 0);
+        unsigned wannaRead = PAGE_SIZE;
+        for(unsigned i = 0; i < codePages; i++) {
+            DEBUG('a', "EL IIII es: %u\n", i);
 
-          totalRead = totalRead + PAGE_SIZE;
+            unsigned lecture = wannaRead > codeSize ? codeSize - i * PAGE_SIZE : PAGE_SIZE;
+            uint32_t addressToWrite = pageTable[i].physicalPage * PAGE_SIZE;
+
+            DEBUG('a', "writing %u bytes to %u\n", lecture, addressToWrite);
+            
+            exe.ReadCodeBlock(&mainMemory[addressToWrite], lecture, addressToWrite);
+            wannaRead += PAGE_SIZE;
         }
+        DEBUG('a', "totalRead: %u\n", wannaRead);
         //exe.ReadCodeBlock(&mainMemory[virtualAddr], codeSize, 0); //leer de a paginas (PAGE_SIZE), ya no está mapeado uno a uno
     }
     if (initDataSize > 0) {
-        uint32_t virtualAddr = exe.GetInitDataAddr();
+        unsigned dataPages = DivRoundUp(initDataSize, PAGE_SIZE);
+
+        uint32_t virtualAddr = exe.GetInitDataAddr(); //ya no es necesario...
         DEBUG('a', "Initializing data segment, at 0x%X, size %u\n",
               virtualAddr, initDataSize);
-        for(uint32_t totalRead = 0; totalRead < initDataSize; i++) {
-          if(codeSize - totalRead > PAGE_SIZE)
-            exe.ReadDataBlock(&mainMemory[pageTable[i].physicalPage], PAGE_SIZE, 0);
-          else
-            exe.ReadDataBlock(&mainMemory[pageTable[i].physicalPage], initDataSize - totalRead, 0); //leer de a paginas, ya no está mapeado uno a uno
-          
-          totalRead = totalRead + PAGE_SIZE;
+        
+        unsigned pageCounter = 0;
+        unsigned wannaRead = PAGE_SIZE;
+        for(unsigned i = codePages; i < codePages + dataPages; i++) {
+            DEBUG('a', "EL IIII es: %u\n", i);
+
+            unsigned lecture = wannaRead > initDataSize ? initDataSize - pageCounter * PAGE_SIZE : PAGE_SIZE;
+            uint32_t addressToWrite = pageTable[i].physicalPage * PAGE_SIZE;
+
+            DEBUG('a', "writing %u bytes to %u\n", lecture, addressToWrite);
+            
+            exe.ReadCodeBlock(&mainMemory[addressToWrite], lecture, addressToWrite);
+            wannaRead += PAGE_SIZE;
+            pageCounter++;
         }
     }
 }
@@ -101,6 +127,10 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
 /// Nothing for now!
 AddressSpace::~AddressSpace()
 {
+    //int index; //check type
+    for (unsigned i = 0; i < numPages; i++) {
+      addressesBitMap->Clear(pageTable[i].physicalPage);
+    }
     delete [] pageTable;
 }
 
