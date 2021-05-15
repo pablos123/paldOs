@@ -10,24 +10,27 @@ main(int argc, char *argv[])
 {
     if (1) { //file test
         //Write(ARGC_ERROR, sizeof(ARGC_ERROR) - 1, CONSOLE_OUTPUT);
-        char string[] = {'f','i','l','e','1'};
-        Create(string);
-        
-        int fileid = Open(string);
+//        char string[] = {'f','i','l','e','1'};
+//        Create(string);
+//        
+//        int fileid = Open(string);
+//
+//        int writedbytes = Write("hola como estas", sizeof("hola como estas") - 1, fileid);
+//
+//        char buffer[sizeof("hola como estas") - 1];
+//
+//        Close(fileid); // para que el puntero vuelva al principio
+//        
+//        fileid = Open(string); // para que el puntero vuelva al principio
+//
+//        int bytesreaded = Read(buffer, writedbytes, fileid);
+//
+//        Write(buffer, sizeof("hola como estas") - 1, CONSOLE_OUTPUT);
+//
+//        Remove(string);
 
-        int writedbytes = Write("hola como estas", sizeof("hola como estas") - 1, fileid);
-
-        char buffer[sizeof("hola como estas") - 1];
-
-        Close(fileid); // para que el puntero vuelva al principio
-        
-        fileid = Open(string); // para que el puntero vuelva al principio
-
-        int bytesreaded = Read(buffer, writedbytes, fileid);
-
-        Write(buffer, sizeof("hola como estas") - 1, CONSOLE_OUTPUT);
-
-        Remove(string);
+        char halt[] = {'.','.','/','u','s','e','r','l','a','n','d','/','h','a','l','t'};
+        Exec(halt);
 
         Exit(1);
     }

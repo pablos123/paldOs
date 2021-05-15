@@ -64,7 +64,7 @@ Scheduler::ReadyToRun(Thread *thread)
 Thread *
 Scheduler::FindNextToRun()
 {
-    return readyList->Pop();
+    return readyList->Pop();    //hay que cambiar esto por la correción que nos dieron?
 }
 
 /// Dispatch the CPU to `nextThread`.

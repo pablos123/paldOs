@@ -212,7 +212,7 @@ Initialize(int argc, char **argv)
     if (randomYield) {           // Start the timer (if needed).
         timer = new Timer(TimerInterruptHandler, 0, randomYield);
     }
-
+  
     threadToBeDestroyed = nullptr;
 
     // We did not explicitly allocate the current thread we are running in.
@@ -235,6 +235,9 @@ Initialize(int argc, char **argv)
     machine = new Machine(d);  // This must come first.
     addressesBitMap = new Bitmap(NUM_PHYS_PAGES);
     SetExceptionHandlers();
+
+    if(! randomYield)
+        timer = new Timer(TimerInterruptHandler, 0, false); //fixed time slicing every TIMER_TICKS
 #endif
 
 #ifdef FILESYS

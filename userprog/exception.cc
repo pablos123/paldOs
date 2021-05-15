@@ -24,6 +24,7 @@
 
 #include "transfer.hh"
 #include "syscall.h"
+#include "args.hh"
 #include "filesys/directory_entry.hh"
 #include "filesys/open_file.hh"
 #include "threads/system.hh"
@@ -72,9 +73,13 @@ DefaultHandler(ExceptionType et)
 ///
 
 static void
-StartProcess(void *filenamevoid)
+StartProcess(void *argumentsAddr)
 {
-    char* filename = (char*)filenamevoid;
+    void** arguments = (void**)argumentsAddr;
+
+    char** argv = (char**)arguments[1];
+
+    char* filename = (char*)arguments[0];
 
     ASSERT(filename != nullptr);
 
@@ -88,6 +93,18 @@ StartProcess(void *filenamevoid)
     currentThread->space = space;
 
     delete executable;
+
+    //Load a0 register (4)
+
+    unsigned argc = WriteArgs(argv);
+    machine->WriteRegister(4, argc);
+
+    //Load a1 register (5)
+
+    //Lo ultimo que hace WriteArgs es dejar el sp dentro de STACK_REG
+    //luego de haber cargado todos los argumentos.
+    int argvaddr = machine->ReadRegister(STACK_REG) + 16;
+    machine->WriteRegister(5, argvaddr);
 
     space->InitRegisters();  // Set the initial register values.
     space->RestoreState();   // Load page table register.
@@ -126,23 +143,26 @@ SyscallHandler(ExceptionType _et)
             interrupt->Halt();
             break;
 
-        //TODO: liberar la memoria del bitmap
         case SC_EXIT: {
             int status = machine->ReadRegister(4);
 
             DEBUG('e', "The program finished with status %d.\n", status);
+
 
             currentThread->Finish(status);
         }
 
         case SC_EXEC: {
             int processAddr = machine->ReadRegister(4);
+            int argvAddr = machine->ReadRegister(5);
 
-            if (processAddr == 0) {
+            if (argvAddr == 0) {
                 DEBUG('e', "Error: address to filename string is null.\n");
                 machine->WriteRegister(2, 1);
             }
 
+            char** argv = SaveArgs(argvAddr);
+        
             char processname[FILE_NAME_MAX_LEN + 1];
             if (!ReadStringFromUser(processAddr,
                                     processname, sizeof processname)) {
@@ -151,10 +171,12 @@ SyscallHandler(ExceptionType _et)
                 machine->WriteRegister(2, 1);
             }
 
+            void* arguments[] = {(void*)processname, (void*)argv};
+
             //se podria hacer mas robusto checkeando mas cosas....
             Thread *newThread = new Thread("newProcess",true);
             SpaceId spaceId = runningProccesses->Add(newThread); 
-            newThread->Fork(StartProcess, (void *) processname);
+            newThread->Fork(StartProcess, (void *) arguments);
 
             
             //hacer tabla para meter con key= spaceId el thread, entonces cuando hago join hago join de esa key.
@@ -174,6 +196,8 @@ SyscallHandler(ExceptionType _et)
 
             Thread* process = runningProccesses->Get(spaceId);
             int exitStatus = process->Join();
+
+            delete (process->space); // liebramos la memoria fisica del proceso
 
             machine->WriteRegister(2, exitStatus);
 

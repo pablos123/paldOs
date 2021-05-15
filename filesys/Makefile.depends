@@ -278,7 +278,7 @@ executable.o: ../userprog/executable.cc ../userprog/executable.hh \
  ../lib/debug.hh ../lib/debug_opts.hh ../machine/system_dep.hh \
  ../machine/endianness.hh
 exception.o: ../userprog/exception.cc ../userprog/transfer.hh \
- ../userprog/syscall.h ../filesys/directory_entry.hh \
+ ../userprog/syscall.h ../userprog/args.hh ../filesys/directory_entry.hh \
  ../filesys/open_file.hh ../lib/utility.hh ../lib/assert.hh \
  ../lib/debug.hh ../lib/debug_opts.hh ../machine/system_dep.hh \
  ../threads/system.hh ../threads/thread.hh ../machine/machine.hh \
