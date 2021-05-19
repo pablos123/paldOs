@@ -87,7 +87,11 @@ Executable::ReadCodeBlock(char *dest, uint32_t size, uint32_t offset)
 {
     ASSERT(dest != nullptr);
     ASSERT(size != 0);
+    DEBUG('t', "offset: %u\n", offset);
+    DEBUG('t', "size: %u\n", size);
+    DEBUG('t', "header.code.size: %u\n", header.code.size);
     ASSERT(offset < header.code.size);
+    
 
     return file->ReadAt(dest, size, header.code.inFileAddr + offset);
 }
@@ -97,6 +101,9 @@ Executable::ReadDataBlock(char *dest, uint32_t size, uint32_t offset)
 {
     ASSERT(dest != nullptr);
     ASSERT(size != 0);
+    DEBUG('t', "offset: %u\n", offset);
+    DEBUG('t', "size: %u\n", size);
+    DEBUG('t', "header.data.size: %u\n", header.initData.size);
     ASSERT(offset < header.initData.size);
 
     return file->ReadAt(dest, size, header.initData.inFileAddr + offset);

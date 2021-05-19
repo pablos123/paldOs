@@ -5,7 +5,7 @@
 #ifndef NACHOS_USERPROG_EXCEPTION__HH
 #define NACHOS_USERPROG_EXCEPTION__HH
 
-
+#include <stddef.h>
 /// Set exception handlers for every exception type.
 ///
 /// Exception handlers are the entry points into the Nachos kernel.  They
@@ -13,5 +13,10 @@
 /// call, or generates an addressing or arithmetic exception.
 void SetExceptionHandlers();
 
+typedef struct _param {
+    char* name;
+    char** argv;
+
+}* StartPParam;
 
 #endif

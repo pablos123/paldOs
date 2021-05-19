@@ -11,7 +11,7 @@ main(int argc, char *argv[])
     if (1) { //file test
         //Write(ARGC_ERROR, sizeof(ARGC_ERROR) - 1, CONSOLE_OUTPUT);
 //        char string[] = {'f','i','l','e','1'};
-//        Create(string);
+ //       Create(string);
 //        
 //        int fileid = Open(string);
 //
@@ -29,8 +29,10 @@ main(int argc, char *argv[])
 //
 //        Remove(string);
 
-        char halt[] = {'.','.','/','u','s','e','r','l','a','n','d','/','h','a','l','t'};
-        Exec(halt);
+        char halt[] = {'h','a','l','t'};
+        int ret = Exec(halt);
+        Join(ret);
+
 
         Exit(1);
     }

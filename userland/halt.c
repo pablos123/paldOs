@@ -15,7 +15,10 @@
 int
 main(void)
 {
-    Halt();
+    //Halt();
+    char str[] = {'f','h','1'};
+    int id = Create(str);
+    Close(id);
     // Not reached.
     return -1;
 }

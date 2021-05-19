@@ -48,7 +48,7 @@ SynchDisk *synchDisk;
 Machine *machine;  ///< User program memory and registers.
 Bitmap *addressesBitMap;        ///< The bitmap to search and allocate processes into memory,
                               ///< this is used for the implementation of multiprgramming.
-Table<Thread*> *runningProccesses;                              
+Table<Thread*> *runningProcesses;                              
 #endif
 
 #ifdef NETWORK
@@ -235,6 +235,8 @@ Initialize(int argc, char **argv)
     machine = new Machine(d);  // This must come first.
     addressesBitMap = new Bitmap(NUM_PHYS_PAGES);
     SetExceptionHandlers();
+
+    runningProcesses = new Table<Thread*>;
 
     if(! randomYield)
         timer = new Timer(TimerInterruptHandler, 0, false); //fixed time slicing every TIMER_TICKS

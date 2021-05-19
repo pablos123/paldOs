@@ -29,7 +29,8 @@
 #include "filesys/open_file.hh"
 #include "threads/system.hh"
 #include "synch_console.hh"
-
+#include "exception.hh"
+#include <stdlib.h>
 
 #include <stdio.h>
 
@@ -75,11 +76,14 @@ DefaultHandler(ExceptionType et)
 static void
 StartProcess(void *argumentsAddr)
 {
-    void** arguments = (void**)argumentsAddr;
+    StartPParam arguments = (StartPParam) argumentsAddr;
 
-    char** argv = (char**)arguments[1];
+    char** argv = arguments->argv;
 
-    char* filename = (char*)arguments[0];
+    char* filename = arguments->name;
+
+    //DEBUG('e', "%s\n", argv[1]);
+    DEBUG('e', "%s\n", filename);
 
     ASSERT(filename != nullptr);
 
@@ -88,25 +92,30 @@ StartProcess(void *argumentsAddr)
         printf("Unable to open file %s\n", filename);
         return;
     }
-
+    
     AddressSpace *space = new AddressSpace(executable);
     currentThread->space = space;
 
     delete executable;
 
+    space->InitRegisters();  // Set the initial register values.
+
     //Load a0 register (4)
 
-    unsigned argc = WriteArgs(argv);
-    machine->WriteRegister(4, argc);
+    if(argv == nullptr) {
+        machine->WriteRegister(4, 0);    
+    } else {
+        unsigned argc = WriteArgs(argv); //la otra es no hacer esto si argv es vacio
+        machine->WriteRegister(4, argc);
+        if(! argc) {
+            //Load a1 register (5)
+            int argvaddr = machine->ReadRegister(STACK_REG) + 16;
+            machine->WriteRegister(5, argvaddr);
+            //Lo ultimo que hace WriteArgs es dejar el sp dentro de STACK_REG
+            //luego de haber cargado todos los argumentos.
+        }
+    }
 
-    //Load a1 register (5)
-
-    //Lo ultimo que hace WriteArgs es dejar el sp dentro de STACK_REG
-    //luego de haber cargado todos los argumentos.
-    int argvaddr = machine->ReadRegister(STACK_REG) + 16;
-    machine->WriteRegister(5, argvaddr);
-
-    space->InitRegisters();  // Set the initial register values.
     space->RestoreState();   // Load page table register.
 
     machine->Run();  // Jump to the user progam.
@@ -155,15 +164,15 @@ SyscallHandler(ExceptionType _et)
         case SC_EXEC: {
             int processAddr = machine->ReadRegister(4);
             int argvAddr = machine->ReadRegister(5);
+            char** argv = nullptr;
 
-            if (argvAddr == 0) {
+            if (processAddr == 0) {
                 DEBUG('e', "Error: address to filename string is null.\n");
-                machine->WriteRegister(2, 1);
+                machine->WriteRegister(2, 1); //aca ojo porque esta haciendo seg fault no se que onda
             }
-
-            char** argv = SaveArgs(argvAddr);
         
             char processname[FILE_NAME_MAX_LEN + 1];
+            //DEBUG('e', "%d", sizeof processname);
             if (!ReadStringFromUser(processAddr,
                                     processname, sizeof processname)) {
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
@@ -171,30 +180,43 @@ SyscallHandler(ExceptionType _et)
                 machine->WriteRegister(2, 1);
             }
 
-            void* arguments[] = {(void*)processname, (void*)argv};
+            if (argvAddr != 0) {
+                DEBUG('e', "argv distinto de cero.\n");
+                argv = SaveArgs(argvAddr);
+            }
+            char filename[30];
+            sprintf(filename, "userland/%s", processname);
 
+            DEBUG('e', "el nombre del archivo a abrir es %s\n", filename);
+
+            StartPParam param = (StartPParam)malloc(sizeof(struct _param));
+            param->name = filename;
+            param->argv = argv;
             //se podria hacer mas robusto checkeando mas cosas....
-            Thread *newThread = new Thread("newProcess",true);
-            SpaceId spaceId = runningProccesses->Add(newThread); 
-            newThread->Fork(StartProcess, (void *) arguments);
-
             
-            //hacer tabla para meter con key= spaceId el thread, entonces cuando hago join hago join de esa key.
+            Thread *newThread = new Thread("newProcess", true);
 
-            machine->WriteRegister(2, spaceId);
+            SpaceId spaceId = (SpaceId)runningProcesses->Add(newThread); 
+
+            newThread->Fork(StartProcess, (void *) param);
             currentThread->Yield(); //esto no estoy seguro, perdon si está mal yay
+
+            //hacer tabla para meter con key= spaceId el thread, entonces cuando hago join hago join de esa key.
+            machine->WriteRegister(2, spaceId);
+
+            free(param);            
             break;
         }
 
         case SC_JOIN: {
             SpaceId spaceId = machine->ReadRegister(4);
 
-            if(! runningProccesses->HasKey(spaceId)){
+            if(! runningProcesses->HasKey(spaceId)){
                 DEBUG('e',"Error en Join: id del proceso inexistente");
                 machine->WriteRegister(2,-1);
             }
 
-            Thread* process = runningProccesses->Get(spaceId);
+            Thread* process = runningProcesses->Get(spaceId);
             int exitStatus = process->Join();
 
             delete (process->space); // liebramos la memoria fisica del proceso
