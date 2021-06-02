@@ -95,10 +95,13 @@ WriteArgs(char **args)
 
     sp -= sp % 4;     // Align the stack to a multiple of four.
     sp -= c * 4 + 4;  // Make room for `argv`, including the trailing null.
+    DEBUG('e', "sp beggins at: %d\n", sp);
     // Write each argument's address.
+
     for (unsigned i = 0; i < c; i++) {
         machine->WriteMem(sp + 4 * i, 4, argsAddress[i]);
     }
+
     machine->WriteMem(sp + 4 * c, 4, 0);  // The last is null.
 
     machine->WriteRegister(STACK_REG, sp);

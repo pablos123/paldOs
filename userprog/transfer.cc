@@ -18,15 +18,15 @@ void ReadBufferFromUser(int userAddress, char *outBuffer,
 
     unsigned count = 0;
 
+    int temp;
     do {
-        int temp;
         count++;
         ASSERT(machine->ReadMem(userAddress++, 1, &temp));
         *outBuffer = (unsigned char) temp;
         outBuffer++;
     } while (count < byteCount);
 
-    *outBuffer = '\0';
+    *outBuffer = (unsigned char)'\0';
 
     return;
 }

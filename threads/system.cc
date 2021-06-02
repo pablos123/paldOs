@@ -14,6 +14,7 @@
 #include "userprog/debugger.hh"
 #include "userprog/exception.hh"
 #include "machine/mmu.hh"
+#include "machine/synch_console.hh"
 #endif
 
 #include <stdlib.h>
@@ -48,7 +49,8 @@ SynchDisk *synchDisk;
 Machine *machine;  ///< User program memory and registers.
 Bitmap *addressesBitMap;        ///< The bitmap to search and allocate processes into memory,
                               ///< this is used for the implementation of multiprgramming.
-Table<Thread*> *runningProcesses;                              
+Table<Thread*> *runningProcesses;                         
+SynchConsole* consoleSys;     
 #endif
 
 #ifdef NETWORK
@@ -235,6 +237,8 @@ Initialize(int argc, char **argv)
     machine = new Machine(d);  // This must come first.
     addressesBitMap = new Bitmap(NUM_PHYS_PAGES);
     SetExceptionHandlers();
+
+    consoleSys = new SynchConsole(nullptr, nullptr);
 
     runningProcesses = new Table<Thread*>;
 

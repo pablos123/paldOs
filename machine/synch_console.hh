@@ -25,7 +25,8 @@ private:
     Console *console;
     Semaphore *readAvail;
     Semaphore *writeDone;
-    Lock *lock;
+    Lock *lockRead;
+    Lock *lockWrite;
 };
 
 #endif 

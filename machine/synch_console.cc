@@ -40,7 +40,8 @@ SynchConsole::SynchConsole(const char *readFile, const char *writeFile)
 {
     readAvail = new Semaphore("synch read console", 0);
     writeDone = new Semaphore("synch write console", 0);
-    lock = new Lock("synch console");
+    lockRead = new Lock("synch console read");
+    lockWrite = new Lock("synch console write");
     console = new Console(readFile, writeFile, ReadAvail, WriteDone, this);
 }
 
@@ -48,7 +49,8 @@ SynchConsole::SynchConsole(const char *readFile, const char *writeFile)
 SynchConsole::~SynchConsole()
 {
     delete console;
-    delete lock;
+    delete lockRead;
+    delete lockWrite;
     delete readAvail;
     delete writeDone;
 }
@@ -58,11 +60,10 @@ SynchConsole::~SynchConsole()
 char
 SynchConsole::ReadConsole()
 {
+    lockRead->Acquire();  // only one thread can be reading of the console
     readAvail->P(); //wait until there is something to be read
-    lock->Acquire();  // only one thread can be reading of the console
     char character = console->GetChar();
-    //writeDone->P();   // Wait for interrupt. //capaz que este no es necesario porque no me interesa el aoutput al toque
-    lock->Release();
+    lockRead->Release();
 
     return character;
 }
@@ -75,11 +76,11 @@ void
 SynchConsole::WriteConsole(char ch)
 {
     //ASSERT(ch != nullptr);
-
-    lock->Acquire();  // not only one disk I/O at a time: en este caso un hilo queriendo escribir no deberia bloquear a un hilo queriendo leer.
+    DEBUG('e', "estoy en writeConsole, caracter: %c\n", ch);
+    lockWrite->Acquire();  // not only one disk I/O at a time: en este caso un hilo queriendo escribir no deberia bloquear a un hilo queriendo leer.
     console->PutChar(ch);
     writeDone->P();   // wait for interrupt
-    lock->Release();
+    lockWrite->Release();
 }
 
 /// Gets the private attribute console

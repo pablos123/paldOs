@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include "syscall.h"
 
 
@@ -20,7 +21,7 @@ strlen(const char *s)
 static inline void
 WritePrompt(OpenFileId output)
 {
-    static const char PROMPT[] = "--> ";
+    static const char PROMPT[] = {'-', '-', '>', ' '};
     Write(PROMPT, sizeof PROMPT - 1, output);
 }
 
@@ -40,7 +41,11 @@ WriteError(const char *description, OpenFileId output)
 static unsigned
 ReadLine(char *buffer, unsigned size, OpenFileId input)
 {
-    // TODO: how to make sure that `buffer` is not `NULL`?
+    if(buffer == NULL) {
+        static const char ERR[] = {'B', 'a', 'd', ' ', 'b', 'u', 'f', ' '};
+        Write(ERR, sizeof ERR - 1, CONSOLE_OUTPUT);
+        return 0;
+    }
 
     unsigned i;
 
@@ -48,27 +53,28 @@ ReadLine(char *buffer, unsigned size, OpenFileId input)
         Read(&buffer[i], 1, input);
         // TODO: what happens when the input ends?
         if (buffer[i] == '\n') {
-            buffer[i] = '\0';
             break;
         }
     }
+
+    buffer[i] = '\0';
+
     return i;
 }
 
 static int
 PrepareArguments(char *line, char **argv, unsigned argvSize)
 {
-    // TODO: how to make sure that `line` and `argv` are not `NULL`?, and
-    //       for `argvSize`, what precondition should be fulfilled?
-    //
-    // TODO: use `bool` instead of `int` as return type; for doing this,
-    //       given that we are in C and not C++, it is convenient to include
+    // given that we are in C and not C++, it is convenient to include
     //       `stdbool.h`.
 
+    if(argvSize > MAX_ARG_COUNT || line == NULL || argv == NULL) {
+        return false;
+    }
     unsigned argCount;
 
-    argv[0] = line;
-    argCount = 1;
+    //argv[0] = line;
+    argCount = 0;
 
     // Traverse the whole line and replace spaces between arguments by null
     // characters, so as to be able to treat each argument as a standalone
@@ -79,6 +85,8 @@ PrepareArguments(char *line, char **argv, unsigned argvSize)
     //
     // TODO: what if the user wants to include a space as part of an
     //       argument?
+
+    
     for (unsigned i = 0; line[i] != '\0'; i++) {
         if (line[i] == ARG_SEPARATOR) {
             if (argCount == argvSize - 1) {
@@ -88,7 +96,7 @@ PrepareArguments(char *line, char **argv, unsigned argvSize)
                 return 0;
             }
             line[i] = '\0';
-            argv[argCount] = &line[i + 1];
+            argv[argCount] = &line[i + 1]; //porque no tiene en cuenta muchos espacios
             argCount++;
         }
     }
@@ -100,15 +108,15 @@ PrepareArguments(char *line, char **argv, unsigned argvSize)
 int
 main(void)
 {
-    const OpenFileId INPUT  = CONSOLE_INPUT;
-    const OpenFileId OUTPUT = CONSOLE_OUTPUT;
+    const OpenFileId      INPUT = CONSOLE_INPUT;
+    const OpenFileId      OUTPUT = CONSOLE_OUTPUT;
     char             line[MAX_LINE_SIZE];
     char            *argv[MAX_ARG_COUNT];
 
     for (;;) {
         WritePrompt(OUTPUT);
         const unsigned lineSize = ReadLine(line, MAX_LINE_SIZE, INPUT);
-        if (lineSize == 0) {
+         if (lineSize == 0) {
             continue;
         }
 
@@ -117,15 +125,15 @@ main(void)
             continue;
         }
 
-        // Comment and uncomment according to whether command line arguments
-        // are given in the system call or not.
-        const SpaceId newProc = Exec(line);
-        //const SpaceId newProc = Exec(line, argv);
+        // // Comment and uncomment according to whether command line arguments
+        // // are given in the system call or not.
+        // //const SpaceId newProc = Exec(line);
+        const SpaceId newProc = Exec(line, argv);
 
         // TODO: check for errors when calling `Exec`; this depends on how
         //       errors are reported.
 
-        Join(newProc);
+        //Join(newProc);
         // TODO: is it necessary to check for errors after `Join` too, or
         //       can you be sure that, with the implementation of the system
         //       call handler you made, it will never give an error?; what

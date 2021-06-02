@@ -1,5 +1,5 @@
 /// Entry points into the Nachos kernel from user programs.
-///
+/// h
 /// There are two kinds of things that can cause control to transfer back to
 /// here from user code:
 ///
@@ -28,12 +28,10 @@
 #include "filesys/directory_entry.hh"
 #include "filesys/open_file.hh"
 #include "threads/system.hh"
-#include "synch_console.hh"
 #include "exception.hh"
 #include <stdlib.h>
 
 #include <stdio.h>
-
 
 static void
 IncrementPC()
@@ -74,49 +72,34 @@ DefaultHandler(ExceptionType et)
 ///
 
 static void
-StartProcess(void *argumentsAddr)
+StartProcess(void * voidargv)
 {
-    StartPParam arguments = (StartPParam) argumentsAddr;
 
-    char** argv = arguments->argv;
+    char** argv = (char**)voidargv;
 
-    char* filename = arguments->name;
-
-    //DEBUG('e', "%s\n", argv[1]);
-    DEBUG('e', "%s\n", filename);
-
-    ASSERT(filename != nullptr);
-
-    OpenFile *executable = fileSystem->Open(filename);
-    if (executable == nullptr) {
-        printf("Unable to open file %s\n", filename);
-        return;
-    }
+    currentThread->space->InitRegisters();  // Set the initial register values.
     
-    AddressSpace *space = new AddressSpace(executable);
-    currentThread->space = space;
+    currentThread->space->RestoreState();   // Load page table register.
 
-    delete executable;
+    unsigned argc = 0;
 
-    space->InitRegisters();  // Set the initial register values.
+    if(argv != nullptr) {
+        argc = WriteArgs(argv); //libera la memoria de argv
+        DEBUG('e', "argv is not null and argc is: %d \n", argc);
 
-    //Load a0 register (4)
-
-    if(argv == nullptr) {
-        machine->WriteRegister(4, 0);    
-    } else {
-        unsigned argc = WriteArgs(argv); //la otra es no hacer esto si argv es vacio
-        machine->WriteRegister(4, argc);
-        if(! argc) {
+        if(argc) {
             //Load a1 register (5)
-            int argvaddr = machine->ReadRegister(STACK_REG) + 16;
-            machine->WriteRegister(5, argvaddr);
+            int argvaddr = machine->ReadRegister(STACK_REG);
             //Lo ultimo que hace WriteArgs es dejar el sp dentro de STACK_REG
             //luego de haber cargado todos los argumentos.
+            machine->WriteRegister(STACK_REG, argvaddr - 24); //convencion de MIPS, restandole 24 seteo el stack pointer 24 bytes más abajo.
+
+            DEBUG('e', "argvaddr is: %d\n", argvaddr);
+            machine->WriteRegister(5, argvaddr);
         }
     }
 
-    space->RestoreState();   // Load page table register.
+    machine->WriteRegister(4, argc);
 
     machine->Run();  // Jump to the user progam.
     ASSERT(false);   // `machine->Run` never returns; the address space
@@ -147,18 +130,22 @@ SyscallHandler(ExceptionType _et)
 
     switch (scid) {
 
-        case SC_HALT:
+        case SC_HALT: {
             DEBUG('e', "Shutdown, initiated by user program.\n");
+
             interrupt->Halt();
+
             break;
+        }
 
         case SC_EXIT: {
             int status = machine->ReadRegister(4);
 
             DEBUG('e', "The program finished with status %d.\n", status);
 
-
             currentThread->Finish(status);
+
+            break;
         }
 
         case SC_EXEC: {
@@ -168,43 +155,54 @@ SyscallHandler(ExceptionType _et)
 
             if (processAddr == 0) {
                 DEBUG('e', "Error: address to filename string is null.\n");
-                machine->WriteRegister(2, 1); //aca ojo porque esta haciendo seg fault no se que onda
+                machine->WriteRegister(2, 1);
+                break;
             }
         
             char processname[FILE_NAME_MAX_LEN + 1];
-            //DEBUG('e', "%d", sizeof processname);
+            
             if (!ReadStringFromUser(processAddr,
                                     processname, sizeof processname)) {
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
                       FILE_NAME_MAX_LEN);
                 machine->WriteRegister(2, 1);
+                break;
             }
 
-            if (argvAddr != 0) {
-                DEBUG('e', "argv distinto de cero.\n");
+            if (argvAddr) {
+                DEBUG('e', "argv distinto de cero, con direccion: %d\n", argvAddr);
                 argv = SaveArgs(argvAddr);
             }
-            char filename[30];
+
+            char* filename = new char [30];
             sprintf(filename, "userland/%s", processname);
 
-            DEBUG('e', "el nombre del archivo a abrir es %s\n", filename);
+            DEBUG('e', "el nombre del archivo a abrir es %s y direccion de memoria %p\n", filename, filename);
 
-            StartPParam param = (StartPParam)malloc(sizeof(struct _param));
-            param->name = filename;
-            param->argv = argv;
-            //se podria hacer mas robusto checkeando mas cosas....
+            ASSERT(filename != nullptr);
+
+            Thread *newThread = new Thread(filename, true); //quiero poder joinear este thread
+
+            SpaceId spaceId = (SpaceId)runningProcesses->Add(newThread);
+
+            DEBUG('e', "abriendo: %s\n", filename);
             
-            Thread *newThread = new Thread("newProcess", true);
+            OpenFile *executable = fileSystem->Open(filename);
+            if (executable == nullptr) {
+                printf("Unable to open file %s\n", filename);
+                break;
+            }
+            
+            AddressSpace *space = new AddressSpace(executable);
+            newThread->space = space;
 
-            SpaceId spaceId = (SpaceId)runningProcesses->Add(newThread); 
+            delete executable;
 
-            newThread->Fork(StartProcess, (void *) param);
-            currentThread->Yield(); //esto no estoy seguro, perdon si está mal yay
+            newThread->Fork(StartProcess, (void *) argv);
+            //currentThread->Yield();
 
-            //hacer tabla para meter con key= spaceId el thread, entonces cuando hago join hago join de esa key.
             machine->WriteRegister(2, spaceId);
 
-            free(param);            
             break;
         }
 
@@ -213,7 +211,8 @@ SyscallHandler(ExceptionType _et)
 
             if(! runningProcesses->HasKey(spaceId)){
                 DEBUG('e',"Error en Join: id del proceso inexistente");
-                machine->WriteRegister(2,-1);
+                machine->WriteRegister(2, -1);
+                break;
             }
 
             Thread* process = runningProcesses->Get(spaceId);
@@ -350,12 +349,11 @@ SyscallHandler(ExceptionType _et)
             char buffer[nbytes + 1];
 
             if(fid == CONSOLE_INPUT) {
-                SynchConsole* console = new SynchConsole(nullptr, nullptr);
+
                 for(int i = 0; i < nbytes; i++) {
-                    buffer[i] = console->ReadConsole();
+                    buffer[i] = consoleSys->ReadConsole();
                 }
                 
-                //delete console; adonde hacer esto??
                 WriteBufferToUser(buffer, usrStringAddr, nbytes);
                 machine->WriteRegister(2, nbytes);
                 break;
@@ -389,32 +387,34 @@ SyscallHandler(ExceptionType _et)
             if (usrStringAddr == 0) {
                 DEBUG('e', "Error: address string is null.\n");
                 machine->WriteRegister(2, 0);
+                break;
             }    
             if (nbytes <= 0){
                 DEBUG('e', "Error: invalid number of bytes.\n");
                 machine->WriteRegister(2, 0);
+                break;
             }
             if(fid < 0){
                 DEBUG('e', "Invalid file descriptor ID \n");    //to avoid the assert in Remove function
                 machine->WriteRegister(2, 0);
+                break;
             }
             
-            char buffer[nbytes + 1];
+            char* buffer = new char[nbytes + 1];
             ReadBufferFromUser(usrStringAddr, buffer, nbytes);
-            printf("Write: %s, nrobytes: %d, hacia: %d\n", buffer, nbytes, usrStringAddr);
+            DEBUG('e', "Write: %s, nrobytes: %d, hacia: %d\n", buffer, nbytes, usrStringAddr);
             
             if(fid == CONSOLE_OUTPUT) {
-                SynchConsole* console = new SynchConsole(nullptr, nullptr);
                 for(int i = 0; i < nbytes; i++) {
-                    console->WriteConsole(buffer[i]);
+                    consoleSys->WriteConsole(buffer[i]);
                 }
                 
-                //delete console; adonde hacer esto??
                 machine->WriteRegister(2, nbytes);
                 break;
             } else if(!currentThread->GetOpenedFilesTable()->HasKey(fid)) {
                 DEBUG('e', "Error in write: the file was not opened\n");
                 machine->WriteRegister(2, 0);
+                break;
             } else {
                 
                 OpenFile* file = currentThread->GetOpenedFilesTable()->Get(fid);
