@@ -274,8 +274,8 @@ Cleanup()
 
 #ifdef USER_PROGRAM
     delete machine;
-    // delete runningProcesses;
-    // delete addressesBitMap;
+    delete runningProcesses;
+    delete addressesBitMap;
 #endif
 
 #ifdef FILESYS_NEEDED

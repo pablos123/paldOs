@@ -189,7 +189,8 @@ SyscallHandler(ExceptionType _et)
             
             OpenFile *executable = fileSystem->Open(filename);
             if (executable == nullptr) {
-                printf("Unable to open file %s\n", filename);
+                DEBUG('e', "Unable to open file %s\n", filename);
+                machine->WriteRegister(2, -1);
                 break;
             }
             
@@ -363,7 +364,7 @@ SyscallHandler(ExceptionType _et)
         
                 int bytesReaded = file->Read(buffer, nbytes);
 
-                printf("Readed: %s, nrobytes: %d de %d, fromfileid: %d, fileaddr: %p\n", buffer, bytesReaded, nbytes, fid, file);
+                DEBUG('e', "Readed: %s, nrobytes: %d de %d, fromfileid: %d, fileaddr: %p\n", buffer, bytesReaded, nbytes, fid, file);
 
                 if(bytesReaded <= 0) {
                     DEBUG('e', "error in read: wrong bytes readed\n");

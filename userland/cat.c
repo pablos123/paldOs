@@ -3,7 +3,10 @@
 #include "syscall.h"
 
 #define ARGC_ERROR    "Error: missing argument."
-#define OPEN_ERROR    "Error: could not open the first file"
+#define OPEN_ERROR1    "Error: could not open the first file"
+#define OPEN_ERROR2   "Error: could not open the second file"
+
+static void print_file(OpenFileId fid);
 
 int
 main(int argc, char *argv[])
@@ -13,24 +16,46 @@ main(int argc, char *argv[])
         Exit(1);
     }
 
-    OpenFileId first_file = Open(argv[0]);
-    if(first_file) {
-        int nb = 1;
-        char c[1] = {'\0'};
-        while(nb  != 0){
-            c[0] = '\0';
-            nb = Read(c, 1, first_file);
-            Write(c, 1, CONSOLE_OUTPUT);
+    OpenFileId second_file = -1;
+    if(argc == 2) {
+        second_file = Open(argv[1]);
+    }
+    const OpenFileId first_file = Open(argv[0]);
+
+    if(first_file > 0) {
+        print_file(first_file);
+    } else{
+        Write(OPEN_ERROR1, sizeof(OPEN_ERROR1) - 1, CONSOLE_OUTPUT);
+        Exit(1);
+    }
+
+    if(argc == 2) { 
+        if(second_file > 0) {
+            print_file(second_file);
+        } else{
+            Write(OPEN_ERROR2, sizeof(OPEN_ERROR2) - 1, CONSOLE_OUTPUT);
+            Exit(1);
         }
-        c[0] = '\n';
-        Write(c, 1, CONSOLE_OUTPUT);
-    }
-    else{
-        Write(OPEN_ERROR, sizeof(OPEN_ERROR) - 1, CONSOLE_OUTPUT);
-        return 1;
     }
 
-    Close(first_file);
     return 0;
+}
 
+
+static void print_file(OpenFileId fid) {
+
+    int nb = 1;
+    char c[1] = {'\0'};
+    while(nb != 0){ //lo hacemos para leer muchos bytes sin necesidad de memoria estatica grande
+        c[0] = '\0';
+        nb = Read(c, 1, fid);
+        Write(c, 1, CONSOLE_OUTPUT);
+        
+    }
+
+    c[0] = '\n'; //convencion de cat
+    Write(c, 1, CONSOLE_OUTPUT);
+
+    Close(fid);
+    return;
 }

@@ -270,7 +270,7 @@ int Thread::Join(){
 
     joinChannel->Receive(value);
     int st = *value;
-    printf("Received %d... joining thread :)", st);
+    DEBUG('t', "Received %d... joining thread :)", st);
     free(value);
     return st;
 }
