@@ -155,7 +155,7 @@ SyscallHandler(ExceptionType _et)
 
             if (processAddr == 0) {
                 DEBUG('e', "Error: address to filename string is null.\n");
-                machine->WriteRegister(2, 1);
+                machine->WriteRegister(2, -1);
                 break;
             }
         
@@ -165,7 +165,7 @@ SyscallHandler(ExceptionType _et)
                                     processname, sizeof processname)) {
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
                       FILE_NAME_MAX_LEN);
-                machine->WriteRegister(2, 1);
+                machine->WriteRegister(2, -1);
                 break;
             }
 
@@ -217,8 +217,6 @@ SyscallHandler(ExceptionType _et)
 
             Thread* process = runningProcesses->Get(spaceId);
             int exitStatus = process->Join();
-
-            delete (process->space); // liebramos la memoria fisica del proceso
 
             machine->WriteRegister(2, exitStatus);
 
@@ -315,7 +313,7 @@ SyscallHandler(ExceptionType _et)
             int fid = machine->ReadRegister(4);
             DEBUG('e', "`Close` requested for id %u.\n", fid);
 
-            if(currentThread->GetOpenedFilesTable()->HasKey(fid)) {
+            if(currentThread->GetOpenedFilesTable()->HasKey(fid) && fid != 0 && fid != 1) {
                 currentThread->GetOpenedFilesTable()->Remove(fid);
                 DEBUG('e', "File closed successfully!\n");
                 machine->WriteRegister(2, 0);

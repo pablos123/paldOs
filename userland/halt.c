@@ -8,17 +8,12 @@
 /// procedure, but if you do this, you have to be careful to allocate a big
 /// enough stack to hold the automatics!
 
-
 #include "syscall.h"
-
 
 int
 main(void)
 {
-    //Halt();
-    char str[] = {'f','h','1'};
-    int id = Create(str);
-    Close(id);
-    // Not reached.
+    Halt();
+
     return -1;
 }

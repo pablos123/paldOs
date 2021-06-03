@@ -51,7 +51,6 @@ ReadLine(char *buffer, unsigned size, OpenFileId input)
 
     for (i = 0; i < size; i++) {
         Read(&buffer[i], 1, input);
-        // TODO: what happens when the input ends?
         if (buffer[i] == '\n') {
             break;
         }
@@ -73,7 +72,6 @@ PrepareArguments(char *line, char **argv, unsigned argvSize)
     }
     unsigned argCount;
 
-    //argv[0] = line;
     argCount = 0;
 
     // Traverse the whole line and replace spaces between arguments by null
@@ -110,8 +108,8 @@ main(void)
 {
     const OpenFileId      INPUT = CONSOLE_INPUT;
     const OpenFileId      OUTPUT = CONSOLE_OUTPUT;
-    char             line[MAX_LINE_SIZE];
-    char            *argv[MAX_ARG_COUNT];
+    char                  line[MAX_LINE_SIZE];
+    char                  *argv[MAX_ARG_COUNT];
 
     for (;;) {
         WritePrompt(OUTPUT);
@@ -125,20 +123,16 @@ main(void)
             continue;
         }
 
-        // // Comment and uncomment according to whether command line arguments
-        // // are given in the system call or not.
-        // //const SpaceId newProc = Exec(line);
+        //Excecute a given program with the argvs
         const SpaceId newProc = Exec(line, argv);
 
-        // TODO: check for errors when calling `Exec`; this depends on how
-        //       errors are reported.
+        if(newProc < 0) {
+           WriteError("error forking child", OUTPUT);
+           continue; 
+        } else {
+            Join(newProc);
+        }
 
-        //Join(newProc);
-        // TODO: is it necessary to check for errors after `Join` too, or
-        //       can you be sure that, with the implementation of the system
-        //       call handler you made, it will never give an error?; what
-        //       happens if tomorrow the implementation changes and new
-        //       error conditions appear?
     }
 
     // Never reached.

@@ -30,7 +30,9 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
     numPages = DivRoundUp(size, PAGE_SIZE);
     size = numPages * PAGE_SIZE * PAGE_SIZE;
 
-    ASSERT(numPages <= addressesBitMap->CountClear()); //usar countClear
+    DEBUG('a', "clean count: %u, numPages: %u, size: %u\n", addressesBitMap->CountClear(), numPages, size);
+
+    ASSERT(numPages <= addressesBitMap->CountClear());
       // Check we are not trying to run anything too big -- at least until we
       // have virtual memory.
 
@@ -72,11 +74,8 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
     uint32_t codeSize = exe.GetCodeSize();
     uint32_t initDataSize = exe.GetInitDataSize();
 
-    DEBUG('a', "Datasize %u\n",
-      initDataSize);
-
     unsigned codePages = DivRoundUp(codeSize, PAGE_SIZE);
-    DEBUG('a', "code pages: %u, %u\n", codePages, PAGE_SIZE);
+    DEBUG('a', "code pages: %u\n", codePages);
     
     if (codeSize > 0) {
         uint32_t virtualAddr = exe.GetCodeAddr(); //ya no es necesario...
@@ -99,7 +98,7 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
             wannaRead += PAGE_SIZE;
             pageCounter++;
         }
-        DEBUG('a', "totalRead: %u\n", wannaRead);
+        DEBUG('a', "total wanted read: %u\n", wannaRead);
         //exe.ReadCodeBlock(&mainMemory[virtualAddr], codeSize, 0); //leer de a paginas (PAGE_SIZE), ya no está mapeado uno a uno
     }
     if (initDataSize > 0) {
@@ -108,7 +107,7 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
         uint32_t virtualAddr = exe.GetInitDataAddr(); //ya no es necesario...
         DEBUG('a', "Initializing data segment, at 0x%X, size %u\n",
               virtualAddr, initDataSize);
-        DEBUG('a', "data pages: %u, %u\n", dataPages, PAGE_SIZE);
+        DEBUG('a', "data pages: %u\n", dataPages);
 
         unsigned pageCounter = 0;
         unsigned wannaRead = PAGE_SIZE;
@@ -133,10 +132,13 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
 /// Nothing for now!
 AddressSpace::~AddressSpace()
 {
-    //int index; //check type
+    char *mainMemory = machine->GetMMU()->mainMemory;
+
     for (unsigned i = 0; i < numPages; i++) {
       addressesBitMap->Clear(pageTable[i].physicalPage);
+      memset(&mainMemory[pageTable[i].physicalPage * PAGE_SIZE], 0, PAGE_SIZE); //looks fine
     }
+
     delete [] pageTable;
 }
 

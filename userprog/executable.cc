@@ -49,6 +49,9 @@ Executable::CheckMagic()
 uint32_t
 Executable::GetSize() const
 {
+    DEBUG('a', "uninitData size: %u\n", header.uninitData.size);
+    DEBUG('a', "code size: %u\n", header.code.size);
+    DEBUG('a', "initData size: %u\n", header.initData.size);
     return header.code.size + header.initData.size + header.uninitData.size;
 }
 

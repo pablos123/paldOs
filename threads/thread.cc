@@ -57,6 +57,7 @@ Thread::Thread(const char *threadName, bool isJoinable, size_t priorityParam)
 #ifdef USER_PROGRAM
     space    = nullptr;
     openedFilesTable = new Table<OpenFile*>;
+
     openedFilesTable->Add(nullptr); //for console input
     openedFilesTable->Add(nullptr); //for console output
 #endif
@@ -79,6 +80,11 @@ Thread::~Thread()
         SystemDep::DeallocBoundedArray((char *) stack,
                                        STACK_SIZE * sizeof *stack);
     }
+
+#ifdef USER_PROGRAM
+    delete space;
+    delete openedFilesTable;
+#endif
 }
 
 //Gets the thread's priority

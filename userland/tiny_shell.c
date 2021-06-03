@@ -4,16 +4,16 @@
 int
 main(void)
 {
-    // const OpenFileId input  = CONSOLE_INPUT; // pero por que no anda si descomento esto,
-    // const OpenFileId output = CONSOLE_OUTPUT; // si dejo descomentado esto, no anda el programa
+    const OpenFileId input  = CONSOLE_INPUT; // pero por que no anda si descomento esto,
+    //const OpenFileId output = CONSOLE_OUTPUT; // si dejo descomentado esto, no anda el programa
     char       ch, buffer[20];
     char*      argv[3];
     int        i;
     
 
     for (;;) {
-        static const char PROMPT[] = {'-', '-', '>', ' ', ' ', ' ', '4', '6', '6','6','6','6','6', '$','$','$','$','$','$','$','$','$','$','$','$','$',};
-        Write(PROMPT, 6, CONSOLE_OUTPUT); // si aca se pone output no imprime nada
+        static const char PROMPT[] = {'-', '-', '>', ' ',};
+        Write(PROMPT, sizeof PROMPT - 1, 1); // si aca se pone output no imprime nada
         i = 0;
         do {
             Read(&buffer[i], 1, CONSOLE_INPUT);
