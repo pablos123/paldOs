@@ -151,6 +151,7 @@ SyscallHandler(ExceptionType _et)
         case SC_EXEC: {
             int processAddr = machine->ReadRegister(4);
             int argvAddr = machine->ReadRegister(5);
+            bool isJoinable = (bool)machine->ReadRegister(6);
             char** argv = nullptr;
 
             if (processAddr == 0) {
@@ -181,7 +182,7 @@ SyscallHandler(ExceptionType _et)
 
             ASSERT(filename != nullptr);
 
-            Thread *newThread = new Thread(filename, true); //quiero poder joinear este thread
+            Thread *newThread = new Thread(filename, isJoinable);
 
             SpaceId spaceId = (SpaceId)runningProcesses->Add(newThread);
 
@@ -229,6 +230,7 @@ SyscallHandler(ExceptionType _et)
             if (filenameAddr == 0) {
                 DEBUG('e', "Error: address to filename string is null.\n");
                 machine->WriteRegister(2, 1);
+                break;
             }
 
             char filename[FILE_NAME_MAX_LEN + 1];
@@ -237,11 +239,13 @@ SyscallHandler(ExceptionType _et)
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
                       FILE_NAME_MAX_LEN);
                 machine->WriteRegister(2, 1);
+                break;
             }
 
             if(!fileSystem->Create(filename, 0)){
                 DEBUG('e', "Error: File not created.\n");
                 machine->WriteRegister(2, 1);
+                break;
             }
             machine->WriteRegister(2, 0);
 
@@ -254,6 +258,7 @@ SyscallHandler(ExceptionType _et)
             if (filenameAddr == 0) {
                 DEBUG('e', "Error: address to filename string is null.\n");
                 machine->WriteRegister(2, 1);
+                break;
             }
 
             char filename[FILE_NAME_MAX_LEN + 1];
@@ -262,10 +267,12 @@ SyscallHandler(ExceptionType _et)
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
                       FILE_NAME_MAX_LEN);
                 machine->WriteRegister(2, 1);
+                break;
             }
             if(!fileSystem->Remove(filename)){
                 DEBUG('e', "Error: File not removed.\n");
                 machine->WriteRegister(2, 1);
+                break;
             }
 
             machine->WriteRegister(2, 0);
@@ -281,6 +288,7 @@ SyscallHandler(ExceptionType _et)
             if (filenameAddr == 0) {
                 DEBUG('e', "Error: address to filename string is null.\n");
                 machine->WriteRegister(2, -1);
+                break;
             }
 
             char filename[FILE_NAME_MAX_LEN + 1];
@@ -289,6 +297,7 @@ SyscallHandler(ExceptionType _et)
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
                     FILE_NAME_MAX_LEN);
                 machine->WriteRegister(2, -1);
+                break;
             }
 
             OpenFile* openedFile = fileSystem->Open(filename);
@@ -296,12 +305,14 @@ SyscallHandler(ExceptionType _et)
             if(openedFile == nullptr){
                 DEBUG('e', "Error: File not opened.\n");
                 machine->WriteRegister(2, -1);
+                break;
             }
             
             int fileDescriptor = currentThread->GetOpenedFilesTable()->Add(openedFile);
             if(fileDescriptor < 0) {
                 DEBUG('e', "Error: File not added to table");
                 machine->WriteRegister(2, -1);
+                break;
             }
             
             machine->WriteRegister(2, fileDescriptor);
@@ -335,14 +346,17 @@ SyscallHandler(ExceptionType _et)
             if (usrStringAddr == 0) {
                 DEBUG('e', "Error: address string is null.\n");
                 machine->WriteRegister(2, 0);
+                break;
             }    
             if (nbytes <= 0){
                 DEBUG('e', "Error: invalid number of bytes.\n");
                 machine->WriteRegister(2, 0);
+                break;
             }
             if(fid < 0){
                 DEBUG('e', "Invalid file descriptor ID \n");    //to avoid the assert in Remove function
                 machine->WriteRegister(2, 0);
+                break;
             }
 
             char buffer[nbytes + 1];
@@ -355,7 +369,6 @@ SyscallHandler(ExceptionType _et)
                 
                 WriteBufferToUser(buffer, usrStringAddr, nbytes);
                 machine->WriteRegister(2, nbytes);
-                break;
             } else if(!currentThread->GetOpenedFilesTable()->HasKey(fid)) {
                 DEBUG('e', "Error in read: Not an opened file\n");
                 machine->WriteRegister(2, 0);
@@ -409,11 +422,9 @@ SyscallHandler(ExceptionType _et)
                 }
                 
                 machine->WriteRegister(2, nbytes);
-                break;
             } else if(!currentThread->GetOpenedFilesTable()->HasKey(fid)) {
                 DEBUG('e', "Error in write: the file was not opened\n");
                 machine->WriteRegister(2, 0);
-                break;
             } else {
                 
                 OpenFile* file = currentThread->GetOpenedFilesTable()->Get(fid);

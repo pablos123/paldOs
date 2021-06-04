@@ -28,7 +28,7 @@ main(void)
         argv[1] = param2;
 
         if (i > 0) {
-            SpaceId newProc = Exec(buffer, argv);
+            SpaceId newProc = Exec(buffer, argv, 0);
             Join(newProc);
             Exit(0);
         }

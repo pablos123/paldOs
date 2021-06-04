@@ -2,9 +2,9 @@
 
 #include "syscall.h"
 
-#define ARGC_ERROR    "Error: missing argument."
-#define OPEN_ERROR1    "Error: could not open the first file"
-#define OPEN_ERROR2   "Error: could not open the second file"
+#define ARGC_ERROR    "Error: missing argument.\n"
+#define OPEN_ERROR1   "Error: could not open the first file.\n"
+#define OPEN_ERROR2   "Error: could not open the second file.\n"
 
 static void print_file(OpenFileId fid);
 

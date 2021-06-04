@@ -273,9 +273,10 @@ Cleanup()
 #endif
 
 #ifdef USER_PROGRAM
-    delete machine;
+    delete consoleSys;
     delete runningProcesses;
     delete addressesBitMap;
+    delete machine;
 #endif
 
 #ifdef FILESYS_NEEDED

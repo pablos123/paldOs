@@ -1,17 +1,16 @@
-#include <stdbool.h>
 #include "syscall.h"
-
 
 #define MAX_LINE_SIZE  60
 #define MAX_ARG_COUNT  32
 #define ARG_SEPARATOR  ' '
 
-#define NULL  ((void *) 0)
+#define NULL ((void *) 0)
 
 static inline unsigned
 strlen(const char *s)
 {
-    // TODO: how to make sure that `s` is not `NULL`?
+    if(s == NULL)
+        return 0;
 
     unsigned i;
     for (i = 0; s[i] != '\0'; i++) {}
@@ -21,42 +20,43 @@ strlen(const char *s)
 static inline void
 WritePrompt(OpenFileId output)
 {
-    static const char PROMPT[] = {'-', '-', '>', ' '};
+    static const char PROMPT[] = "--> ";
     Write(PROMPT, sizeof PROMPT - 1, output);
+    return;
 }
 
 static inline void
 WriteError(const char *description, OpenFileId output)
 {
-    // TODO: how to make sure that `description` is not `NULL`?
-
     static const char PREFIX[] = "Error: ";
     static const char SUFFIX[] = "\n";
+    unsigned len = strlen(description);
 
     Write(PREFIX, sizeof PREFIX - 1, output);
-    Write(description, strlen(description), output);
+
+    !len ? Write("bad description", sizeof("bad description"), output) 
+         : Write(description, len, output);
+
     Write(SUFFIX, sizeof SUFFIX - 1, output);
+
+    return;
 }
 
 static unsigned
 ReadLine(char *buffer, unsigned size, OpenFileId input)
 {
-    if(buffer == NULL) {
-        static const char ERR[] = {'B', 'a', 'd', ' ', 'b', 'u', 'f', ' '};
-        Write(ERR, sizeof ERR - 1, CONSOLE_OUTPUT);
+    if(buffer == NULL)
         return 0;
-    }
 
     unsigned i;
 
     for (i = 0; i < size; i++) {
         Read(&buffer[i], 1, input);
         if (buffer[i] == '\n') {
+            buffer[i] = '\0';
             break;
         }
     }
-
-    buffer[i] = '\0';
 
     return i;
 }
@@ -64,15 +64,12 @@ ReadLine(char *buffer, unsigned size, OpenFileId input)
 static int
 PrepareArguments(char *line, char **argv, unsigned argvSize)
 {
-    // given that we are in C and not C++, it is convenient to include
-    //       `stdbool.h`.
+    unsigned argCount;
+    argCount = 0;
 
     if(argvSize > MAX_ARG_COUNT || line == NULL || argv == NULL) {
-        return false;
+        return 1;
     }
-    unsigned argCount;
-
-    argCount = 0;
 
     // Traverse the whole line and replace spaces between arguments by null
     // characters, so as to be able to treat each argument as a standalone
@@ -91,16 +88,15 @@ PrepareArguments(char *line, char **argv, unsigned argvSize)
                 // The maximum of allowed arguments is exceeded, and
                 // therefore the size of `argv` is too.  Note that 1 is
                 // decreased in order to leave space for the NULL at the end.
-                return 0;
+                return 1;
             }
             line[i] = '\0';
-            argv[argCount] = &line[i + 1]; //porque no tiene en cuenta muchos espacios
-            argCount++;
+            argv[argCount++] = &line[i + 1]; //porque no tiene en cuenta muchos espacios
         }
     }
 
     argv[argCount] = NULL;
-    return 1;
+    return 0;
 }
 
 int
@@ -113,24 +109,37 @@ main(void)
 
     for (;;) {
         WritePrompt(OUTPUT);
+
         const unsigned lineSize = ReadLine(line, MAX_LINE_SIZE, INPUT);
          if (lineSize == 0) {
+            WriteError("bad buffer.", OUTPUT);
             continue;
         }
 
-        if (PrepareArguments(line, argv, MAX_ARG_COUNT) == 0) {
-            WriteError("too many arguments.", OUTPUT);
+        const int args = PrepareArguments(line, argv, MAX_ARG_COUNT);
+        if(args) {
+            WriteError("bad arguments.", OUTPUT);
             continue;
         }
 
+        //convencion: &command args
         //Excecute a given program with the argvs
-        const SpaceId newProc = Exec(line, argv);
+        if(line[0] == '&') { //Execute in the background
+            const SpaceId newProc = Exec(&line[1], argv, 0);
 
-        if(newProc < 0) {
-           WriteError("error forking child", OUTPUT);
-           continue; 
-        } else {
-            Join(newProc);
+            if(newProc < 0) {
+                WriteError("error forking child", OUTPUT);
+                continue; 
+            } 
+        } else { //Execute with join
+             const SpaceId newProc = Exec(line, argv, 1);
+
+            if(newProc < 0) {
+                WriteError("error forking child", OUTPUT);
+                continue; 
+            } else {
+                Join(newProc);
+            }
         }
 
     }

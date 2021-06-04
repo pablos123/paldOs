@@ -1,6 +1,7 @@
 #include "syscall.h"
+#include "lib.h"
 
-unsigned strlen(const char *s) {
+inline unsigned strlen(const char *s) {
     unsigned iter = 0;
     for(; s[iter] != '\0'; ++iter);
     return iter;
@@ -16,7 +17,6 @@ static int elevar(int b, int e) {
     }
 
     return b * elevar(b, e - 1);
-
 }
 
 void itoa(int i, char* c) {

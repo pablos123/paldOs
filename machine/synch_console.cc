@@ -49,8 +49,6 @@ SynchConsole::SynchConsole(const char *readFile, const char *writeFile)
 SynchConsole::~SynchConsole()
 {
     delete console;
-    delete lockRead;
-    delete lockWrite;
     delete readAvail;
     delete writeDone;
 }

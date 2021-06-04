@@ -5,6 +5,8 @@
 #define ARGC_ERROR    "Error: missing argument.\n"
 #define CREATE_ERROR  "Error: could not create file.\n"
 
+static void print_file(OpenFileId fid);
+
 int
 main(int argc, char *argv[])
 {

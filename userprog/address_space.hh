@@ -19,7 +19,7 @@
 #include "lib/bitmap.hh"
 
 
-const unsigned USER_STACK_SIZE = 1024;  ///< Increase this as necessary!
+const unsigned USER_STACK_SIZE = 1256;  ///< Increase this as necessary!
 
 
 class AddressSpace {
