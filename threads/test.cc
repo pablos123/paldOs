@@ -4,13 +4,10 @@
 #include "condition.hh"
 #include <stdio.h>
 
-// Lock* lockDeTestPrioridad = new Lock("lockPrioridad");
-// Condition* conditionTestPrioridad = new Condition("conditionLocko", lockDeTestPrioridad);
-
 void foo(void* v) {
     for(int i = 0; i < 5; ++i){
-        DEBUG('t', "Ejecutando el hilo con prioridad: %ld\n", currentThread->GetPriority());
-        printf("Ejecutando el hilo %s con prioridad: %ld\n", currentThread->GetName(), currentThread->GetPriority());
+        printf("Ejecutando el hilo %s con prioridad: %ld\n", 
+            currentThread->GetName(), currentThread->GetPriority());
     }
 
     currentThread->Yield();
