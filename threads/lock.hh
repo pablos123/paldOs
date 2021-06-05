@@ -62,7 +62,7 @@ private:
 
     Thread* lockOwner;
 
-    size_t currentPriority; 
+    size_t oldPriority; 
 };
 
 ///Struct to pass Locks with a name as parameters to threads

@@ -39,9 +39,14 @@ public:
     // Print contents of ready list.
     void Print();
 
-    //Gets the priority of the highest priority thread in the ready to run processes list
+#ifdef MULTILEVEL_PRIORITY_QUEUE
+    //Modifies the thread priority (for priority inheritance)
+    void ModifyPriority(Thread* thread);
 
-    size_t GetMaxPriority();
+    //Gets the priority of the highest priority thread in the ready to run processes list
+    //Deprecated.
+    //size_t GetMaxPriority();
+#endif
 
 private:
 

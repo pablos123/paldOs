@@ -97,6 +97,8 @@ StartProcess(void * voidargv)
             DEBUG('e', "argvaddr is: %d\n", argvaddr);
             machine->WriteRegister(5, argvaddr);
         }
+    } else {
+        DEBUG('e', "argvaddr is null!: %p\n", argv);
     }
 
     machine->WriteRegister(4, argc);
@@ -171,7 +173,7 @@ SyscallHandler(ExceptionType _et)
             }
 
             if (argvAddr) {
-                DEBUG('e', "argv distinto de cero, con direccion: %d\n", argvAddr);
+                DEBUG('e', "argvAddr distinto de cero, con direccion: %d\n", argvAddr);
                 argv = SaveArgs(argvAddr);
             }
 
@@ -182,10 +184,6 @@ SyscallHandler(ExceptionType _et)
 
             ASSERT(filename != nullptr);
 
-            Thread *newThread = new Thread(filename, isJoinable);
-
-            SpaceId spaceId = (SpaceId)runningProcesses->Add(newThread);
-
             DEBUG('e', "abriendo: %s\n", filename);
             
             OpenFile *executable = fileSystem->Open(filename);
@@ -194,6 +192,10 @@ SyscallHandler(ExceptionType _et)
                 machine->WriteRegister(2, -1);
                 break;
             }
+
+            Thread *newThread = new Thread(filename, isJoinable);
+
+            SpaceId spaceId = (SpaceId)runningProcesses->Add(newThread);
             
             AddressSpace *space = new AddressSpace(executable);
             newThread->space = space;

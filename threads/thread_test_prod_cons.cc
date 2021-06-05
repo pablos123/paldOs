@@ -9,9 +9,121 @@
 #include "condition.hh"
 #include "system.hh"
 #include "channel.hh"
-
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
+
+/*****************************************************************************************
+///////////////////////////////////TEST PROD CONS/////////////////////////////////////////
+******************************************************************************************/
+#define max 2
+#define consumers 4
+#define loops 10
+
+int * buffer;
+int fillIndex, useIndex, total, count = 0;
+
+
+/************************
+  Function declarations
+*************************/
+void producer (void * arg);
+void consumer (void * arg);
+static void put(int value);
+static int get();
+/**************************************/
+
+
+void ThreadTestProdCons() {
+    /* Allocate space for the buffer*/
+    buffer = (int*)malloc(sizeof(int) * max);
+
+    //Create the producer
+    Thread* prod = new Thread("producer", true);
+    prod->Fork(producer, nullptr);
+
+    //Create the consumers
+    Thread* cons[consumers];      
+    for(int i = 0; i < consumers; i++){
+        char name[10];
+        sprintf(name, "con%d", i);
+        int* n = (int*)calloc(1, sizeof(int));
+        *n = i;
+        cons[i] = new Thread(name, true);
+        cons[i]->Fork(consumer, (void*)n);
+    }
+
+    //Wait for all the threads to finish
+    prod->Join();
+    for(int i = 0; i < consumers; i++){
+        cons[i]->Join();
+    }
+    
+    printf("All consumers finished. Final count is %d (should be %d), all products were consumed!!!.\n",
+           total, loops);
+
+    return;
+}
+
+
+/* Buffer Operations */
+static void put(int value) {
+    buffer[fillIndex] = value;
+    fillIndex = (fillIndex + 1) % max;
+    count++;
+}
+
+static int get() {
+    int tmp = buffer[useIndex];
+    useIndex = (useIndex + 1) % max;
+    count--;
+    return tmp;
+}
+
+Lock* mutex = new Lock("mutex");
+
+Condition* empty = new Condition("emptyCondition", mutex);
+Condition* full = new Condition("fullCondition", mutex);
+
+void producer (void * arg) {
+    for(int i = 0; i < loops; i++) {
+        printf("Created the product %d\n", i);
+        mutex->Acquire();
+        while(count == max)
+            empty->Wait();
+        put(i);
+
+        full->Signal();
+        
+        mutex->Release();
+    }
+    return;
+}
+
+void consumer (void * arg) {
+    int* Ncon = (int*)arg;
+    for(int i = 0; i < loops; i++){
+        mutex->Acquire();
+
+        while(count == 0) {
+            printf("El consumidor %d entro a esperar\n", *Ncon);
+            full->Wait();
+        }
+
+        int tmp = get();
+        empty->Signal();
+
+        //Count the consumed product
+        total++;
+
+        mutex->Release();
+        printf("Producto %d consumido por %d\n", tmp, *Ncon);
+    }
+    return;
+}
+
+/*****************************************************************************************
+///////////////////////////////////TEST CHANNEL///////////////////////////////////////////
+******************************************************************************************/
 
 typedef struct _channelParam {
     Channel* channel;
@@ -23,112 +135,13 @@ typedef struct _channelParam2 {
     int* i;
 }* ChannelParam2;
 
-static const unsigned MAX = 5;
-
-/*::::::::::::::VARIABELS:::::::::::::::::::::::*/
-size_t loops = MAX, consumers = MAX, products = 0;
-int buffer[MAX];
-int fillIndex = 0, useIndex = 0, count = 0;
-static bool done[MAX]; //pongo el mas uno porque el productor tambien es un hilo 
-
-Lock* lock = new Lock("CondLock"); 
-Condition* cond_var = new Condition("CondVariable", lock);
-
-/*:::::::::::::::::::::::::::::::::::::*/
-
-static int get() {
-    int tmp = buffer[useIndex];
-    useIndex = (useIndex + 1) % MAX;
-    printf("useIndex: %d\n", useIndex);
-    count--;
-    return tmp;
-}
-
-static void put(int value){
-    buffer[fillIndex] = value;
-    fillIndex = (fillIndex + 1) % MAX; 
-    count++;
-}
-
-
-void Producer(void* v) {
-    for(size_t i = 0; i < loops; i++){
-        cond_var->GetLock()->Acquire();
-        if(count == MAX) {
-            cond_var->Wait();
-        }
-        put(i);
-        printf("Insertando %ld con el productor\n", i);
-        cond_var->Signal();
-        cond_var->GetLock()->Release();  
-        currentThread->Yield();      
-    }
-}
-
-void Consumer(void* v) {
-    size_t* consumerNumber = (size_t*)v;
-    
-    for (size_t i = 0; i < loops; i++) { //chequeo todos los productos que puedo llegar a agarrar
-        cond_var->GetLock()->Acquire();
-        if (count == 0) {
-            printf("El cosumidor %ld entro a esperar\n", *consumerNumber);
-            cond_var->Wait();
-        }
-        int tmp = get();
-        printf("Producto %d consumido por el consumidor %ld \n", tmp, *consumerNumber);
-        products++;
-         if (products == MAX) {     
-            for (size_t j = 0; j < consumers; j++) done[j] = true;
-            return;
-        }
-
-        cond_var->Signal();
-        cond_var->GetLock()->Release();
-        currentThread->Yield();
-    }
-    done[*consumerNumber] = true; //este me interesa porque quiero saber si termine de chequear
-    return;
-}
-
-
-void
-ThreadTestProdCons()
-{
-    
-    Thread* producer = new Thread("producer");
-    producer->Fork(Producer, (void*)"dummyparam");
-
-    for (size_t i = 0; i < consumers; i++) {
-        printf("Launching consumer %lu.\n", i);
-        char *name = new char [16];
-        sprintf(name, "Consumer %lu", i);
-
-        Thread *consumer = new Thread(name);
-        size_t * caca = (size_t*)malloc(sizeof(size_t));
-        *caca = i;
-        consumer->Fork(Consumer, (void*)caca);
-    }
-    
-    // Wait until all turnstile threads finish their work.  `Thread::Join` is
-    // not implemented at the beginning, therefore an ad-hoc workaround is
-    // applied here.
-    for (size_t i = 0; i < consumers; i++) {
-        while (!done[i]) {
-            currentThread->Yield(); //aca recien va a parar a producer
-        }
-    }
-    printf("\nAll consumers finish consuming :D\n");
-}
-
-
-
-void senderTest(void* param) {
+static void senderTest(void* param) {
     ChannelParam channelParam = (ChannelParam)param;
     Channel* channel = (Channel*)(channelParam->channel);
     channel->Send(channelParam->i);
 }
 
-void receiverTest(void* param) {
+static void receiverTest(void* param) {
     ChannelParam2 channelParam = (ChannelParam2)param;
     Channel* channel = (Channel*)(channelParam->channel);
     channel->Receive(channelParam->i);
@@ -156,9 +169,10 @@ void ThreadTestChannel() {
     receiver->Fork(receiverTest, (void*) param2);
 
     sender->Join();
-    receiver->Join(); ///saque un join  porque uno de los dos esta esperando y entonces con el otro quiero mandarle la señal :D
-                        //si voy a esperar entonces no me sirve, un owr around podría ser, agarrar y fijarme si esta
-    
+    receiver->Join();
+    ///saque un join  porque uno de los dos esta esperando y entonces con el otro quiero mandarle la señal :D
+    //si voy a esperar entonces no me sirve, un owr around podría ser, agarrar y fijarme si esta
+
     printf("Recibiendo mensaje: %d\n", *j);
     free(j);
 

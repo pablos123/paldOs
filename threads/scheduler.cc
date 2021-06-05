@@ -147,9 +147,25 @@ Scheduler::Print()
     readyList->Apply(ThreadPrint);
 }
 
-size_t 
-Scheduler::GetMaxPriority(){
-    if(readyList->IsEmpty()) return currentThread->GetPriority();
-    Thread* highestThread = readyList->Head();
-    return highestThread->GetPriority();
+//Deprecated.
+// size_t 
+// Scheduler::GetMaxPriority(){
+//     if(readyList->IsEmpty()) return currentThread->GetPriority();
+//     Thread* highestThread = readyList->Head();
+//     return highestThread->GetPriority();
+// }
+
+#ifdef MULTILEVEL_PRIORITY_QUEUE
+void
+Scheduler::ModifyPriority(Thread* thread) {
+    
+    // buscar el thread t
+    // remover el thread t
+    // volver a insertarlo con la nueva prioridad
+    if(readyList->Has(thread)){
+        readyList->Remove(thread);
+        readyList->SortedInsertInverted(thread, thread->GetPriority());
+    }
+    
 }
+#endif

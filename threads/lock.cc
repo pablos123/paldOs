@@ -22,22 +22,21 @@
 
 Lock::Lock(const char *debugName)
 {
-    this->name = debugName; //este name no me gusta mucho peeeero, depende tamben cuanto usemos este name no??
+    name = debugName; //este name no me gusta mucho peeeero, depende tamben cuanto usemos este name no??
                             //entonces tenemos la discusion de si menos memoria por no poner el name o mayor
                             //reutilizacion al ponerlo.
 
-    this->lock = new Semaphore(debugName, 1); //ya lo tenemos aca me parece.
+    lock = new Semaphore(debugName, 1); //ya lo tenemos aca me parece.
 
-    this->lockOwner = nullptr; //nadie es dueño del lock... todavia
+    lockOwner = nullptr; //nadie es dueño del lock... todavia
 
-    this->currentPriority = 0;
+    oldPriority = 0;
 
 } //esto parece que tambien pero no me acuerdo 
 
 Lock::~Lock()
 {
-    delete this->lock;
-    delete this;
+    delete lock;
 }
 
 const char *
@@ -49,44 +48,59 @@ Lock::GetName() const //accedo mas facil si existe la propiedad.
 void
 Lock::Acquire()
 {
-    ASSERT(!this->IsHeldByCurrentThread());
+    ASSERT(! this->IsHeldByCurrentThread());
 #ifdef MULTILEVEL_PRIORITY_QUEUE
 /*  
-    Herencia de propiedades:
+    Herencia de prioridades:
     obtengo la propiedad del proceso de mayor prioridad
     guardo la prioridad del actual (el de baja prioridad, por ej)
     guardo dentro de la prioridad del actual como prioridad mayor
     antes del release bajo la prioridad del actual y la dejo como la que tenía originalmente
 
 */
-    currentPriority = currentThread->GetPriority();
-    size_t maxPriority = scheduler->GetMaxPriority();
-
-    currentThread->SetPriority(maxPriority);
+    size_t ownerPriority;
+    if(lockOwner == nullptr) {
+        ownerPriority = currentThread->GetPriority();
+    } else {
+        ownerPriority = lockOwner->GetPriority();
+    }
+    size_t currentPriority = currentThread->GetPriority();
+    if(ownerPriority < currentPriority){
+        oldPriority = ownerPriority;
+        lockOwner->SetPriority(currentPriority);   //le subimos al de baja prioridad para que termine de usar el lock mas rapido
+        scheduler->ModifyPriority(lockOwner);
+    }
 #endif
 
-    this->lock->P(); //Primero resto el semaforo dado que puede pasar que no pueda entrar pero cambio el dueño igual
-                    //therefore hay alta explotacion con el assert
-    this->lockOwner = currentThread;
+    lock->P(); //Primero resto el semaforo dado que puede pasar que no pueda entrar pero cambio el dueño igual
+               //therefore hay alta explotacion con el assert
+    lockOwner = currentThread;
 }
 
 void
 Lock::Release()
 {
     ASSERT(this->IsHeldByCurrentThread());
-    this->lock->V();
-    currentThread->SetPriority(currentPriority);
-    this->lockOwner = nullptr; //esto es representativo para la funcion del lock :)ç
-                               //aunque no es necesario. Si es necesario! :D aldu la mas grande
+
+    lockOwner = nullptr;//esto es representativo para la funcion del lock :)
+                        //aunque no es necesario. Si es necesario! :D aldu la mas grande
     //currentThread->Yield(); lo sacamos ya que en las variables de condicion, en Wait() se llama a
     // P() y esta cuando hace Sleep() ya hace un relinquish/yield del CPU. Entonces,
     //cuando hacemos Realease() no deberíamos "duplicar" este relinquish
+#ifdef MULTILEVEL_PRIORITY_QUEUE
+    if(currentThread->GetPriority() != oldPriority){
+        currentThread->SetPriority(oldPriority);
+        scheduler->ModifyPriority(currentThread);
+    }
+#endif
+
+    lock->V();
 }
 
 bool
 Lock::IsHeldByCurrentThread() const
 {
-    return this->lockOwner == currentThread;
+    return lockOwner == currentThread;
 }
 
 ///Lock param library

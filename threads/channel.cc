@@ -2,19 +2,20 @@
 
 Channel::Channel(const char * debugName) 
 {
-    this->name = debugName;
-    this->buzon = new List<int>;
-    this->lock = new Lock(name);
-    this->conditionForSenders = new Condition(name, this->lock);
-    this->conditionForReceivers = new Condition(name, this->lock);
+    name = debugName;
+
+    buzon = new List<int>;
+    lock = new Lock(name);
+
+    conditionForSenders = new Condition(name, lock);
+    conditionForReceivers = new Condition(name, lock);
 }
 
 Channel::~Channel() {
     delete buzon;
-    delete this->lock;
-    delete conditionForSenders; //aca no destruimos el lock, si lo hicieramos entonces segfault
+    delete conditionForSenders; // not freeing the lock here
     delete conditionForReceivers;
-    delete this;
+    delete lock;
 }
 
 void Channel::Send(int message){

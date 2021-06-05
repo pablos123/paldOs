@@ -25,15 +25,15 @@
 
 Condition::Condition(const char* debugName, Lock* lock) //tener en cuenta que no se libera la memoria ocupada por el lock.
 {
-    this->name = debugName;
-    this->conditionLock = lock;
-    this->queue = new List<Semaphore *>;
+    name = debugName;
+    conditionLock = lock;
+
+    queue = new List<Semaphore *>;
 }
 
 Condition::~Condition()
 {
     delete queue;
-    delete this;
 }
 
 const char *

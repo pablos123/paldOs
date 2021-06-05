@@ -51,6 +51,8 @@ SynchConsole::~SynchConsole()
     delete console;
     delete readAvail;
     delete writeDone;
+    delete lockRead;
+    delete lockWrite;
 }
 
 /// Read the contents of a console into a buffer.  Return only after the

@@ -1,4 +1,3 @@
-#include "syscall.h"
 #include "lib.h"
 
 inline unsigned strlen(const char *s) {

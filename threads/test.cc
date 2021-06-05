@@ -4,8 +4,8 @@
 #include "condition.hh"
 #include <stdio.h>
 
-Lock* lockDeTestPrioridad = new Lock("lockPrioridad");
-Condition* conditionTestPrioridad = new Condition("conditionLocko", lockDeTestPrioridad);
+// Lock* lockDeTestPrioridad = new Lock("lockPrioridad");
+// Condition* conditionTestPrioridad = new Condition("conditionLocko", lockDeTestPrioridad);
 
 void foo(void* v) {
     for(int i = 0; i < 5; ++i){
@@ -13,12 +13,16 @@ void foo(void* v) {
         printf("Ejecutando el hilo %s con prioridad: %ld\n", currentThread->GetName(), currentThread->GetPriority());
     }
 
+    currentThread->Yield();
     return;
 }
 
+
 void MultilevelPriorityQueueTest() {
-    Thread* threads[5];
-    for(int i = 0; i < 5; ++i) {
+    Thread* threads[8];
+    threads[0] = new Thread("bigpriority", true, 30);
+    threads[0]->Fork(foo, nullptr);
+    for(int i = 1; i < 6; ++i) {
         char *name = new char[16];
         sprintf(name, "p%d", i);
         Thread* newThread = new Thread(name, true, i);
@@ -27,7 +31,12 @@ void MultilevelPriorityQueueTest() {
         threads[i] = newThread;
     }
 
-    for(int i = 0; i < 5; ++i) {
+    threads[6] = new Thread("lowpriorityafter", true, 3);
+    threads[6]->Fork(foo, nullptr);
+    threads[7] = new Thread("bigpriority", true, 37);
+    threads[7]->Fork(foo, nullptr);
+
+    for(int i = 0; i < 7; ++i) {
         threads[i]->Join();
     }
     

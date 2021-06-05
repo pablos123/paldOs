@@ -25,7 +25,6 @@
 
 #include <inttypes.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 
 /// This is put at the top of the execution stack, for detecting stack
@@ -82,6 +81,7 @@ Thread::~Thread()
     }
 
 #ifdef USER_PROGRAM
+    delete joinChannel;
     delete space;
     delete openedFilesTable;
 #endif
@@ -266,12 +266,11 @@ Thread::Sleep()
 int Thread::Join(){
     ASSERT(joinable);
 
-    int* value = (int*)malloc(sizeof(int));
+    int value = 0;
+    joinChannel->Receive(&value);
 
-    joinChannel->Receive(value);
-    int st = *value;
+    int st = value;
     DEBUG('t', "Received %d... joining thread :)", st);
-    free(value);
     return st;
 }
 
