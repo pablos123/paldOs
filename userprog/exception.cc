@@ -162,10 +162,10 @@ SyscallHandler(ExceptionType _et)
                 break;
             }
         
-            char processname[FILE_NAME_MAX_LEN + 1];
+            char filename[FILE_NAME_MAX_LEN + 1];
             
             if (!ReadStringFromUser(processAddr,
-                                    processname, sizeof processname)) {
+                                    filename, sizeof filename)) {
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
                       FILE_NAME_MAX_LEN);
                 machine->WriteRegister(2, -1);
@@ -176,9 +176,6 @@ SyscallHandler(ExceptionType _et)
                 DEBUG('e', "argvAddr distinto de cero, con direccion: %d\n", argvAddr);
                 argv = SaveArgs(argvAddr);
             }
-
-            char* filename = new char [30];
-            sprintf(filename, "userland/%s", processname);
 
             DEBUG('e', "el nombre del archivo a abrir es %s y direccion de memoria %p\n", filename, filename);
 
