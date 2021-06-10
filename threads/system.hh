@@ -33,6 +33,8 @@ extern Interrupt *interrupt;         ///< Interrupt status.
 extern Statistics *stats;            ///< Performance metrics.
 extern Timer *timer;                 ///< The hardware alarm clock.
 
+extern const unsigned NUMBER_OF_TRIES;
+
 #ifdef USER_PROGRAM
 #include "machine/machine.hh"
 #include "machine/synch_console.hh"

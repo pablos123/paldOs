@@ -13,10 +13,4 @@
 /// call, or generates an addressing or arithmetic exception.
 void SetExceptionHandlers();
 
-typedef struct _param {
-    char* name;
-    char** argv;
-
-}* StartPParam;
-
 #endif

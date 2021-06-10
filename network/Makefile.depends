@@ -318,21 +318,22 @@ executable.o: ../userprog/executable.cc ../userprog/executable.hh \
  ../lib/debug.hh ../lib/debug_opts.hh ../machine/system_dep.hh \
  ../machine/endianness.hh
 exception.o: ../userprog/exception.cc ../userprog/transfer.hh \
- ../userprog/syscall.h ../userprog/args.hh ../filesys/directory_entry.hh \
- ../filesys/open_file.hh ../lib/utility.hh ../lib/assert.hh \
- ../lib/debug.hh ../lib/debug_opts.hh ../machine/system_dep.hh \
- ../threads/system.hh ../threads/thread.hh ../machine/machine.hh \
- ../machine/exception_type.hh ../machine/mmu.hh ../machine/disk.hh \
- ../machine/translation_entry.hh ../machine/single_stepper.hh \
- ../userprog/address_space.hh ../filesys/file_system.hh \
- ../filesys/open_file.hh ../filesys/directory_entry.hh ../machine/disk.hh \
+ ../userprog/syscall.h ../userprog/args.hh ../userprog/exception.hh \
+ ../filesys/directory_entry.hh ../filesys/open_file.hh ../lib/utility.hh \
+ ../lib/assert.hh ../lib/debug.hh ../lib/debug_opts.hh \
+ ../machine/system_dep.hh ../threads/system.hh ../threads/thread.hh \
+ ../machine/machine.hh ../machine/exception_type.hh ../machine/mmu.hh \
+ ../machine/disk.hh ../machine/translation_entry.hh \
+ ../machine/single_stepper.hh ../userprog/address_space.hh \
+ ../filesys/file_system.hh ../filesys/open_file.hh \
+ ../filesys/directory_entry.hh ../machine/disk.hh \
  ../machine/translation_entry.hh ../lib/bitmap.hh ../lib/utility.hh \
  ../lib/table.hh ../lib/list.hh ../threads/scheduler.hh ../lib/list.hh \
  ../machine/interrupt.hh ../machine/statistics.hh ../machine/timer.hh \
  ../machine/synch_console.hh ../machine/console.hh ../threads/lock.hh \
  ../threads/semaphore.hh ../threads/semaphore.hh ../filesys/synch_disk.hh \
  ../network/post.hh ../machine/network.hh ../threads/synch_list.hh \
- ../threads/condition.hh ../threads/lock.hh ../userprog/exception.hh
+ ../threads/condition.hh ../threads/lock.hh ../machine/mmu.hh
 prog_test.o: ../userprog/prog_test.cc ../userprog/address_space.hh \
  ../filesys/file_system.hh ../filesys/open_file.hh ../lib/utility.hh \
  ../lib/assert.hh ../lib/debug.hh ../lib/debug_opts.hh \

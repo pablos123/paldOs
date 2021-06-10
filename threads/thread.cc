@@ -50,6 +50,8 @@ Thread::Thread(const char *threadName, bool isJoinable, size_t priorityParam)
     status   = JUST_CREATED;
     joinable = isJoinable;
     priority = priorityParam;
+
+    numFaults = 0;
  
     joinChannel = new Channel("Join Channel");
 

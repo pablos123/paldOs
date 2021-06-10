@@ -51,11 +51,18 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
           // If the code segment was entirely on a separate page, we could
           // set its pages to be read-only.
     }
+#ifdef USE_TLB
+
+    // for(unsigned i = 0; i < TLB_SIZE; ++i) { //cargo si o si las primeras tlb_size paginas de la memoria a la TLB ya que son siempre miss
+    //   tlb[i].physicalPage = pageTable[i].physicalPage;
+    // }
+
+#endif
 
     
     //Debug:
     for(unsigned i = 0; i < numPages; i++)
-      DEBUG('a', "use el bit %u\n", pageTable[i].physicalPage);
+      DEBUG('a', "using%u\n", pageTable[i].physicalPage);
 
     char *mainMemory = machine->GetMMU()->mainMemory;
     // Zero out the entire address space, to zero the unitialized data
@@ -148,6 +155,11 @@ AddressSpace::InitRegisters()
           numPages * PAGE_SIZE - 16);
 }
 
+TranslationEntry* 
+AddressSpace::getPageTable() {
+  return pageTable;
+}
+
 /// On a context switch, save any machine state, specific to this address
 /// space, that needs saving.
 ///
@@ -163,6 +175,14 @@ AddressSpace::SaveState()
 void
 AddressSpace::RestoreState()
 {
+#ifndef USE_TLB
     machine->GetMMU()->pageTable     = pageTable;
     machine->GetMMU()->pageTableSize = numPages;
+#else
+    //tenemos TLB, la limpiamos para cambiar de proceso
+    DEBUG('t', "Vaciando la TLB \n");
+    for(unsigned i=0; i < TLB_SIZE; i++){
+      machine->GetMMU()->tlb[i].valid = false;
+    }
+#endif
 }

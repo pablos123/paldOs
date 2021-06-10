@@ -65,7 +65,6 @@ const unsigned MACHINE_STATE_SIZE = 17;
 /// WATCH OUT IF THIS IS NOT BIG ENOUGH!!!!!
 const unsigned STACK_SIZE = 4 * 1024;
 
-
 /// Thread state.
 enum ThreadStatus {
     JUST_CREATED,
@@ -138,6 +137,9 @@ public:
     void SetPriority(size_t);
 
     void Print() const;
+
+    //number of faults in the tlb
+    unsigned numFaults;
 
 private:
     // Some of the private data for this class is listed above.

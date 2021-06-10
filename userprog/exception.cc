@@ -25,12 +25,13 @@
 #include "transfer.hh"
 #include "syscall.h"
 #include "args.hh"
+#include "exception.hh"
 #include "filesys/directory_entry.hh"
 #include "filesys/open_file.hh"
 #include "threads/system.hh"
-#include "exception.hh"
-#include <stdlib.h>
+#include "machine/mmu.hh"    //for the page size
 
+#include <stdlib.h>
 #include <stdio.h>
 
 static void
@@ -451,6 +452,34 @@ SyscallHandler(ExceptionType _et)
     IncrementPC();
 }
 
+static void TLBPageFaultHandler(ExceptionType exc) {
+
+#ifndef USE_TLB //Si no uso tlb entonces este error no deberíamos catchearlo (por ahora...)
+    DefaultHandler(exc);
+#else
+    int vpnAddress = machine->ReadRegister(BAD_VADDR_REG);
+
+    DEBUG('a',"There was a page fault. Searching... vpnAdress: %d \n", vpnAddress);
+    DEBUG('t',"There was a page fault. Searching... vpnAdress: %d \n", vpnAddress);
+
+    int vpn = vpnAddress / PAGE_SIZE;
+
+    DEBUG('t', "vpn: %d, numFaults: %lu ,indice de la TLB: %d \n", vpn, currentThread->numFaults, currentThread->numFaults % TLB_SIZE);
+
+    // probé esto para ver si eran quilombos de direcciones de memoria copiando todo "atomicamente" y no hay caso
+    // TranslationEntry* entry = &currentThread->space->getPageTable()[vpn];
+    // entry->valid = true;
+    // int tlbIndex = currentThread->numFaults++ % TLB_SIZE;
+    // machine->GetMMU()->tlb[tlbIndex].virtualPage  = entry->virtualPage;
+    // machine->GetMMU()->tlb[tlbIndex].physicalPage = entry->physicalPage;
+    // machine->GetMMU()->tlb[tlbIndex].valid        = entry->valid;
+    // machine->GetMMU()->tlb[tlbIndex].readOnly     = entry->readOnly;
+    // machine->GetMMU()->tlb[tlbIndex].use          = entry->use;
+    // machine->GetMMU()->tlb[tlbIndex].dirty        = entry->dirty;
+    machine->GetMMU()->tlb[currentThread->numFaults++ % TLB_SIZE] = currentThread->space->getPageTable()[vpn];
+#endif
+
+}
 
 /// By default, only system calls have their own handler.  All other
 /// exception types are assigned the default handler.
@@ -459,7 +488,7 @@ SetExceptionHandlers()
 {
     machine->SetHandler(NO_EXCEPTION,            &DefaultHandler);
     machine->SetHandler(SYSCALL_EXCEPTION,       &SyscallHandler);
-    machine->SetHandler(PAGE_FAULT_EXCEPTION,    &DefaultHandler);
+    machine->SetHandler(PAGE_FAULT_EXCEPTION,    &TLBPageFaultHandler);
     machine->SetHandler(READ_ONLY_EXCEPTION,     &DefaultHandler);
     machine->SetHandler(BUS_ERROR_EXCEPTION,     &DefaultHandler);
     machine->SetHandler(ADDRESS_ERROR_EXCEPTION, &DefaultHandler);

@@ -21,7 +21,6 @@
 
 const unsigned USER_STACK_SIZE = 1256;  ///< Increase this as necessary!
 
-
 class AddressSpace {
 public:
 
@@ -48,7 +47,7 @@ public:
     void SaveState();
     void RestoreState();
 
-    //SpaceId spaceId; //adress space identifier ????
+    TranslationEntry* getPageTable();
 private:
 
     /// Assume linear page table translation for now!

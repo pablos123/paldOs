@@ -21,7 +21,7 @@ void ReadBufferFromUser(int userAddress, char *outBuffer,
     int temp;
     do {
         count++;
-        ASSERT(machine->ReadMem(userAddress++, 1, &temp));
+        for(unsigned i = 0; !machine->ReadMem(userAddress++, 1, &temp) && i < NUMBER_OF_TRIES; ++i);
         *outBuffer = (unsigned char) temp;
         outBuffer++;
     } while (count < byteCount);
@@ -42,7 +42,7 @@ bool ReadStringFromUser(int userAddress, char *outString,
     do {
         int temp;
         count++;
-        ASSERT(machine->ReadMem(userAddress++, 1, &temp)); //aca se modifica temp
+        for(unsigned i = 0; !machine->ReadMem(userAddress++, 1, &temp) && i < NUMBER_OF_TRIES; ++i);
         *outString = (unsigned char) temp;
     } while (*outString++ != '\0' && count < maxByteCount);
 
@@ -61,7 +61,7 @@ void WriteBufferToUser(const char *buffer, int userAddress,
     do{
         count++;
         ///int temp = *buffer;
-        ASSERT(machine->WriteMem(userAddress++, 1, *(int*) buffer));
+        for(unsigned i = 0; !machine->WriteMem(userAddress++, 1, *(int*) buffer) && i < NUMBER_OF_TRIES; ++i);
 
     } while(*buffer++ != '\0' && count < byteCount);
 
@@ -77,7 +77,7 @@ void WriteStringToUser(const char *string, int userAddress)
     unsigned count = 0;
     do {
         count++;
-        ASSERT(machine->WriteMem(userAddress++, 1, *(int*) string));
+        for(unsigned i = 0; !machine->WriteMem(userAddress++, 1, *(int*) string) && i < NUMBER_OF_TRIES; ++i);
 
     } while (*string++ != '\0');
     return;
