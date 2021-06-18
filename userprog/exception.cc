@@ -79,7 +79,7 @@ StartProcess(void * voidargv)
     char** argv = (char**)voidargv;
 
     currentThread->space->InitRegisters();  // Set the initial register values.
-    
+
     currentThread->space->RestoreState();   // Load page table register.
 
     unsigned argc = 0;
@@ -162,9 +162,9 @@ SyscallHandler(ExceptionType _et)
                 machine->WriteRegister(2, -1);
                 break;
             }
-        
+
             char filename[FILE_NAME_MAX_LEN + 1];
-            
+
             if (!ReadStringFromUser(processAddr,
                                     filename, sizeof filename)) {
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
@@ -183,7 +183,7 @@ SyscallHandler(ExceptionType _et)
             ASSERT(filename != nullptr);
 
             DEBUG('e', "abriendo: %s\n", filename);
-            
+
             OpenFile *executable = fileSystem->Open(filename);
             if (executable == nullptr) {
                 DEBUG('e', "Unable to open file %s\n", filename);
@@ -194,7 +194,7 @@ SyscallHandler(ExceptionType _et)
             Thread *newThread = new Thread(filename, isJoinable);
 
             SpaceId spaceId = (SpaceId)runningProcesses->Add(newThread);
-            
+
             AddressSpace *space = new AddressSpace(executable);
             newThread->space = space;
 
@@ -307,17 +307,17 @@ SyscallHandler(ExceptionType _et)
                 machine->WriteRegister(2, -1);
                 break;
             }
-            
+
             int fileDescriptor = currentThread->GetOpenedFilesTable()->Add(openedFile);
             if(fileDescriptor < 0) {
                 DEBUG('e', "Error: File not added to table");
                 machine->WriteRegister(2, -1);
                 break;
             }
-            
+
             machine->WriteRegister(2, fileDescriptor);
             DEBUG('e', "File opened successfully!. Index assigned: %d \n", fileDescriptor);
-    
+
             break;
         }
 
@@ -329,7 +329,7 @@ SyscallHandler(ExceptionType _et)
                 currentThread->GetOpenedFilesTable()->Remove(fid);
                 DEBUG('e', "File closed successfully!\n");
                 machine->WriteRegister(2, 0);
-                
+
             } else{
                 DEBUG('e', "Error: File not closed. ID is not present in the table");
                 machine->WriteRegister(2, 1);
@@ -347,7 +347,7 @@ SyscallHandler(ExceptionType _et)
                 DEBUG('e', "Error: address string is null.\n");
                 machine->WriteRegister(2, 0);
                 break;
-            }    
+            }
             if (nbytes <= 0){
                 DEBUG('e', "Error: invalid number of bytes.\n");
                 machine->WriteRegister(2, 0);
@@ -366,7 +366,7 @@ SyscallHandler(ExceptionType _et)
                 for(int i = 0; i < nbytes; i++) {
                     buffer[i] = consoleSys->ReadConsole();
                 }
-                
+
                 WriteBufferToUser(buffer, usrStringAddr, nbytes);
                 machine->WriteRegister(2, nbytes);
             } else if(!currentThread->GetOpenedFilesTable()->HasKey(fid)) {
@@ -374,7 +374,7 @@ SyscallHandler(ExceptionType _et)
                 machine->WriteRegister(2, 0);
             } else {
                 OpenFile* file = currentThread->GetOpenedFilesTable()->Get(fid);
-        
+
                 int bytesReaded = file->Read(buffer, nbytes);
 
                 DEBUG('e', "Readed: %s, nrobytes: %d de %d, fromfileid: %d, fileaddr: %p\n", buffer, bytesReaded, nbytes, fid, file);
@@ -394,13 +394,13 @@ SyscallHandler(ExceptionType _et)
             int usrStringAddr = machine->ReadRegister(4);
             int nbytes = machine->ReadRegister(5);
             int fid = machine->ReadRegister(6);
-            
+
 
             if (usrStringAddr == 0) {
                 DEBUG('e', "Error: address string is null.\n");
                 machine->WriteRegister(2, 0);
                 break;
-            }    
+            }
             if (nbytes <= 0){
                 DEBUG('e', "Error: invalid number of bytes.\n");
                 machine->WriteRegister(2, 0);
@@ -411,24 +411,24 @@ SyscallHandler(ExceptionType _et)
                 machine->WriteRegister(2, 0);
                 break;
             }
-            
+
             char* buffer = new char[nbytes + 1];
             ReadBufferFromUser(usrStringAddr, buffer, nbytes);
             DEBUG('e', "Write: %s, nrobytes: %d, hacia: %d\n", buffer, nbytes, usrStringAddr);
-            
+
             if(fid == CONSOLE_OUTPUT) {
                 for(int i = 0; i < nbytes; i++) {
                     consoleSys->WriteConsole(buffer[i]);
                 }
-                
+
                 machine->WriteRegister(2, nbytes);
             } else if(!currentThread->GetOpenedFilesTable()->HasKey(fid)) {
                 DEBUG('e', "Error in write: the file was not opened\n");
                 machine->WriteRegister(2, 0);
             } else {
-                
+
                 OpenFile* file = currentThread->GetOpenedFilesTable()->Get(fid);
-                
+
                 int bytesWrited = file->Write(buffer, nbytes);
 
                 if(bytesWrited <= 0) {
@@ -460,23 +460,20 @@ static void TLBPageFaultHandler(ExceptionType exc) {
     int vpnAddress = machine->ReadRegister(BAD_VADDR_REG);
 
     DEBUG('a',"There was a page fault. Searching... vpnAdress: %d \n", vpnAddress);
-    DEBUG('t',"There was a page fault. Searching... vpnAdress: %d \n", vpnAddress);
+    DEBUG('e',"There was a page fault. Searching... vpnAdress: %d \n", vpnAddress);
 
     int vpn = vpnAddress / PAGE_SIZE;
+    DEBUG('e', "vpn: %d, numFaults: %lu ,indice de la TLB: %d \n", vpn, currentThread->numFaults, currentThread->numFaults % TLB_SIZE);
 
-    DEBUG('t', "vpn: %d, numFaults: %lu ,indice de la TLB: %d \n", vpn, currentThread->numFaults, currentThread->numFaults % TLB_SIZE);
+    TranslationEntry* pageTableEntry = currentThread->space->getPageTableEntry(vpn);
 
-    // probé esto para ver si eran quilombos de direcciones de memoria copiando todo "atomicamente" y no hay caso
-    // TranslationEntry* entry = &currentThread->space->getPageTable()[vpn];
-    // entry->valid = true;
-    // int tlbIndex = currentThread->numFaults++ % TLB_SIZE;
-    // machine->GetMMU()->tlb[tlbIndex].virtualPage  = entry->virtualPage;
-    // machine->GetMMU()->tlb[tlbIndex].physicalPage = entry->physicalPage;
-    // machine->GetMMU()->tlb[tlbIndex].valid        = entry->valid;
-    // machine->GetMMU()->tlb[tlbIndex].readOnly     = entry->readOnly;
-    // machine->GetMMU()->tlb[tlbIndex].use          = entry->use;
-    // machine->GetMMU()->tlb[tlbIndex].dirty        = entry->dirty;
-    machine->GetMMU()->tlb[currentThread->numFaults++ % TLB_SIZE] = currentThread->space->getPageTable()[vpn];
+    pageTableEntry->valid = true;
+
+    unsigned tlbEntry = currentThread->numFaults % TLB_SIZE;
+
+    machine->GetMMU()->tlb[tlbEntry] = *pageTableEntry;
+
+    currentThread->numFaults++;
 #endif
 
 }

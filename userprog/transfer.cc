@@ -21,7 +21,12 @@ void ReadBufferFromUser(int userAddress, char *outBuffer,
     int temp;
     do {
         count++;
-        for(unsigned i = 0; !machine->ReadMem(userAddress++, 1, &temp) && i < NUMBER_OF_TRIES; ++i);
+        for(unsigned i = 0;  i < NUMBER_OF_TRIES; ++i){
+            if(machine->ReadMem(userAddress, 1, &temp)){
+                userAddress++;
+                break;
+            }
+        }
         *outBuffer = (unsigned char) temp;
         outBuffer++;
     } while (count < byteCount);
@@ -42,7 +47,12 @@ bool ReadStringFromUser(int userAddress, char *outString,
     do {
         int temp;
         count++;
-        for(unsigned i = 0; !machine->ReadMem(userAddress++, 1, &temp) && i < NUMBER_OF_TRIES; ++i);
+        for(unsigned i = 0; i < NUMBER_OF_TRIES; ++i){
+            if(machine->ReadMem(userAddress, 1, &temp)){
+                userAddress++;
+                break;
+            }
+        }
         *outString = (unsigned char) temp;
     } while (*outString++ != '\0' && count < maxByteCount);
 
@@ -61,7 +71,12 @@ void WriteBufferToUser(const char *buffer, int userAddress,
     do{
         count++;
         ///int temp = *buffer;
-        for(unsigned i = 0; !machine->WriteMem(userAddress++, 1, *(int*) buffer) && i < NUMBER_OF_TRIES; ++i);
+        for(unsigned i = 0; i < NUMBER_OF_TRIES; ++i){
+            if(machine->WriteMem(userAddress, 1, *(int*) buffer)){
+                userAddress++;
+                break;
+            }
+        }
 
     } while(*buffer++ != '\0' && count < byteCount);
 
@@ -77,7 +92,12 @@ void WriteStringToUser(const char *string, int userAddress)
     unsigned count = 0;
     do {
         count++;
-        for(unsigned i = 0; !machine->WriteMem(userAddress++, 1, *(int*) string) && i < NUMBER_OF_TRIES; ++i);
+        for(unsigned i = 0; i < NUMBER_OF_TRIES; ++i){
+            if(machine->WriteMem(userAddress, 1, *(int*) string)){
+                userAddress++;
+                break;
+            }
+        }
 
     } while (*string++ != '\0');
     return;

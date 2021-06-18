@@ -51,22 +51,14 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
           // If the code segment was entirely on a separate page, we could
           // set its pages to be read-only.
     }
-#ifdef USE_TLB
 
-    // for(unsigned i = 0; i < TLB_SIZE; ++i) { //cargo si o si las primeras tlb_size paginas de la memoria a la TLB ya que son siempre miss
-    //   tlb[i].physicalPage = pageTable[i].physicalPage;
-    // }
-
-#endif
-
-    
     //Debug:
     for(unsigned i = 0; i < numPages; i++)
       DEBUG('a', "using%u\n", pageTable[i].physicalPage);
 
     char *mainMemory = machine->GetMMU()->mainMemory;
     // Zero out the entire address space, to zero the unitialized data
-    // segment and the stack segment. 
+    // segment and the stack segment.
     //Cleaning the memory that will be used...
 
     for(unsigned i = 0; i < numPages; i++) {
@@ -82,7 +74,7 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
     // DEBUG('a', "code pages: %u\n", codePages);
     // unsigned dataPages = DivRoundUp(initDataSize, PAGE_SIZE);
     // DEBUG('a', "data pages: %u\n", dataPages);
-    
+
     if (codeSize > 0) {
         uint32_t virtualAddr = exe.GetCodeAddr();
 
@@ -100,9 +92,9 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
     if (initDataSize > 0) {
         uint32_t virtualAddr = exe.GetInitDataAddr();
         DEBUG('a', "Initializing data segment, at 0x%X, size %u\n", virtualAddr, initDataSize);
-        
+
         for(unsigned i = 0; i < initDataSize; i++) {
-           
+
             uint32_t frame  = (uint32_t)((virtualAddr + i) / PAGE_SIZE);
             uint32_t offset = (virtualAddr + i) % PAGE_SIZE ;
             uint32_t physicalAddressToWrite = pageTable[frame].physicalPage * PAGE_SIZE + offset;
@@ -155,9 +147,9 @@ AddressSpace::InitRegisters()
           numPages * PAGE_SIZE - 16);
 }
 
-TranslationEntry* 
-AddressSpace::getPageTable() {
-  return pageTable;
+TranslationEntry*
+AddressSpace::getPageTableEntry(unsigned vpn) {
+  return &pageTable[vpn];
 }
 
 /// On a context switch, save any machine state, specific to this address
@@ -175,10 +167,12 @@ AddressSpace::SaveState()
 void
 AddressSpace::RestoreState()
 {
+
 #ifndef USE_TLB
     machine->GetMMU()->pageTable     = pageTable;
     machine->GetMMU()->pageTableSize = numPages;
 #else
+
     //tenemos TLB, la limpiamos para cambiar de proceso
     DEBUG('t', "Vaciando la TLB \n");
     for(unsigned i=0; i < TLB_SIZE; i++){

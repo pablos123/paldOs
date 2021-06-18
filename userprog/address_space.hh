@@ -47,7 +47,7 @@ public:
     void SaveState();
     void RestoreState();
 
-    TranslationEntry* getPageTable();
+    TranslationEntry* getPageTableEntry(unsigned vpn);
 private:
 
     /// Assume linear page table translation for now!

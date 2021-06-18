@@ -35,7 +35,7 @@ SynchConsole::WriteDoneSynch()
 }
 
 
-/// Initialize a SynchConsole, 
+/// Initialize a SynchConsole,
 SynchConsole::SynchConsole(const char *readFile, const char *writeFile)
 {
     readAvail = new Semaphore("synch read console", 0);
@@ -75,8 +75,6 @@ SynchConsole::ReadConsole()
 void
 SynchConsole::WriteConsole(char ch)
 {
-    //ASSERT(ch != nullptr);
-    DEBUG('e', "estoy en writeConsole, caracter: %c\n", ch);
     lockWrite->Acquire();  // not only one disk I/O at a time: en este caso un hilo queriendo escribir no deberia bloquear a un hilo queriendo leer.
     console->PutChar(ch);
     writeDone->P();   // wait for interrupt

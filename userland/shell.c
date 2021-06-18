@@ -1,21 +1,10 @@
-#include "syscall.h"
+#include "lib.h"
 
 #define MAX_LINE_SIZE  60
 #define MAX_ARG_COUNT  32
 #define ARG_SEPARATOR  ' '
 
 #define NULL ((void *) 0)
-
-static inline unsigned
-strlen(const char *s)
-{
-    if(s == NULL)
-        return 0;
-
-    unsigned i;
-    for (i = 0; s[i] != '\0'; i++) {}
-    return i;
-}
 
 static inline void
 WritePrompt(OpenFileId output)
@@ -34,7 +23,7 @@ WriteError(const char *description, OpenFileId output)
 
     Write(PREFIX, sizeof PREFIX - 1, output);
 
-    !len ? Write("bad description", sizeof("bad description"), output) 
+    !len ? Write("bad description", sizeof("bad description"), output)
          : Write(description, len, output);
 
     Write(SUFFIX, sizeof SUFFIX - 1, output);
@@ -64,6 +53,8 @@ ReadLine(char *buffer, unsigned size, OpenFileId input)
 static int
 PrepareArguments(char *line, char **argv, unsigned argvSize)
 {
+    // The user cannot have ARG_SEPARATOR inside an argument!
+
     unsigned argCount;
     argCount = 0;
 
@@ -71,18 +62,11 @@ PrepareArguments(char *line, char **argv, unsigned argvSize)
         return 1;
     }
 
-    // Traverse the whole line and replace spaces between arguments by null
-    // characters, so as to be able to treat each argument as a standalone
-    // string.
-    //
-    // TODO: what happens if there are two consecutive spaces?, and what
-    //       about spaces at the beginning of the line?, and at the end?
-    //
-    // TODO: what if the user wants to include a space as part of an
-    //       argument?
+    unsigned i = 0;
 
-    
-    for (unsigned i = 0; line[i] != '\0'; i++) {
+    while(line[i++] == ARG_SEPARATOR);
+
+    for (; line[i] != '\0'; i++) {
         if (line[i] == ARG_SEPARATOR) {
             if (argCount == argvSize - 1) {
                 // The maximum of allowed arguments is exceeded, and
@@ -91,7 +75,9 @@ PrepareArguments(char *line, char **argv, unsigned argvSize)
                 return 1;
             }
             line[i] = '\0';
-            argv[argCount++] = &line[i + 1]; //porque no tiene en cuenta muchos espacios
+            while(line[++i] == ARG_SEPARATOR); //to support more spaces between the arguments
+            if(line[i] != '\0') //if im not in the end of the string add the argument, this is for trailing space
+                argv[argCount++] = &line[i];
         }
     }
 
@@ -129,14 +115,14 @@ main(void)
 
             if(newProc < 0) {
                 WriteError("error forking child", OUTPUT);
-                continue; 
-            } 
+                continue;
+            }
         } else { //Execute with join
              const SpaceId newProc = Exec(line, argv, 1);
 
             if(newProc < 0) {
                 WriteError("error forking child", OUTPUT);
-                continue; 
+                continue;
             } else {
                 Join(newProc);
             }

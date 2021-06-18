@@ -33,10 +33,9 @@ Channel::Receive(int* message) //como usuario llamo a receive y espero que el re
     //se llamo a receive, por lo tanto hacemos la signal aca
 
     lock->Acquire(); //tomamos el lock
-    //aca podriamos chequear si esta vacio el buzon
-    if(buzon->IsEmpty()){
+
+    while(buzon->IsEmpty())
         conditionForReceivers->Wait();  //lo mando a dormir hasta que un sender mande algo
-    }
 
     *message = buzon->Pop();
     conditionForSenders->Signal(); //mando la señal al sender que esta esperando para seguir mandando
