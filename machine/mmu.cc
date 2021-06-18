@@ -33,6 +33,8 @@
 
 #include <stdio.h>
 
+int tlbTotal = 0;
+int tlbHitCount = 0;
 
 MMU::MMU()
 {
@@ -55,6 +57,8 @@ MMU::MMU()
 
 MMU::~MMU()
 {
+    double hitRatio =  (double)tlbHitCount/(double)tlbTotal;
+    DEBUG('m', "The tlb total searches was: %d.\nThe tlb hit count was: %d.\nHit ratio is: %.10f\n", tlbTotal, tlbHitCount, hitRatio);
     delete [] mainMemory;
     if (tlb != nullptr) {
         delete [] tlb;
@@ -195,14 +199,17 @@ MMU::RetrievePageEntry(unsigned vpn, TranslationEntry **entry) const
     } else {
         // Use the TLB.
 
+        tlbTotal++;
         unsigned i;
         for (i = 0; i < TLB_SIZE; i++) {
             TranslationEntry *e = &tlb[i];
             if (e->valid && e->virtualPage == vpn) {
                 *entry = e;  // FOUND!
+                tlbHitCount++;
                 return NO_EXCEPTION;
             }
-            DEBUG('e',"entrada TLB: %d, validez: %d, virtualPage de la TLB %d, vpn buscada: %d \n", i, e->valid, e->virtualPage, vpn);
+            DEBUG('m',"entrada TLB: %d, validez: %d, virtualPage de la TLB %d, vpn buscada: %d \n",
+                i, e->valid, e->virtualPage, vpn);
         }
 
         // Not found.

@@ -51,8 +51,8 @@ SynchDisk *synchDisk;
 Machine *machine;  ///< User program memory and registers.
 Bitmap *addressesBitMap;        ///< The bitmap to search and allocate processes into memory,
                               ///< this is used for the implementation of multiprgramming.
-Table<Thread*> *runningProcesses;                         
-SynchConsole* consoleSys;     
+Table<Thread*> *runningProcesses;
+SynchConsole* consoleSys;
 #endif
 
 #ifdef NETWORK
@@ -216,7 +216,7 @@ Initialize(int argc, char **argv)
     if (randomYield) {           // Start the timer (if needed).
         timer = new Timer(TimerInterruptHandler, 0, randomYield);
     }
-  
+
     threadToBeDestroyed = nullptr;
 
     // We did not explicitly allocate the current thread we are running in.

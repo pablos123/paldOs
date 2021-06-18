@@ -54,6 +54,9 @@ static int
 PrepareArguments(char *line, char **argv, unsigned argvSize)
 {
     // The user cannot have ARG_SEPARATOR inside an argument!
+    // And there will be no check for before-command trailing space.
+    // If the user input have before-command trailing space it
+    // will be just a forking error
 
     unsigned argCount;
     argCount = 0;
@@ -62,11 +65,7 @@ PrepareArguments(char *line, char **argv, unsigned argvSize)
         return 1;
     }
 
-    unsigned i = 0;
-
-    while(line[i++] == ARG_SEPARATOR);
-
-    for (; line[i] != '\0'; i++) {
+    for (unsigned i = 0; line[i] != '\0'; i++) {
         if (line[i] == ARG_SEPARATOR) {
             if (argCount == argvSize - 1) {
                 // The maximum of allowed arguments is exceeded, and
