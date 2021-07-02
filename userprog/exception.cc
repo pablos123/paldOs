@@ -31,6 +31,7 @@
 #include "threads/system.hh"
 #include "machine/mmu.hh"    //for the page size
 
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -198,10 +199,12 @@ SyscallHandler(ExceptionType _et)
             AddressSpace *space = new AddressSpace(executable);
             newThread->space = space;
 
+#ifndef DEMAND_LOADING
+            DEBUG('e', "Deleting executable...\n");
             delete executable;
+#endif
 
             newThread->Fork(StartProcess, (void *) argv);
-            //currentThread->Yield();
 
             machine->WriteRegister(2, spaceId);
 
@@ -467,8 +470,21 @@ static void TLBPageFaultHandler(ExceptionType exc) {
 
     TranslationEntry* pageTableEntry = currentThread->space->getPageTableEntry(vpn);
 
-    pageTableEntry->valid = true;
+#ifdef DEMAND_LOADING
+    DEBUG('e', "Loading page that does not exists in memory (demand loading)\n");
+    pageTableEntry->virtualPage  = vpn;
 
+    pageTableEntry->use          = false;
+    pageTableEntry->dirty        = false;
+    pageTableEntry->readOnly     = false;
+
+    if(pageTableEntry->physicalPage == INT_MAX) {
+        pageTableEntry->physicalPage = addressesBitMap->Find();
+        currentThread->space->LoadPage(vpnAddress, pageTableEntry->physicalPage);
+    }
+#endif
+
+    pageTableEntry->valid = true;
     unsigned tlbEntry = currentThread->numFaults % TLB_SIZE;
 
     machine->GetMMU()->tlb[tlbEntry] = *pageTableEntry;

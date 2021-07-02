@@ -35,7 +35,9 @@ StartProcess(const char *filename)
     AddressSpace *space = new AddressSpace(executable);
     currentThread->space = space;
 
+#ifndef DEMAND_LOADING
     delete executable;
+#endif
 
     space->InitRegisters();  // Set the initial register values.
     space->RestoreState();   // Load page table register.
@@ -105,11 +107,11 @@ SynchConsoleTest(const char *in, const char *out)
     // writeDone = new Semaphore("write done", 0);
 
     for (;;) {
-        
+
         char ch = synchConsole->ReadConsole();
 
         synchConsole->WriteConsole(ch);  // Echo it!
-        
+
         if (ch == 'q') {
             return;  // If `q`, then quit.
         }

@@ -16,6 +16,7 @@
 
 #include "filesys/file_system.hh"
 #include "machine/translation_entry.hh"
+#include "executable.hh"
 #include "lib/bitmap.hh"
 
 
@@ -47,9 +48,21 @@ public:
     void SaveState();
     void RestoreState();
 
+#ifdef DEMAND_LOADING
+    void LoadPage(unsigned, unsigned);
+    uint32_t codeSize;
+    uint32_t initDataSize;
+    uint32_t initDataFileAddr;
+    uint32_t codeFileAddr;
+    uint32_t exeSize;
+#endif
+
     TranslationEntry* getPageTableEntry(unsigned vpn);
 private:
 
+#ifdef DEMAND_LOADING
+    OpenFile* exeFile;
+#endif
     /// Assume linear page table translation for now!
     TranslationEntry *pageTable;
 

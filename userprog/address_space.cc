@@ -7,9 +7,8 @@
 
 
 #include "address_space.hh"
-#include "executable.hh"
 #include "threads/system.hh"
-
+#include <limits.h>
 #include <string.h>
 
 
@@ -20,8 +19,24 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
 {
     ASSERT(executable_file != nullptr);
 
+#ifdef DEMAND_LOADING
+    exeFile = executable_file;
+#endif
+
     Executable exe (executable_file);
     ASSERT(exe.CheckMagic()); //check if the executable is a nachos binary
+
+#ifdef DEMAND_LOADING
+    codeSize = exe.GetCodeSize();
+    initDataSize = exe.GetInitDataSize();
+
+    initDataFileAddr = exe.GetInFileInitDataAddr();
+    codeFileAddr = exe.GetInFileCodeAddr();
+
+    exeSize = exe.GetSize();
+
+    DEBUG('a',"Loading information: codeAddr: %d initDataAddr: %d, ", exe.GetCodeAddr(), exe.GetInitDataAddr());
+#endif
 
     // We need to increase the size to leave room for the stack.
     unsigned size = exe.GetSize() + USER_STACK_SIZE;
@@ -31,7 +46,7 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
 
     DEBUG('a', "clean count: %u, numPages: %u, size: %u\n", addressesBitMap->CountClear(), numPages, size);
 
-    ASSERT(numPages <= addressesBitMap->CountClear());
+    ASSERT(numPages <= addressesBitMap->CountClear()); //ver que onda este assert, habria que dejarlo si no hay DL
       // Check we are not trying to run anything too big -- at least until we
       // have virtual memory.
 
@@ -41,10 +56,16 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
     // First, set up the translation.
 
     pageTable = new TranslationEntry[numPages];
+
     for (unsigned i = 0; i < numPages; i++) {
-        pageTable[i].virtualPage  = i;
+        pageTable[i].virtualPage = i;
+#ifndef DEMAND_LOADING
         pageTable[i].physicalPage = addressesBitMap->Find();
         pageTable[i].valid        = true;
+#else
+        pageTable[i].physicalPage = INT_MAX;
+        pageTable[i].valid        = false;
+#endif
         pageTable[i].use          = false;
         pageTable[i].dirty        = false;
         pageTable[i].readOnly     = false;
@@ -52,6 +73,9 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
           // set its pages to be read-only.
     }
 
+#ifndef DEMAND_LOADING
+
+    DEBUG('e', "Not using demand loading...\n");
     //Debug:
     for(unsigned i = 0; i < numPages; i++)
       DEBUG('a', "using%u\n", pageTable[i].physicalPage);
@@ -68,12 +92,6 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
     // Then, copy in the code and data segments into memory.
     uint32_t codeSize = exe.GetCodeSize();
     uint32_t initDataSize = exe.GetInitDataSize();
-
-    //Debug:
-    // unsigned codePages = DivRoundUp(codeSize, PAGE_SIZE);
-    // DEBUG('a', "code pages: %u\n", codePages);
-    // unsigned dataPages = DivRoundUp(initDataSize, PAGE_SIZE);
-    // DEBUG('a', "data pages: %u\n", dataPages);
 
     if (codeSize > 0) {
         uint32_t virtualAddr = exe.GetCodeAddr();
@@ -102,7 +120,63 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
             exe.ReadDataBlock(&mainMemory[physicalAddressToWrite], 1, i);
         }
     }
+#else
+  DEBUG('e', "Using demand loading...\n");
+#endif
 }
+
+#ifdef DEMAND_LOADING
+void
+AddressSpace::LoadPage(unsigned vpnAddress, unsigned physicalPage) {
+
+    ASSERT(vpnAddress >= 0);
+    ASSERT(physicalPage != INT_MAX); //i  have a valid frame
+
+    Executable exe (exeFile);
+
+    DEBUG('e', "Loading page..., physicalPage: %d, vpnAddress: %d\n", physicalPage, vpnAddress);
+
+    // Get the physical address to write into
+    uint32_t physicalAddressToWrite = physicalPage * PAGE_SIZE;
+
+    // Clean the memory
+    char *mainMemory = machine->GetMMU()->mainMemory;
+    memset(&mainMemory[physicalAddressToWrite], 0, PAGE_SIZE); //looks fine
+
+    int vpn = vpnAddress / PAGE_SIZE;
+    unsigned vpnAddressToRead = vpn * PAGE_SIZE;
+
+    unsigned readed = 0; // I need to ensure that i have readed PAGE_SIZE bytes
+
+    if (codeSize > 0 && vpnAddressToRead < codeSize) { // C lazyness
+        DEBUG('e', "Reading code...\n");
+        uint32_t toRead = codeSize - vpnAddressToRead < PAGE_SIZE ? codeSize - vpnAddressToRead : PAGE_SIZE;
+
+        DEBUG('e',"Amount to be read: %d \n", toRead);
+        exe.ReadCodeBlock(&mainMemory[physicalAddressToWrite], PAGE_SIZE, vpnAddressToRead);
+
+        readed += toRead; //to check if there is some data left to read
+    }
+
+    if (initDataSize > 0 && vpnAddressToRead + readed < exe.GetInitDataAddr() + initDataSize &&
+        readed != PAGE_SIZE) {
+        DEBUG('e', "Reading data...\n");
+        uint32_t toRead = PAGE_SIZE - readed ;
+
+        // exe =|code....||data...||stadijwdjwidj|
+        readed ? //if read any bytes in the code section and i have not completed the PAGE_SIZE
+            exe.ReadDataBlock(&mainMemory[physicalAddressToWrite + readed], toRead,  0)
+        :
+            exe.ReadDataBlock(&mainMemory[physicalAddressToWrite], toRead, vpnAddressToRead - codeSize);
+    }
+
+    if (readed != PAGE_SIZE) { // Completes a page if needed
+        // Stack memory
+    }
+
+    return;
+}
+#endif
 
 /// Deallocate an address space.
 ///
@@ -112,10 +186,16 @@ AddressSpace::~AddressSpace()
     char *mainMemory = machine->GetMMU()->mainMemory;
 
     for (unsigned i = 0; i < numPages; i++) {
+#ifdef DEMAND_LOADING
+        if(pageTable[i].physicalPage == INT_MAX)
+            continue;
+#endif
       addressesBitMap->Clear(pageTable[i].physicalPage);
       memset(&mainMemory[pageTable[i].physicalPage * PAGE_SIZE], 0, PAGE_SIZE); //looks fine
     }
-
+#ifdef DEMAND_LOADING
+    delete exeFile;
+#endif
     delete [] pageTable;
 }
 

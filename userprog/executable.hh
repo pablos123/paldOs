@@ -47,6 +47,9 @@ public:
     uint32_t GetInitDataAddr() const;
     uint32_t GetUninitDataAddr() const;
 
+    uint32_t GetInFileCodeAddr() const;
+    uint32_t GetInFileInitDataAddr() const;
+
     /// The following methods read a block from a given program segment into
     /// memory.  Reads are possible only from the code and the initialized
     /// data segments, because these are the ones that actually encode their
