@@ -52,9 +52,8 @@ public:
     void LoadPage(unsigned, unsigned);
     uint32_t codeSize;
     uint32_t initDataSize;
-    uint32_t initDataFileAddr;
-    uint32_t codeFileAddr;
-    uint32_t exeSize;
+
+    uint32_t dataVirtualAddr;
 #endif
 
     TranslationEntry* getPageTableEntry(unsigned vpn);

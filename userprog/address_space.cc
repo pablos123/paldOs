@@ -30,10 +30,7 @@ AddressSpace::AddressSpace(OpenFile *executable_file)
     codeSize = exe.GetCodeSize();
     initDataSize = exe.GetInitDataSize();
 
-    initDataFileAddr = exe.GetInFileInitDataAddr();
-    codeFileAddr = exe.GetInFileCodeAddr();
-
-    exeSize = exe.GetSize();
+    dataVirtualAddr = exe.GetInitDataAddr();
 
     DEBUG('a',"Loading information: codeAddr: %d initDataAddr: %d, ", exe.GetCodeAddr(), exe.GetInitDataAddr());
 #endif
@@ -158,21 +155,32 @@ AddressSpace::LoadPage(unsigned vpnAddress, unsigned physicalPage) {
         readed += toRead; //to check if there is some data left to read
     }
 
-    if (initDataSize > 0 && vpnAddressToRead + readed < exe.GetInitDataAddr() + initDataSize &&
+    if (initDataSize > 0 && vpnAddressToRead + readed < dataVirtualAddr + initDataSize &&
         readed != PAGE_SIZE) {
-        DEBUG('e', "Reading data...\n");
-        uint32_t toRead = PAGE_SIZE - readed ;
 
-        // exe =|code....||data...||stadijwdjwidj|
+        // uint32_t toRead = PAGE_SIZE - readed; // We're not sure if we need to the check cases like: |code segment... |data segment: 128 ... 128 12|. Suppose we didnt read any code bytes, so
+                                                 // here we're reading 128 bytes intead of just 12, maybe we're reaing garbage in some point. So we think of:
+
+        uint32_t toRead = (dataVirtualAddr + initDataSize) - (vpnAddressToRead + readed) < (PAGE_SIZE - readed) ?
+                                (dataVirtualAddr + initDataSize) - (vpnAddressToRead + readed)
+                            :
+                                PAGE_SIZE - readed;
+
+        DEBUG('e', "Reading %d of data...\n", toRead);
+
         readed ? //if read any bytes in the code section and i have not completed the PAGE_SIZE
             exe.ReadDataBlock(&mainMemory[physicalAddressToWrite + readed], toRead,  0)
         :
             exe.ReadDataBlock(&mainMemory[physicalAddressToWrite], toRead, vpnAddressToRead - codeSize);
+
+        readed += toRead;
     }
 
-    if (readed != PAGE_SIZE) { // Completes a page if needed
-        // Stack memory
-    }
+    if(vpnAddressToRead > codeSize + initDataSize) { // We are reading from the stack
+        readed = PAGE_SIZE; // memset already done previously
+    };
+
+    //ASSERT(readed == PAGE_SIZE);
 
     return;
 }

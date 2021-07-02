@@ -80,18 +80,6 @@ Executable::GetCodeAddr() const
 }
 
 uint32_t
-Executable::GetInFileCodeAddr() const
-{
-    return header.code.inFileAddr;
-}
-
-uint32_t
-Executable::GetInFileInitDataAddr() const
-{
-    return header.initData.inFileAddr;
-}
-
-uint32_t
 Executable::GetInitDataAddr() const
 {
     return header.initData.virtualAddr;
