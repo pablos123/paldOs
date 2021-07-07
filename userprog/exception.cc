@@ -196,7 +196,8 @@ SyscallHandler(ExceptionType _et)
 
             SpaceId spaceId = (SpaceId)runningProcesses->Add(newThread);
 
-            AddressSpace *space = new AddressSpace(executable);
+            AddressSpace *space = new AddressSpace(executable, spaceId);
+
             newThread->space = space;
 
 #ifndef DEMAND_LOADING
@@ -479,6 +480,9 @@ static void TLBPageFaultHandler(ExceptionType exc) {
     pageTableEntry->readOnly     = false;
 
     if(pageTableEntry->physicalPage == INT_MAX) {
+        unsigned possibleFrame = addressesBitMap->Find();
+        if(possibleFrame == -1) //there aren't frames availables
+            EvacuatePage();
         pageTableEntry->physicalPage = addressesBitMap->Find();
         currentThread->space->LoadPage(vpnAddress, pageTableEntry->physicalPage);
     }

@@ -15,12 +15,23 @@
 /// First, set up the translation from program memory to physical memory.
 /// For now, this is really simple (1:1), since we are only uniprogramming,
 /// and we have a single unsegmented page table.
-AddressSpace::AddressSpace(OpenFile *executable_file)
+AddressSpace::AddressSpace(OpenFile *executable_file, SpaceId spaceId)
 {
     ASSERT(executable_file != nullptr);
 
+
 #ifdef DEMAND_LOADING
     exeFile = executable_file;
+    #ifdef SWAP
+        char* swapFile = new char[30];
+        sprintf(swapFile, "userprog/swap/SWAP.%d", spaceId);
+        if(!fileSystem->Create(swapFile, 0)) {
+            DEBUG('e', "Error: File not created.\n");
+        }
+        // We can have the approach of open the file every time we write in swap, but for testing we are forcing the OS to have
+        // very poor number of physical pages.
+        openSwapFile = fileSystem->Open(swapFile);
+    #endif
 #endif
 
     Executable exe (executable_file);
@@ -144,6 +155,13 @@ AddressSpace::LoadPage(unsigned vpnAddress, unsigned physicalPage) {
     unsigned vpnAddressToRead = vpn * PAGE_SIZE;
 
     unsigned readed = 0; // I need to ensure that i have readed PAGE_SIZE bytes
+
+    // if(page is in swap){
+        // read swapness
+    //}
+    // else{
+
+    // }
 
     if (codeSize > 0 && vpnAddressToRead < codeSize) { // C lazyness
         DEBUG('e', "Reading code...\n");

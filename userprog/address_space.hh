@@ -35,7 +35,7 @@ public:
     /// Parameters:
     /// * `executable_file` is the open file that corresponds to the
     ///   program; it contains the object code to load into memory.
-    AddressSpace(OpenFile *executable_file);
+    AddressSpace(OpenFile *executable_file, SpaceId spaceId);
 
     /// De-allocate an address space.
     ~AddressSpace();
@@ -60,6 +60,9 @@ public:
 private:
 
 #ifdef DEMAND_LOADING
+#ifdef SWAP
+    OpenFile* openSwapFile;
+#endif
     OpenFile* exeFile;
 #endif
     /// Assume linear page table translation for now!
