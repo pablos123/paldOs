@@ -8,8 +8,10 @@
 
 #include "address_space.hh"
 #include "threads/system.hh"
+#include <time.h>
 #include <limits.h>
 #include <string.h>
+#include <stdio.h>
 
 
 /// First, set up the translation from program memory to physical memory.
@@ -26,11 +28,18 @@ AddressSpace::AddressSpace(OpenFile *executable_file, SpaceId spaceId)
         char* swapFile = new char[30];
         sprintf(swapFile, "userprog/swap/SWAP.%d", spaceId);
         if(!fileSystem->Create(swapFile, 0)) {
-            DEBUG('e', "Error: File not created.\n");
+            DEBUG('e', "Error: Swap file not created.\n");
         }
         // We can have the approach of open the file every time we write in swap, but for testing we are forcing the OS to have
         // very poor number of physical pages.
         openSwapFile = fileSystem->Open(swapFile);
+
+        if(openSwapFile == nullptr) {
+            DEBUG('e', "Cannot open SWAP FILE!!!!\n");
+            ASSERT(false);
+        }
+
+        addressSpaceId = spaceId;  //to replace the coreMap later
     #endif
 #endif
 
@@ -53,11 +62,12 @@ AddressSpace::AddressSpace(OpenFile *executable_file, SpaceId spaceId)
     size = numPages * PAGE_SIZE;
 
     DEBUG('a', "clean count: %u, numPages: %u, size: %u\n", addressesBitMap->CountClear(), numPages, size);
-
-    ASSERT(numPages <= addressesBitMap->CountClear()); //ver que onda este assert, habria que dejarlo si no hay DL
-      // Check we are not trying to run anything too big -- at least until we
-      // have virtual memory.
-
+#ifndef SWAP
+    // por enunciado tenemos que todos los programas entran en memoria con demand loading
+    // Check we are not trying to run anything too big -- at least until we
+    // have virtual memory.
+    ASSERT(numPages <= addressesBitMap->CountClear());
+#endif
     DEBUG('a', "Initializing address space, num pages %u, size %u\n",
           numPages, size);
 
@@ -156,52 +166,119 @@ AddressSpace::LoadPage(unsigned vpnAddress, unsigned physicalPage) {
 
     unsigned readed = 0; // I need to ensure that i have readed PAGE_SIZE bytes
 
-    // if(page is in swap){
-        // read swapness
-    //}
-    // else{
+    if(pageTable[vpn].dirty) {
+        DEBUG('e',"Reading from swap at position %d...\n", vpn * PAGE_SIZE);
+        openSwapFile->ReadAt(&mainMemory[physicalAddressToWrite], PAGE_SIZE, vpn * PAGE_SIZE);
+    } else { //read from the exe file
+        if (codeSize > 0 && vpnAddressToRead < codeSize) {
+            DEBUG('e', "Reading code...\n");
+            uint32_t toRead = codeSize - vpnAddressToRead < PAGE_SIZE ? codeSize - vpnAddressToRead : PAGE_SIZE;
 
-    // }
+            DEBUG('e',"Amount to be read: %d \n", toRead);
+            exe.ReadCodeBlock(&mainMemory[physicalAddressToWrite], PAGE_SIZE, vpnAddressToRead);
 
-    if (codeSize > 0 && vpnAddressToRead < codeSize) { // C lazyness
-        DEBUG('e', "Reading code...\n");
-        uint32_t toRead = codeSize - vpnAddressToRead < PAGE_SIZE ? codeSize - vpnAddressToRead : PAGE_SIZE;
+            readed += toRead; //to check if there is some data left to read
+        }
 
-        DEBUG('e',"Amount to be read: %d \n", toRead);
-        exe.ReadCodeBlock(&mainMemory[physicalAddressToWrite], PAGE_SIZE, vpnAddressToRead);
+        if (initDataSize > 0 && vpnAddressToRead + readed < dataVirtualAddr + initDataSize &&
+            readed != PAGE_SIZE) {
 
-        readed += toRead; //to check if there is some data left to read
-    }
+            // uint32_t toRead = PAGE_SIZE - readed; // We're not sure if we need to the check cases like: |code segment... |data segment: 128 ... 128 12|. Suppose we didnt read any code bytes, so
+            //                                         // here we're reading 128 bytes intead of just 12, maybe we're reaing garbage in some point. So we think of:
 
-    if (initDataSize > 0 && vpnAddressToRead + readed < dataVirtualAddr + initDataSize &&
-        readed != PAGE_SIZE) {
+            uint32_t toRead = (dataVirtualAddr + initDataSize) - (vpnAddressToRead + readed) < (PAGE_SIZE - readed) ?
+                                    (dataVirtualAddr + initDataSize) - (vpnAddressToRead + readed)
+                                :
+                                    PAGE_SIZE - readed;
 
-        // uint32_t toRead = PAGE_SIZE - readed; // We're not sure if we need to the check cases like: |code segment... |data segment: 128 ... 128 12|. Suppose we didnt read any code bytes, so
-                                                 // here we're reading 128 bytes intead of just 12, maybe we're reaing garbage in some point. So we think of:
+            DEBUG('e', "Reading %d of data...\n", toRead);
 
-        uint32_t toRead = (dataVirtualAddr + initDataSize) - (vpnAddressToRead + readed) < (PAGE_SIZE - readed) ?
-                                (dataVirtualAddr + initDataSize) - (vpnAddressToRead + readed)
-                            :
-                                PAGE_SIZE - readed;
+            readed ? //if read any bytes in the code section and i have not completed the PAGE_SIZE
+                exe.ReadDataBlock(&mainMemory[physicalAddressToWrite + readed], toRead,  0)
+            :
+                exe.ReadDataBlock(&mainMemory[physicalAddressToWrite], toRead, vpnAddressToRead - codeSize);
 
-        DEBUG('e', "Reading %d of data...\n", toRead);
-
-        readed ? //if read any bytes in the code section and i have not completed the PAGE_SIZE
-            exe.ReadDataBlock(&mainMemory[physicalAddressToWrite + readed], toRead,  0)
-        :
-            exe.ReadDataBlock(&mainMemory[physicalAddressToWrite], toRead, vpnAddressToRead - codeSize);
-
-        readed += toRead;
+            readed += toRead;
+        }
     }
 
     if(vpnAddressToRead > codeSize + initDataSize) { // We are reading from the stack
         readed = PAGE_SIZE; // memset already done previously
     };
 
-    //ASSERT(readed == PAGE_SIZE);
+#ifdef SWAP
+    // //Update the coremap
+    // coreMap[physicalPage].spaceId = addressSpaceId;
+    // coreMap[physicalPage].virtualPage = vpn;
 
+    CoreMapEntry* chosenCoreMapEntry = &coreMap[physicalPage];
+    chosenCoreMapEntry->spaceId = addressSpaceId;
+    chosenCoreMapEntry->virtualPage = vpn;
+
+    DEBUG('e',"Marking physical page %u, with virtualPage %u from process %d in the coremap\n", physicalPage, vpn, addressSpaceId);
+
+    DEBUG('e',"State of the coremap: \n");
+    for(unsigned i = 0; i < NUM_PHYS_PAGES; i++){
+        DEBUG('e',"Physical page: %u, spaceId: %d, virtualPage of the mentioned process: %u \n", i, coreMap[i].spaceId, coreMap[i].virtualPage);
+    }
+#endif
+
+    //ASSERT(readed == PAGE_SIZE);
+    DEBUG('e', "finished loading page! :) \n");
     return;
 }
+
+#ifdef SWAP
+unsigned
+AddressSpace::EvacuatePage() {
+    //search for a victim
+    unsigned victim = PickVictim();
+    SpaceId victimSpace = coreMap[victim].spaceId;
+
+    if(runningProcesses->HasKey(victimSpace)) { // the victim process is alive
+        TranslationEntry* entry = runningProcesses->Get(victimSpace)->space->getPageTableEntry(coreMap[victim].virtualPage);
+
+        for(unsigned i = 0; i < TLB_SIZE; ++i) { // save the bits if the page is in the TLB
+            if(machine->GetMMU()->tlb[i].physicalPage == victim && machine->GetMMU()->tlb[i].valid) {
+                machine->GetMMU()->tlb[i].valid = false;
+                *entry = machine->GetMMU()->tlb[i];
+            }
+        }
+
+        //if dirty, we put the midified virtualPage into the N block of the swap file
+        DEBUG('e', "In evacuate page, the entry is: \n dirty: %d\n valid: %d\n", entry->dirty, entry->valid);
+        if(entry->dirty) {
+            char *mainMemory = machine->GetMMU()->mainMemory;
+            unsigned physicalAddressToWrite = victim * PAGE_SIZE;
+            DEBUG('e',"Writing into swap...\n");
+            runningProcesses->Get(coreMap[victim].spaceId)->space->openSwapFile->WriteAt(&mainMemory[physicalAddressToWrite], PAGE_SIZE, coreMap[victim].virtualPage * PAGE_SIZE);   //save the evacuated information in the N file block
+        }
+        // we do not update the coremap here because it always has to happen, regardless there is an EvacuatePage or not
+        // CoreMapEntry* chosenCoreMapEntry = &coreMap[victim];
+        // chosenCoreMapEntry->spaceId = currentThread->space->addressSpaceId;
+        // chosenCoreMapEntry->virtualPage = vpn;
+        //coreMap->Update(victim, chosenCoreMapEntry);
+
+        entry->physicalPage = INT_MAX; // mark the entry out of the memory for the pageTable
+        entry->valid = false; // mark the entry out of the memory for the machine
+    }
+    return victim;
+}
+
+unsigned
+AddressSpace::PickVictim() {
+
+    unsigned victim = rand() % NUM_PHYS_PAGES;
+
+    return victim;
+}
+
+SpaceId
+AddressSpace::GetSpaceId() {
+    return addressSpaceId;
+}
+#endif
+
 #endif
 
 /// Deallocate an address space.
@@ -264,7 +341,18 @@ AddressSpace::getPageTableEntry(unsigned vpn) {
 /// For now, nothing!
 void
 AddressSpace::SaveState()
-{}
+{
+#ifdef SWAP
+    for(unsigned i=0; i < TLB_SIZE; i++){
+        if(machine->GetMMU()->tlb[i].valid){
+            unsigned physicalPageToSave = machine->GetMMU()->tlb[i].physicalPage;
+            TranslationEntry* entry = getPageTableEntry(coreMap[physicalPageToSave].virtualPage);
+            machine->GetMMU()->tlb[i].valid = false;
+            *entry = machine->GetMMU()->tlb[i];
+        }
+    }
+#endif
+}
 
 /// On a context switch, restore the machine state so that this address space
 /// can run.
@@ -280,7 +368,7 @@ AddressSpace::RestoreState()
 #else
 
     //tenemos TLB, la limpiamos para cambiar de proceso
-    DEBUG('t', "Vaciando la TLB \n");
+    DEBUG('e', "Vaciando la TLB !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
     for(unsigned i=0; i < TLB_SIZE; i++){
       machine->GetMMU()->tlb[i].valid = false;
     }

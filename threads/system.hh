@@ -25,6 +25,15 @@ extern void Initialize(int argc, char **argv);
 // Cleanup, called when Nachos is done.
 extern void Cleanup();
 
+#ifdef SWAP
+typedef struct {
+    SpaceId spaceId;
+    unsigned virtualPage;
+} CoreMapEntry;
+
+extern CoreMapEntry* coreMap;
+#endif
+
 
 extern Thread *currentThread;        ///< The thread holding the CPU.
 extern Thread *threadToBeDestroyed;  ///< The thread that just finished.

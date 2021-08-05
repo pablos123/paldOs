@@ -32,7 +32,9 @@ Interrupt *interrupt;         ///< Interrupt status.
 Statistics *stats;            ///< Performance metrics.
 Timer *timer;                 ///< The hardware timer device, for invoking
                               ///< context switches.
-
+#ifdef SWAP
+CoreMapEntry* coreMap;
+#endif
 // 2007, Jose Miguel Santos Espino
 PreemptiveScheduler *preemptiveScheduler = nullptr;
 const long long DEFAULT_TIME_SLICE = 50000;
@@ -248,6 +250,10 @@ Initialize(int argc, char **argv)
         timer = new Timer(TimerInterruptHandler, 0, false); //fixed time slicing every TIMER_TICKS
 #endif
 
+#ifdef SWAP
+coreMap = new CoreMapEntry[NUM_PHYS_PAGES];
+#endif
+
 #ifdef FILESYS
     synchDisk = new SynchDisk("DISK");
 #endif
@@ -279,6 +285,10 @@ Cleanup()
     delete runningProcesses;
     delete addressesBitMap;
     delete machine;
+#endif
+
+#ifdef SWAP
+    //delete coreMap;
 #endif
 
 #ifdef FILESYS_NEEDED

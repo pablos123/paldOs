@@ -81,10 +81,17 @@
 
 #include <stdio.h>
 #include <string.h>
+
 #ifdef NETWORK
+#ifndef SWAP
     #include <stdlib.h>
 #endif
+#endif
 
+#ifdef SWAP
+    #include <time.h>
+    #include <stdlib.h>
+#endif
 
 // External functions used by this file.
 
@@ -144,6 +151,13 @@ main(int argc, char **argv)
         }
 #endif
 #ifdef USER_PROGRAM
+
+#ifdef VMEM
+#ifdef SWAP
+srand(time(NULL));
+#endif
+#endif
+
         if (!strcmp(*argv, "-x")) {          // Run a user program.
             ASSERT(argc > 1);
             StartProcess(*(argv + 1));
@@ -162,7 +176,7 @@ main(int argc, char **argv)
         }
         else if (!strcmp(*argv, "-tsc")) {  // Test the console.
             if (argc == 1) {
-                SynchConsoleTest(nullptr, nullptr); 
+                SynchConsoleTest(nullptr, nullptr);
             } else {
                 ASSERT(argc > 2);
                 SynchConsoleTest(*(argv + 1), *(argv + 2));

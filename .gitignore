@@ -34,3 +34,7 @@ bin/readnoff
 userland/echo
 userland/tiny_shell
 userland/touch
+userland/cat
+userland/cp
+userland/rm
+userland/swap/*

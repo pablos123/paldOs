@@ -159,7 +159,7 @@ SyscallHandler(ExceptionType _et)
             char** argv = nullptr;
 
             if (processAddr == 0) {
-                DEBUG('e', "Error: address to filename string is null.\n");
+                DEBUG('e', "Error in Exec: address to filename string is null.\n");
                 machine->WriteRegister(2, -1);
                 break;
             }
@@ -215,6 +215,12 @@ SyscallHandler(ExceptionType _et)
         case SC_JOIN: {
             SpaceId spaceId = machine->ReadRegister(4);
 
+            DEBUG('e', "Joining process %d\n", spaceId);
+
+            if(!spaceId) {
+                DEBUG('e', "WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFf");
+            }
+
             if(! runningProcesses->HasKey(spaceId)){
                 DEBUG('e',"Error en Join: id del proceso inexistente");
                 machine->WriteRegister(2, -1);
@@ -232,7 +238,7 @@ SyscallHandler(ExceptionType _et)
         case SC_CREATE: {
             int filenameAddr = machine->ReadRegister(4);
             if (filenameAddr == 0) {
-                DEBUG('e', "Error: address to filename string is null.\n");
+                DEBUG('e', "Error in Create: address to filename string is null.\n");
                 machine->WriteRegister(2, 1);
                 break;
             }
@@ -258,9 +264,10 @@ SyscallHandler(ExceptionType _et)
         }
 
         case SC_REMOVE:{
+            DEBUG('e',"About to remove a file...\n");
             int filenameAddr = machine->ReadRegister(4);
             if (filenameAddr == 0) {
-                DEBUG('e', "Error: address to filename string is null.\n");
+                DEBUG('e', "Error in remove: address to filename string is null.\n");
                 machine->WriteRegister(2, 1);
                 break;
             }
@@ -274,7 +281,7 @@ SyscallHandler(ExceptionType _et)
                 break;
             }
             if(!fileSystem->Remove(filename)){
-                DEBUG('e', "Error: File not removed.\n");
+                DEBUG('e', "Error: File %s not removed.\n",filename);
                 machine->WriteRegister(2, 1);
                 break;
             }
@@ -290,7 +297,7 @@ SyscallHandler(ExceptionType _et)
             int filenameAddr = machine->ReadRegister(4);
 
             if (filenameAddr == 0) {
-                DEBUG('e', "Error: address to filename string is null.\n");
+                DEBUG('e', "Error in Open: address to filename string is null.\n");
                 machine->WriteRegister(2, -1);
                 break;
             }
@@ -348,17 +355,17 @@ SyscallHandler(ExceptionType _et)
             int fid = machine->ReadRegister(6);
 
             if (usrStringAddr == 0) {
-                DEBUG('e', "Error: address string is null.\n");
+                DEBUG('e', "Error in Read: address string is null.\n");
                 machine->WriteRegister(2, 0);
                 break;
             }
             if (nbytes <= 0){
-                DEBUG('e', "Error: invalid number of bytes.\n");
+                DEBUG('e', "Error in Read: invalid number of bytes.\n");
                 machine->WriteRegister(2, 0);
                 break;
             }
             if(fid < 0){
-                DEBUG('e', "Invalid file descriptor ID \n");    //to avoid the assert in Remove function
+                DEBUG('e', "Invalid file descriptor ID to Read\n");    //to avoid the assert in Remove function
                 machine->WriteRegister(2, 0);
                 break;
             }
@@ -401,17 +408,17 @@ SyscallHandler(ExceptionType _et)
 
 
             if (usrStringAddr == 0) {
-                DEBUG('e', "Error: address string is null.\n");
+                DEBUG('e', "Error in Write: address string is null.\n");
                 machine->WriteRegister(2, 0);
                 break;
             }
             if (nbytes <= 0){
-                DEBUG('e', "Error: invalid number of bytes.\n");
+                DEBUG('e', "Error in Write: invalid number of bytes.\n");
                 machine->WriteRegister(2, 0);
                 break;
             }
             if(fid < 0){
-                DEBUG('e', "Invalid file descriptor ID \n");    //to avoid the assert in Remove function
+                DEBUG('e', "Invalid file descriptor ID to Write\n");    //to avoid the assert in Remove function
                 machine->WriteRegister(2, 0);
                 break;
             }
@@ -456,14 +463,29 @@ SyscallHandler(ExceptionType _et)
     IncrementPC();
 }
 
+
+static void print_page_table(TranslationEntry* entry) {
+    DEBUG('e', "La page table entry es: \n");
+    DEBUG('e', "valid: %d\ndirty: %d\n", entry->valid, entry->dirty);
+    return;
+}
+
+static void print_tlb(TranslationEntry* entry) {
+    DEBUG('e', "La page table entry es: \n");
+    DEBUG('e', "valid: %d\ndirty: %d\n", entry->valid, entry->dirty);
+    return;
+}
+
+
 static void TLBPageFaultHandler(ExceptionType exc) {
 
 #ifndef USE_TLB //Si no uso tlb entonces este error no deberíamos catchearlo (por ahora...)
+
     DefaultHandler(exc);
+
 #else
     int vpnAddress = machine->ReadRegister(BAD_VADDR_REG);
 
-    DEBUG('a',"There was a page fault. Searching... vpnAdress: %d \n", vpnAddress);
     DEBUG('e',"There was a page fault. Searching... vpnAdress: %d \n", vpnAddress);
 
     int vpn = vpnAddress / PAGE_SIZE;
@@ -472,24 +494,53 @@ static void TLBPageFaultHandler(ExceptionType exc) {
     TranslationEntry* pageTableEntry = currentThread->space->getPageTableEntry(vpn);
 
 #ifdef DEMAND_LOADING
-    DEBUG('e', "Loading page that does not exists in memory (demand loading)\n");
-    pageTableEntry->virtualPage  = vpn;
 
-    pageTableEntry->use          = false;
-    pageTableEntry->dirty        = false;
-    pageTableEntry->readOnly     = false;
+    //pageTableEntry->virtualPage  = vpn; redundant
+
+    //pageTableEntry->use          = true;
+    //pageTableEntry->dirty        = false; //OJO CON ESTOOOOOOOOOOOOOOOOOO porque siempre va a ser falso
+
+    pageTableEntry->valid = true;
 
     if(pageTableEntry->physicalPage == INT_MAX) {
-        unsigned possibleFrame = addressesBitMap->Find();
-        if(possibleFrame == -1) //there aren't frames availables
-            EvacuatePage();
-        pageTableEntry->physicalPage = addressesBitMap->Find();
+        DEBUG('e', "Loading page that does not exists in memory (demand loading)\n");
+        int possibleFrame = addressesBitMap->Find();
+        unsigned frame = (unsigned)possibleFrame;
+        DEBUG('e',"frame to use: %u, possibleFrame: %d\n",frame, possibleFrame);
+#ifdef SWAP
+        if(possibleFrame == -1) { //there aren't frames availables
+            DEBUG('e', "I want to evacuate a page\n");
+            DEBUG('e',"The page dirtyness is: %d\n", pageTableEntry->dirty);
+            frame = currentThread->space->EvacuatePage(); //cleans up a physical page and updates the coreMap,
+                                                             //returns the new physical page for use
+            possibleFrame = frame;
+
+            DEBUG('e',"frame to use: %u, possibleFrame: %d\n",frame, possibleFrame);
+            ASSERT(possibleFrame != -1);
+            //ASSERT(false);
+        }
+#endif
+        pageTableEntry->physicalPage = frame;
+
         currentThread->space->LoadPage(vpnAddress, pageTableEntry->physicalPage);
     }
 #endif
 
-    pageTableEntry->valid = true;
     unsigned tlbEntry = currentThread->numFaults % TLB_SIZE;
+
+    if(machine->GetMMU()->tlb[tlbEntry].valid) {    // we are going to occupy a page that belongs to this proccess
+        DEBUG('e', "The tlb entry was valid, saving the tlb state...\n");
+        machine->GetMMU()->tlb[tlbEntry].valid = false;
+        unsigned virtualPage = machine->GetMMU()->tlb[tlbEntry].virtualPage;
+        DEBUG('e',"tlb page: \n");
+        print_page_table(&machine->GetMMU()->tlb[tlbEntry]);
+        TranslationEntry* entryToSave = currentThread->space->getPageTableEntry(virtualPage);
+        DEBUG('e',"saving in: \n");
+        print_page_table(entryToSave);
+        *entryToSave = machine->GetMMU()->tlb[tlbEntry];
+        DEBUG('e',"TLB entry saved: \n");
+        print_page_table(entryToSave);
+    }
 
     machine->GetMMU()->tlb[tlbEntry] = *pageTableEntry;
 

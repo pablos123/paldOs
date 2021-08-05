@@ -16,8 +16,14 @@
 
 #include "filesys/file_system.hh"
 #include "machine/translation_entry.hh"
+#include "syscall.h"
 #include "executable.hh"
 #include "lib/bitmap.hh"
+
+#ifdef SWAP
+#include <time.h>
+#include <stdlib.h>
+#endif
 
 
 const unsigned USER_STACK_SIZE = 1256;  ///< Increase this as necessary!
@@ -47,6 +53,11 @@ public:
 
     void SaveState();
     void RestoreState();
+#ifdef SWAP
+    unsigned EvacuatePage();
+    unsigned PickVictim();
+    SpaceId GetSpaceId();
+#endif
 
 #ifdef DEMAND_LOADING
     void LoadPage(unsigned, unsigned);
@@ -62,6 +73,7 @@ private:
 #ifdef DEMAND_LOADING
 #ifdef SWAP
     OpenFile* openSwapFile;
+    SpaceId   addressSpaceId;
 #endif
     OpenFile* exeFile;
 #endif

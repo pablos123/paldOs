@@ -1,4 +1,4 @@
-/// Routines to manage threads. 
+/// Routines to manage threads.
 ///
 /// There are four main operations:
 ///
@@ -52,7 +52,7 @@ Thread::Thread(const char *threadName, bool isJoinable, size_t priorityParam)
     priority = priorityParam;
 
     numFaults = 0;
- 
+
     joinChannel = new Channel("Join Channel");
 
 #ifdef USER_PROGRAM
@@ -84,6 +84,11 @@ Thread::~Thread()
 
 #ifdef USER_PROGRAM
     delete joinChannel;
+#ifdef DEMAND_LOADING
+#ifdef SWAP
+    runningProcesses->Remove(space->GetSpaceId());
+#endif
+#endif
     delete space;
     delete openedFilesTable;
 #endif
