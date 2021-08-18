@@ -30,6 +30,7 @@
 
 #include "mmu.hh"
 #include "endianness.hh"
+#include "threads/system.hh"
 
 #include <stdio.h>
 
@@ -198,14 +199,20 @@ MMU::RetrievePageEntry(unsigned vpn, TranslationEntry **entry) const
 
     } else {
         // Use the TLB.
-
+#ifdef PRPOLICY_LRU
+        references_done++;
+#endif
         tlbTotal++;
+
         unsigned i;
         for (i = 0; i < TLB_SIZE; i++) {
             TranslationEntry *e = &tlb[i];
             if (e->valid && e->virtualPage == vpn) {
                 *entry = e;  // FOUND!
                 tlbHitCount++;
+#ifdef PRPOLICY_LRU
+                coreMap[e->physicalPage].last_use_counter = references_done;
+#endif
                 return NO_EXCEPTION;
             }
             DEBUG('m',"entrada TLB: %d, validez: %d, virtualPage de la TLB %d, vpn buscada: %d \n",

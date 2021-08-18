@@ -233,6 +233,7 @@ unsigned
 AddressSpace::EvacuatePage() {
     //search for a victim
     unsigned victim = PickVictim();
+    DEBUG('e',"VICTIM PICKED in EvacuatePage: %u\n", victim);
     SpaceId victimSpace = coreMap[victim].spaceId;
 
     if(runningProcesses->HasKey(victimSpace)) { // the victim process is alive
@@ -267,8 +268,29 @@ AddressSpace::EvacuatePage() {
 
 unsigned
 AddressSpace::PickVictim() {
+    unsigned victim = 0;
+#ifdef PRPOLICY_FIFO
+    victim = fifo_counter % NUM_PHYS_PAGES;
+    fifo_counter++;
+    DEBUG('e', "fifo_counter: %u\n", fifo_counter);
+#elif PRPOLICY_LRU
+    if(references_done == UINT_MAX) {
+        references_done = 0;
+        for(unsigned i = 0; i < NUM_PHYS_PAGES; i++)    // to avoid using the same frame once the UINT_MAX is reached
+            coreMap[i].last_use_counter = 0;
+    }
 
-    unsigned victim = rand() % NUM_PHYS_PAGES;
+    unsigned min = UINT_MAX;
+    for(unsigned i = 0; i < NUM_PHYS_PAGES; i++) {
+        if(coreMap[i].last_use_counter < min) {
+            min = coreMap[i].last_use_counter;
+            victim = i;
+        }
+    }
+
+#else
+    victim = rand() % NUM_PHYS_PAGES;
+#endif
 
     return victim;
 }

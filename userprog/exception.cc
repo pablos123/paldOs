@@ -464,17 +464,17 @@ SyscallHandler(ExceptionType _et)
 }
 
 
-static void print_page_table(TranslationEntry* entry) {
-    DEBUG('e', "La page table entry es: \n");
-    DEBUG('e', "valid: %d\ndirty: %d\n", entry->valid, entry->dirty);
-    return;
-}
+// static void print_page_table(TranslationEntry* entry) {
+//     DEBUG('e', "La page table entry es: \n");
+//     DEBUG('e', "valid: %d\ndirty: %d\n", entry->valid, entry->dirty);
+//     return;
+// }
 
-static void print_tlb(TranslationEntry* entry) {
-    DEBUG('e', "La page table entry es: \n");
-    DEBUG('e', "valid: %d\ndirty: %d\n", entry->valid, entry->dirty);
-    return;
-}
+// static void print_tlb(TranslationEntry* entry) {
+//     DEBUG('e', "La page table entry es: \n");
+//     DEBUG('e', "valid: %d\ndirty: %d\n", entry->valid, entry->dirty);
+//     return;
+// }
 
 
 static void TLBPageFaultHandler(ExceptionType exc) {
@@ -502,7 +502,7 @@ static void TLBPageFaultHandler(ExceptionType exc) {
 
     pageTableEntry->valid = true;
 
-    if(pageTableEntry->physicalPage == INT_MAX) {
+    if(pageTableEntry->physicalPage == INT_MAX) {   // the page is not in main memory
         DEBUG('e', "Loading page that does not exists in memory (demand loading)\n");
         int possibleFrame = addressesBitMap->Find();
         unsigned frame = (unsigned)possibleFrame;
@@ -522,6 +522,11 @@ static void TLBPageFaultHandler(ExceptionType exc) {
 #endif
         pageTableEntry->physicalPage = frame;
 
+#ifdef PRPOLICY_LRU
+        references_done++;
+        coreMap[frame].last_use_counter = references_done;
+#endif
+
         currentThread->space->LoadPage(vpnAddress, pageTableEntry->physicalPage);
     }
 #endif
@@ -533,13 +538,13 @@ static void TLBPageFaultHandler(ExceptionType exc) {
         machine->GetMMU()->tlb[tlbEntry].valid = false;
         unsigned virtualPage = machine->GetMMU()->tlb[tlbEntry].virtualPage;
         DEBUG('e',"tlb page: \n");
-        print_page_table(&machine->GetMMU()->tlb[tlbEntry]);
+        //print_page_table(&machine->GetMMU()->tlb[tlbEntry]);
         TranslationEntry* entryToSave = currentThread->space->getPageTableEntry(virtualPage);
         DEBUG('e',"saving in: \n");
-        print_page_table(entryToSave);
+        //print_page_table(entryToSave);
         *entryToSave = machine->GetMMU()->tlb[tlbEntry];
         DEBUG('e',"TLB entry saved: \n");
-        print_page_table(entryToSave);
+        //print_page_table(entryToSave);
     }
 
     machine->GetMMU()->tlb[tlbEntry] = *pageTableEntry;

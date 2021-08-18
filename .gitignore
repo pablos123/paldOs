@@ -37,4 +37,4 @@ userland/touch
 userland/cat
 userland/cp
 userland/rm
-userprog/swap/*
+userprog/swap/SWAP.*

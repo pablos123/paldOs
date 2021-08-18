@@ -417,7 +417,18 @@ mips_sim.o: ../machine/mips_sim.cc ../machine/instruction.hh \
 mmu.o: ../machine/mmu.cc ../machine/mmu.hh ../machine/exception_type.hh \
  ../machine/disk.hh ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh \
  ../lib/debug_opts.hh ../machine/system_dep.hh \
- ../machine/translation_entry.hh ../machine/endianness.hh
+ ../machine/translation_entry.hh ../machine/endianness.hh \
+ ../threads/system.hh ../threads/thread.hh ../machine/machine.hh \
+ ../machine/single_stepper.hh ../userprog/address_space.hh \
+ ../filesys/file_system.hh ../filesys/open_file.hh \
+ ../filesys/directory_entry.hh ../machine/disk.hh \
+ ../machine/translation_entry.hh ../userprog/syscall.h \
+ ../userprog/executable.hh ../bin/noff.h ../filesys/open_file.hh \
+ ../lib/bitmap.hh ../lib/utility.hh ../lib/table.hh ../lib/list.hh \
+ ../threads/scheduler.hh ../lib/list.hh ../machine/interrupt.hh \
+ ../machine/statistics.hh ../machine/timer.hh ../machine/synch_console.hh \
+ ../machine/console.hh ../threads/lock.hh ../threads/semaphore.hh \
+ ../threads/semaphore.hh ../filesys/synch_disk.hh
 synch_console.o: ../machine/synch_console.cc ../machine/synch_console.hh \
  ../machine/console.hh ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh \
  ../lib/debug_opts.hh ../machine/system_dep.hh ../threads/lock.hh \

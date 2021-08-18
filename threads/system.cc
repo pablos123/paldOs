@@ -61,6 +61,15 @@ SynchConsole* consoleSys;
 PostOffice *postOffice;
 #endif
 
+#ifdef PRPOLICY_FIFO
+unsigned fifo_counter;
+#endif
+
+#ifdef PRPOLICY_LRU
+unsigned references_done;
+#endif
+
+
 // External definition, to allow us to take a pointer to this function.
 extern void Cleanup();
 
@@ -264,6 +273,14 @@ coreMap = new CoreMapEntry[NUM_PHYS_PAGES];
 
 #ifdef NETWORK
     postOffice = new PostOffice(netname, rely, 10);
+#endif
+
+#ifdef PRPOLICY_FIFO
+    fifo_counter = 0;
+#endif
+
+#ifdef PRPOLICY_LRU
+    references_done = 0;
 #endif
 }
 

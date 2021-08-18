@@ -29,11 +29,22 @@ extern void Cleanup();
 typedef struct {
     SpaceId spaceId;
     unsigned virtualPage;
+#ifdef PRPOLICY_LRU
+    unsigned last_use_counter;  // this will represent the last recently use page.
+                                // to search for the victim we will search directly for the minimun value of the array
+#endif
 } CoreMapEntry;
 
 extern CoreMapEntry* coreMap;
 #endif
 
+#ifdef PRPOLICY_FIFO
+extern unsigned fifo_counter;
+#endif
+
+#ifdef PRPOLICY_LRU
+extern unsigned references_done;
+#endif
 
 extern Thread *currentThread;        ///< The thread holding the CPU.
 extern Thread *threadToBeDestroyed;  ///< The thread that just finished.
