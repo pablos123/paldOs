@@ -495,11 +495,6 @@ static void TLBPageFaultHandler(ExceptionType exc) {
 
 #ifdef DEMAND_LOADING
 
-    //pageTableEntry->virtualPage  = vpn; redundant
-
-    //pageTableEntry->use          = true;
-    //pageTableEntry->dirty        = false; //OJO CON ESTOOOOOOOOOOOOOOOOOO porque siempre va a ser falso
-
     pageTableEntry->valid = true;
 
     if(pageTableEntry->physicalPage == INT_MAX) {   // the page is not in main memory
@@ -537,13 +532,13 @@ static void TLBPageFaultHandler(ExceptionType exc) {
         DEBUG('e', "The tlb entry was valid, saving the tlb state...\n");
         machine->GetMMU()->tlb[tlbEntry].valid = false;
         unsigned virtualPage = machine->GetMMU()->tlb[tlbEntry].virtualPage;
-        DEBUG('e',"tlb page: \n");
+        //DEBUG('e',"tlb page: \n");
         //print_page_table(&machine->GetMMU()->tlb[tlbEntry]);
         TranslationEntry* entryToSave = currentThread->space->getPageTableEntry(virtualPage);
-        DEBUG('e',"saving in: \n");
+        //DEBUG('e',"saving in: \n");
         //print_page_table(entryToSave);
         *entryToSave = machine->GetMMU()->tlb[tlbEntry];
-        DEBUG('e',"TLB entry saved: \n");
+        //DEBUG('e',"TLB entry saved: \n");
         //print_page_table(entryToSave);
     }
 
