@@ -38,3 +38,5 @@ userland/cat
 userland/cp
 userland/rm
 userprog/swap/SWAP.*
+filesys/DISK
+DISK

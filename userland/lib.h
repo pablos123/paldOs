@@ -1,37 +1,36 @@
 #include "syscall.h"
 
-inline unsigned strlen(const char *s) {
+unsigned strlen(const char *s) {
     unsigned iter = 0;
     for(; s[iter] != '\0'; ++iter);
     return iter;
 }
 
 void putss(const char *s) {
-    Write(s, sizeof(s), CONSOLE_OUTPUT);
+    Write(s, strlen(s), CONSOLE_OUTPUT);
+    Write("\n", 1, CONSOLE_OUTPUT);
+    return;
 }
 
-static int elevar(int b, int e) {
-    if(e == 0) {
-        return b;
+void itoa(int n, char* c) {
+    if (n == 0) {
+        c[0] = 48;
+        c[1] = '\0';
+        return;
+    }
+    int i = 0;
+    char dumb[9];
+    while(n > 0) {
+        int mod = n % 10;
+        dumb[i] = mod + 48;
+        n /= 10;
+        i++;
     }
 
-    return b * elevar(b, e - 1);
-}
+    int counter = i;
+    for(int j = 0; j < i; j++)
+        c[j] = dumb[--counter];
 
-void itoa(int i, char* c) {
-
-    int counter = 0;
-    char dummy[100];
-    char digit;
-    do
-    {
-        char digit = (char)(i/ elevar(10,counter));
-        dummy[0] = digit;
-        counter++;
-    } while (digit >= 1);
-    int estopper = counter;
-    for(int i = 0; i < estopper; i++,counter--){
-        c[i] = dummy[counter];
-    }
+    c[i] = '\0';
     return;
 }

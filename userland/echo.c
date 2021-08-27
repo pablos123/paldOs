@@ -31,8 +31,8 @@ PrintChar(char c)
 int
 main(int argc, char *argv[])
 {
-    for (unsigned i = 1; i < argc; i++) {
-        if (i != 1) {
+    for (unsigned i = 0; i < argc; i++) {
+        if (i != 0) {
             PrintChar(' ');
         }
         PrintString(argv[i]);

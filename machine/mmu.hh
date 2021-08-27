@@ -20,7 +20,7 @@ const unsigned PAGE_SIZE = SECTOR_SIZE;  ///< Set the page size equal to the
                                          ///< disk sector size, for
                                          ///< simplicity.
 #ifdef SWAP
-const unsigned NUM_PHYS_PAGES = 8;
+const unsigned NUM_PHYS_PAGES = 12;
 #else
 const unsigned NUM_PHYS_PAGES = 64;
 #endif

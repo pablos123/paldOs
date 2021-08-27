@@ -7,7 +7,7 @@
 
 
 #include "syscall.h"
-
+#include "lib.h"
 
 #define DIM  1024
 
@@ -19,14 +19,18 @@ main(void)
 {
     int i, j, tmp;
 
+    char c[8];
+
     // First initialize the array, in reverse sorted order.
     for (i = 0; i < DIM; i++) {
         A[i] = DIM - i;
+        //itoa(A[i], c);
+        //putss(c);
     }
 
-    // Then sort!
+    // Then (bubble) sort !
     for (i = 0; i < DIM - 1; i++) {
-        for (j = i; j < DIM - 1 - i; j++) {
+        for (j = 0; j < DIM - 1 - i; j++) {
             if (A[j] > A[j + 1]) {  // Out of order -> need to swap!
                 tmp = A[j];
                 A[j] = A[j + 1];
@@ -35,6 +39,10 @@ main(void)
         }
     }
 
-    // And then we're done -- should be 0!
+    putss("The first element of the sorted array is: ");
+    itoa(A[0], c);
+    putss(c);
+
+    // And then we're done -- should be 111111!!!!!!!!!!!!
     return A[0];
 }

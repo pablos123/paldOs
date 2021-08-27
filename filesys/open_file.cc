@@ -63,9 +63,8 @@ OpenFile::Read(char *into, unsigned numBytes)
     ASSERT(into != nullptr);
     ASSERT(numBytes > 0);
 
-    DEBUG('e', "no se que son estas cosas: nb: %d, sp: %d", numBytes, seekPosition);
     int result = ReadAt(into, numBytes, seekPosition);
-    printf("cacaman");
+
     seekPosition += result;
     return result;
 }
@@ -76,9 +75,6 @@ OpenFile::Write(const char *into, unsigned numBytes)
     ASSERT(into != nullptr);
     ASSERT(numBytes > 0);
 
-    DEBUG('e',"paso por write de open_file.cc \n");
-    printf("printeo que paso por write");
-    DEBUG('f',"FFFFpaso por write de open_file.cc \n");
     int result = WriteAt(into, numBytes, seekPosition);
     seekPosition += result;
     return result;
@@ -120,7 +116,6 @@ OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position)
     char *buf;
 
     if (position >= fileLength) {
-        printf("seekposition mas grande que el la longitud del archivo.\n");
         DEBUG('f', "Reading error position greater or equal than fileLength.\n");
         return 0;  // Check request.
     }
