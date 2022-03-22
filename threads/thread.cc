@@ -51,6 +51,8 @@ Thread::Thread(const char *threadName, bool isJoinable, size_t priorityParam)
     joinable = isJoinable;
     priority = priorityParam;
 
+    Print();
+
     numFaults = 0;
 
     joinChannel = new Channel("Join Channel");
@@ -129,8 +131,7 @@ Thread::Fork(VoidFunctionPtr func, void *arg)
 {
     ASSERT(func != nullptr);
 
-    DEBUG('t', "Forking thread \"%s\" with func = %p, arg = %p\n",
-          name, func, arg);
+    DEBUG('t', "Forking thread \"%s\"\n", name);
 
     StackAllocate(func, arg);
 
@@ -176,7 +177,7 @@ Thread::GetName() const
 void
 Thread::Print() const
 {
-    printf("%s, ", name);
+    DEBUG('t', "name of the new thread: %s\n", name);
 }
 
 /// Called by `ThreadRoot` when a thread is done executing the forked
@@ -196,9 +197,9 @@ Thread::Finish(int st)
     interrupt->SetLevel(INT_OFF);
     ASSERT(this == currentThread);
 
-    if (joinable){
+    if (joinable)
         joinChannel->Send(st);
-    }
+    
     DEBUG('t', "Finishing thread \"%s\"\n", GetName());
 
     threadToBeDestroyed = currentThread;
@@ -228,10 +229,10 @@ Thread::Yield()
 
     ASSERT(this == currentThread);
 
-    DEBUG('t', "Yielding thread \"%s\"\n", GetName());
-
     Thread *nextThread = scheduler->FindNextToRun();
-    if (nextThread != nullptr) {
+
+    if (nextThread != nullptr && nextThread != currentThread) {
+        DEBUG('t', "Yielding thread \"%s\" to %s\n", currentThread->GetName(), nextThread->GetName());
         scheduler->ReadyToRun(this);
         scheduler->Run(nextThread);
     }
@@ -263,6 +264,7 @@ Thread::Sleep()
 
     Thread *nextThread;
     status = BLOCKED;
+    // Wait for another thread to come in
     while ((nextThread = scheduler->FindNextToRun()) == nullptr) {
         interrupt->Idle();  // No one to run, wait for an interrupt.
     }
@@ -273,12 +275,13 @@ Thread::Sleep()
 int Thread::Join(){
     ASSERT(joinable);
 
-    int value = 0;
-    joinChannel->Receive(&value);
+    int* value = nullptr;
+    *value = 0;
 
-    int st = value;
-    DEBUG('t', "Received %d... joining thread :)", st);
-    return st;
+    joinChannel->Receive(value);
+
+    DEBUG('t', "Received %d... joining thread :)\n", *value);
+    return *value;
 }
 
 /// ThreadFinish, InterruptEnable

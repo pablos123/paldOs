@@ -217,10 +217,6 @@ SyscallHandler(ExceptionType _et)
 
             DEBUG('e', "Joining process %d\n", spaceId);
 
-            if(!spaceId) {
-                DEBUG('e', "WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFf");
-            }
-
             if(! runningProcesses->HasKey(spaceId)){
                 DEBUG('e',"Error en Join: id del proceso inexistente");
                 machine->WriteRegister(2, -1);

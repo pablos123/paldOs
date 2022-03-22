@@ -167,6 +167,7 @@ Interrupt::OneTick()
                                    // context switch, ok to do it now.
         yieldOnReturn = false;
         status = SYSTEM_MODE;      // Yield is a kernel routine.
+        DEBUG('t', "About to yield: %s\n", currentThread->GetName());
         currentThread->Yield();
         status = old;
     }
@@ -198,9 +199,12 @@ Interrupt::Idle()
 {
     DEBUG('i', "Machine idling; checking for interrupts.\n");
     status = IDLE_MODE;
-    if (CheckIfDue(true)) {           // Check for any pending interrupts.
+    if (bool val = CheckIfDue(true)) {           // Check for any pending interrupts.
+        DEBUG('t', "%d\n", val);
+        
         while (CheckIfDue(false)) {}  // Check for any other pending
                                       // interrupts.
+        DEBUG('t', "se muere aca\n");
         yieldOnReturn = false;        // Since there is nothing in the ready
                                       // queue, the yield is automatic.
         status = SYSTEM_MODE;
@@ -318,6 +322,7 @@ Interrupt::CheckIfDue(bool advanceClock)
     }
     PendingInterrupt *toOccur = pending->SortedPop((int *) &when);
 
+    DEBUG('t', "se quiere hacer: %p", toOccur);
     if (toOccur == nullptr) {  // No pending interrupts.
         return false;
     }

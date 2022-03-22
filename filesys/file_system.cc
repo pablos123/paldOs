@@ -175,7 +175,9 @@ FileSystem::Create(const char *name, unsigned initialSize)
     dir->FetchFrom(directoryFile);
 
     bool success;
+    bool unlock = true;
 
+    //lock
     if (dir->Find(name) != -1) {
         success = false;  // File is already in directory.
     } else {
@@ -196,12 +198,16 @@ FileSystem::Create(const char *name, unsigned initialSize)
                 h->WriteBack(sector);
                 dir->WriteBack(directoryFile);
                 freeMap->WriteBack(freeMapFile);
+                //unlock
+                unlock = false;
             }
             delete h;
         }
         delete freeMap;
     }
     delete dir;
+    if(unlock);
+    //    unlock
     return success;
 }
 

@@ -93,14 +93,14 @@ Scheduler::Run(Thread *nextThread)
     }
 #endif
 
+    DEBUG('t', "Switching from thread \"%s\" to thread \"%s\"\n",
+          oldThread->GetName(), nextThread->GetName());
+
     oldThread->CheckOverflow();  // Check if the old thread had an undetected
                                  // stack overflow.
 
     currentThread = nextThread;  // Switch to the next thread.
     currentThread->SetStatus(RUNNING);  // `nextThread` is now running.
-
-    DEBUG('t', "Switching from thread \"%s\" to thread \"%s\"\n",
-          oldThread->GetName(), nextThread->GetName());
 
     // This is a machine-dependent assembly language routine defined in
     // `switch.s`.  You may have to think a bit to figure out what happens
@@ -147,18 +147,11 @@ Scheduler::Print()
     readyList->Apply(ThreadPrint);
 }
 
-//Deprecated.
-// size_t 
-// Scheduler::GetMaxPriority(){
-//     if(readyList->IsEmpty()) return currentThread->GetPriority();
-//     Thread* highestThread = readyList->Head();
-//     return highestThread->GetPriority();
-// }
-
 #ifdef MULTILEVEL_PRIORITY_QUEUE
 void
 Scheduler::ModifyPriority(Thread* thread) {
     
+    DEBUG('t', "Modificando con la priority el thread %s", thread->GetName());
     // buscar el thread t
     // remover el thread t
     // volver a insertarlo con la nueva prioridad

@@ -224,16 +224,15 @@ Initialize(int argc, char **argv)
     stats = new Statistics;      // Collect statistics.
     interrupt = new Interrupt;   // Start up interrupt handling.
     scheduler = new Scheduler;   // Initialize the ready queue.
-    if (randomYield) {           // Start the timer (if needed).
+    if (randomYield)             // Start the timer (if needed).
         timer = new Timer(TimerInterruptHandler, 0, randomYield);
-    }
 
     threadToBeDestroyed = nullptr;
 
     // We did not explicitly allocate the current thread we are running in.
     // But if it ever tries to give up the CPU, we better have a `Thread`
     // object to save its state.
-    currentThread = new Thread("main",false);
+    currentThread = new Thread("main", false);
     currentThread->SetStatus(RUNNING);
 
     interrupt->Enable();

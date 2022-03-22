@@ -1,7 +1,7 @@
 #include "syscall.h"
 
 #define ARGC_ERROR    "Error: missing argument.\n"
-#define REMOVE_ERROR  "Error: could not remove the file.\n"
+#define REMOVE_ERROR  "Error: could not remove some files.\n"
 
 int
 main(int argc, char *argv[])
@@ -14,10 +14,12 @@ main(int argc, char *argv[])
     int success = 1;
     for (unsigned i = 0; i < argc; i++) {
         if (Remove(argv[i])) {
-            Write(REMOVE_ERROR, sizeof(REMOVE_ERROR) - 1, CONSOLE_OUTPUT);
             success = 0;
         }
     }
+
+    if (!success)
+        Write(REMOVE_ERROR, sizeof(REMOVE_ERROR) - 1, CONSOLE_OUTPUT);
 
     return !success;
 }

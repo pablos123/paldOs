@@ -117,7 +117,11 @@ main(void)
                 continue;
             }
         } else { //Execute with join
-             const SpaceId newProc = Exec(line, argv, 1);
+            const SpaceId newProc = Exec(line, argv, 1);
+
+            if(strcmpp(line, "exit")) {
+                Exec("userland/halt", argv, 1);
+            }
 
             if(newProc < 0) {
                 WriteError("error forking child", OUTPUT);
@@ -126,7 +130,6 @@ main(void)
                 Join(newProc);
             }
         }
-
     }
 
     // Never reached.

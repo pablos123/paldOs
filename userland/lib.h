@@ -6,6 +6,15 @@ unsigned strlen(const char *s) {
     return iter;
 }
 
+char strcmpp(const char *s1, const char *s2) {
+    unsigned iter = 0;
+    for(;   s1[iter] != '\0' 
+         && s2[iter] != '\0' 
+         && s1[iter] == s2[iter]; ++iter);
+
+    return s1[iter] == '\0' && s2[iter] == '\0' ? 1 : 0;
+}
+
 void putss(const char *s) {
     Write(s, strlen(s), CONSOLE_OUTPUT);
     Write("\n", 1, CONSOLE_OUTPUT);
