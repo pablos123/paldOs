@@ -194,11 +194,11 @@ Thread::Print() const
 void
 Thread::Finish(int st)
 {
-    interrupt->SetLevel(INT_OFF);
     ASSERT(this == currentThread);
 
-    if (joinable)
-        joinChannel->Send(st);
+    interrupt->SetLevel(INT_OFF);
+
+    if (joinable) joinChannel->Send(st);
     
     DEBUG('t', "Finishing thread \"%s\"\n", GetName());
 
@@ -226,12 +226,12 @@ void
 Thread::Yield()
 {
     IntStatus oldLevel = interrupt->SetLevel(INT_OFF);
-
     ASSERT(this == currentThread);
 
     Thread *nextThread = scheduler->FindNextToRun();
 
-    if (nextThread != nullptr && nextThread != currentThread) {
+    DEBUG('t', "Yielding thread \"%s\" to %s\n", currentThread != nullptr ? currentThread->GetName() : "vacio current", nextThread != nullptr ? nextThread->GetName() : "vacio next");
+    if (nextThread != nullptr) {
         DEBUG('t', "Yielding thread \"%s\" to %s\n", currentThread->GetName(), nextThread->GetName());
         scheduler->ReadyToRun(this);
         scheduler->Run(nextThread);
@@ -275,13 +275,17 @@ Thread::Sleep()
 int Thread::Join(){
     ASSERT(joinable);
 
-    int* value = nullptr;
+    int* value = new int;
     *value = 0;
 
     joinChannel->Receive(value);
 
+    int value_copy = *value;
+
     DEBUG('t', "Received %d... joining thread :)\n", *value);
-    return *value;
+
+    delete value;
+    return value_copy;
 }
 
 /// ThreadFinish, InterruptEnable
