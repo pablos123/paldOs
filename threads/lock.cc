@@ -40,7 +40,7 @@ Lock::~Lock()
 }
 
 const char *
-Lock::GetName() const //accedo mas facil si existe la propiedad.
+Lock::GetName() const
 {
     return name;
 }

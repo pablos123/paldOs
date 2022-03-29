@@ -26,7 +26,6 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-
 /// This is put at the top of the execution stack, for detecting stack
 /// overflows.
 const unsigned STACK_FENCEPOST = 0xDEADBEEF;
@@ -199,7 +198,7 @@ Thread::Finish(int st)
     interrupt->SetLevel(INT_OFF);
 
     if (joinable) joinChannel->Send(st);
-    
+
     DEBUG('t', "Finishing thread \"%s\"\n", GetName());
 
     threadToBeDestroyed = currentThread;

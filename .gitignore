@@ -13,7 +13,7 @@
 __pycache__
 *.rej
 *~ #*#
-.#* 
+.#*
 .*.swp
 .DS_Store
 [Tt]humbs.db
@@ -23,13 +23,13 @@ __pycache__
 *.depends
 nachos
 switch*.s
-/userland/filetest 
+/userland/filetest
 /userland/halt
 /userland/matmult
 /userland/shell
 /userland/sort
 /userland/tinyshell
-/userland/*.coff 
+/userland/*.coff
 bin/readnoff
 userland/echo
 userland/tiny_shell

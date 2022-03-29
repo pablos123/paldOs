@@ -94,9 +94,6 @@ AddressSpace::AddressSpace(OpenFile *executable_file, SpaceId spaceId)
 #ifndef DEMAND_LOADING
 
     DEBUG('e', "Not using demand loading...\n");
-    //Debug:
-    for(unsigned i = 0; i < numPages; i++)
-      DEBUG('a', "using%u\n", pageTable[i].physicalPage);
 
     char *mainMemory = machine->GetMMU()->mainMemory;
     // Zero out the entire address space, to zero the unitialized data
@@ -224,14 +221,13 @@ AddressSpace::LoadPage(unsigned vpnAddress, unsigned physicalPage) {
 #endif
 
     //ASSERT(readed == PAGE_SIZE);
-    DEBUG('e', "finished loading page! :) \n");
+    DEBUG('e', "Finished loading page! :)\n");
     return;
 }
 
 #ifdef SWAP
 unsigned
 AddressSpace::EvacuatePage() {
-    //search for a victim
     unsigned victim = PickVictim();
     DEBUG('e',"VICTIM PICKED in EvacuatePage: %u\n", victim);
     SpaceId victimSpace = coreMap[victim].spaceId;
@@ -272,7 +268,6 @@ AddressSpace::PickVictim() {
 #ifdef PRPOLICY_FIFO
     victim = fifo_counter % NUM_PHYS_PAGES;
     fifo_counter++;
-    DEBUG('e', "fifo_counter: %u\n", fifo_counter);
 #elif PRPOLICY_LRU
     if(references_done == UINT_MAX) {
         references_done = 0;
@@ -390,7 +385,7 @@ AddressSpace::RestoreState()
 #else
 
     //tenemos TLB, la limpiamos para cambiar de proceso
-    DEBUG('e', "Vaciando la TLB !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+    DEBUG('e', "Cleaning TLB...\n");
     for(unsigned i=0; i < TLB_SIZE; i++){
       machine->GetMMU()->tlb[i].valid = false;
     }

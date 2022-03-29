@@ -53,7 +53,7 @@ Scheduler::ReadyToRun(Thread *thread)
 #else
     readyList->Append(thread);
 #endif
-    
+
 }
 
 /// Return the next thread to be scheduled onto the CPU.
@@ -117,6 +117,7 @@ Scheduler::Run(Thread *nextThread)
     // now (for example, in `Thread::Finish`), because up to this point, we
     // were still running on the old thread's stack!
     if (threadToBeDestroyed != nullptr) {
+        DEBUG('t', "Thread to be destroyed %s\n", threadToBeDestroyed->GetName());
         delete threadToBeDestroyed;
         threadToBeDestroyed = nullptr;
     }
@@ -151,15 +152,11 @@ Scheduler::Print()
 #ifdef MULTILEVEL_PRIORITY_QUEUE
 void
 Scheduler::ModifyPriority(Thread* thread) {
-    
     DEBUG('t', "Modificando con la priority el thread %s", thread->GetName());
-    // buscar el thread t
-    // remover el thread t
-    // volver a insertarlo con la nueva prioridad
+    // Busco el thread, lo remuevo y vuelvo a insertarlo con la nueva prioridad
     if(readyList->Has(thread)){
         readyList->Remove(thread);
         readyList->SortedInsertInverted(thread, thread->GetPriority());
     }
-    
 }
 #endif

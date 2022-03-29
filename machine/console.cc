@@ -74,6 +74,7 @@ Console::Console(const char *readFile, const char *writeFile,
     putBusy      = false;
     incoming     = EOF;
 
+    DEBUG('i', "Scheduling an interrupt for the console read in console::console...\n");
     // Start polling for incoming packets.
     interrupt->Schedule(ConsoleReadPoll, this,
                         CONSOLE_TIME, CONSOLE_READ_INT);
@@ -102,6 +103,7 @@ Console::CheckCharAvail()
 {
     char c;
 
+    DEBUG('i', "Scheduling an interrupt for the console read in console::checkcharavail...\n");
     // Schedule the next time to poll for a packet.
     interrupt->Schedule(ConsoleReadPoll, this,
             CONSOLE_TIME, CONSOLE_READ_INT);

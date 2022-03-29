@@ -250,16 +250,20 @@ Initialize(int argc, char **argv)
     addressesBitMap = new Bitmap(NUM_PHYS_PAGES);
     SetExceptionHandlers();
 
+#ifdef CONSOLE_NEEDED
     consoleSys = new SynchConsole(nullptr, nullptr);
+#endif
 
     runningProcesses = new Table<Thread*>;
 
+#ifdef FIXED_NEEDED
     if(! randomYield)
         timer = new Timer(TimerInterruptHandler, 0, false); //fixed time slicing every TIMER_TICKS
 #endif
+#endif
 
 #ifdef SWAP
-coreMap = new CoreMapEntry[NUM_PHYS_PAGES];
+    coreMap = new CoreMapEntry[NUM_PHYS_PAGES];
 #endif
 
 #ifdef FILESYS
@@ -297,14 +301,16 @@ Cleanup()
 #endif
 
 #ifdef USER_PROGRAM
+#ifdef CONSOLE_NEEDED
     delete consoleSys;
+#endif
     delete runningProcesses;
     delete addressesBitMap;
     delete machine;
 #endif
 
 #ifdef SWAP
-    //delete coreMap;
+    delete coreMap;
 #endif
 
 #ifdef FILESYS_NEEDED

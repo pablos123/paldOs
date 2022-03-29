@@ -48,6 +48,7 @@ Timer::Timer(VoidFunctionPtr timerHandler, void *callArg, bool doRandom)
     handler   = timerHandler;
     arg       = callArg;
 
+    DEBUG('i', "Scheduling an interrupt for the timer read in timer::timer...\n");
     // Schedule the first interrupt from the timer device.
     interrupt->Schedule(TimerHandler, this, TimeOfNextInterrupt(),
                         TIMER_INT);
@@ -59,6 +60,7 @@ Timer::Timer(VoidFunctionPtr timerHandler, void *callArg, bool doRandom)
 void
 Timer::TimerExpired()
 {
+    DEBUG('i', "Scheduling an interrupt for the timer read in timer::timerexpired...\n");
     // Schedule the next timer device interrupt.
     interrupt->Schedule(TimerHandler, this, TimeOfNextInterrupt(),
                         TIMER_INT);
