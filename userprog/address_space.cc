@@ -28,14 +28,14 @@ AddressSpace::AddressSpace(OpenFile *executable_file, SpaceId spaceId)
         char* swapFile = new char[30];
         sprintf(swapFile, "userprog/swap/SWAP.%d", spaceId);
         if(!fileSystem->Create(swapFile, 0)) {
-            DEBUG('e', "Error: Swap file not created.\n");
+            DEBUG('a', "Error: Swap file not created.\n");
         }
         // We can have the approach of open the file every time we write in swap, but for testing we are forcing the OS to have
         // very poor number of physical pages.
         openSwapFile = fileSystem->Open(swapFile);
 
         if(openSwapFile == nullptr) {
-            DEBUG('e', "Cannot open SWAP FILE!!!!\n");
+            DEBUG('a', "Cannot open SWAP FILE!!!!\n");
             ASSERT(false);
         }
 
@@ -93,7 +93,7 @@ AddressSpace::AddressSpace(OpenFile *executable_file, SpaceId spaceId)
 
 #ifndef DEMAND_LOADING
 
-    DEBUG('e', "Not using demand loading...\n");
+    DEBUG('a', "Not using demand loading...\n");
 
     char *mainMemory = machine->GetMMU()->mainMemory;
     // Zero out the entire address space, to zero the unitialized data
@@ -136,7 +136,7 @@ AddressSpace::AddressSpace(OpenFile *executable_file, SpaceId spaceId)
         }
     }
 #else
-  DEBUG('e', "Using demand loading...\n");
+  DEBUG('a', "Using demand loading...\n");
 #endif
 }
 
@@ -149,7 +149,7 @@ AddressSpace::LoadPage(unsigned vpnAddress, unsigned physicalPage) {
 
     Executable exe (exeFile);
 
-    DEBUG('e', "Loading page..., physicalPage: %d, vpnAddress: %d\n", physicalPage, vpnAddress);
+    DEBUG('a', "Loading page..., physicalPage: %d, vpnAddress: %d\n", physicalPage, vpnAddress);
 
     // Get the physical address to write into
     uint32_t physicalAddressToWrite = physicalPage * PAGE_SIZE;
@@ -164,14 +164,14 @@ AddressSpace::LoadPage(unsigned vpnAddress, unsigned physicalPage) {
     unsigned readed = 0; // I need to ensure that i have readed PAGE_SIZE bytes
 
     if(pageTable[vpn].dirty) {
-        DEBUG('e',"Reading from swap at position %d...\n", vpn * PAGE_SIZE);
+        DEBUG('a',"Reading from swap at position %d...\n", vpn * PAGE_SIZE);
         openSwapFile->ReadAt(&mainMemory[physicalAddressToWrite], PAGE_SIZE, vpn * PAGE_SIZE);
     } else { //read from the exe file
         if (codeSize > 0 && vpnAddressToRead < codeSize) {
-            DEBUG('e', "Reading code...\n");
+            DEBUG('a', "Reading code...\n");
             uint32_t toRead = codeSize - vpnAddressToRead < PAGE_SIZE ? codeSize - vpnAddressToRead : PAGE_SIZE;
 
-            DEBUG('e',"Amount to be read: %d \n", toRead);
+            DEBUG('a',"Amount to be read: %d \n", toRead);
             exe.ReadCodeBlock(&mainMemory[physicalAddressToWrite], PAGE_SIZE, vpnAddressToRead);
 
             readed += toRead; //to check if there is some data left to read
@@ -188,7 +188,7 @@ AddressSpace::LoadPage(unsigned vpnAddress, unsigned physicalPage) {
                                 :
                                     PAGE_SIZE - readed;
 
-            DEBUG('e', "Reading %d of data...\n", toRead);
+            DEBUG('a', "Reading %d of data...\n", toRead);
 
             readed ? //if read any bytes in the code section and i have not completed the PAGE_SIZE
                 exe.ReadDataBlock(&mainMemory[physicalAddressToWrite + readed], toRead,  0)
@@ -212,16 +212,16 @@ AddressSpace::LoadPage(unsigned vpnAddress, unsigned physicalPage) {
     chosenCoreMapEntry->spaceId = addressSpaceId;
     chosenCoreMapEntry->virtualPage = vpn;
 
-    DEBUG('e',"Marking physical page %u, with virtualPage %u from process %d in the coremap\n", physicalPage, vpn, addressSpaceId);
+    DEBUG('a',"Marking physical page %u, with virtualPage %u from process %d in the coremap\n", physicalPage, vpn, addressSpaceId);
 
-    DEBUG('e',"State of the coremap: \n");
+    DEBUG('a',"State of the coremap: \n");
     for(unsigned i = 0; i < NUM_PHYS_PAGES; i++){
-        DEBUG('e',"Physical page: %u, spaceId: %d, virtualPage of the mentioned process: %u \n", i, coreMap[i].spaceId, coreMap[i].virtualPage);
+        DEBUG('a',"Physical page: %u, spaceId: %d, virtualPage of the mentioned process: %u \n", i, coreMap[i].spaceId, coreMap[i].virtualPage);
     }
 #endif
 
     //ASSERT(readed == PAGE_SIZE);
-    DEBUG('e', "Finished loading page! :)\n");
+    DEBUG('a', "Finished loading page! :)\n");
     return;
 }
 
@@ -229,7 +229,7 @@ AddressSpace::LoadPage(unsigned vpnAddress, unsigned physicalPage) {
 unsigned
 AddressSpace::EvacuatePage() {
     unsigned victim = PickVictim();
-    DEBUG('e',"VICTIM PICKED in EvacuatePage: %u\n", victim);
+    DEBUG('a',"VICTIM PICKED in EvacuatePage: %u\n", victim);
     SpaceId victimSpace = coreMap[victim].spaceId;
 
     if(runningProcesses->HasKey(victimSpace)) { // the victim process is alive
@@ -243,11 +243,11 @@ AddressSpace::EvacuatePage() {
         }
 
         //if dirty, we put the midified virtualPage into the N block of the swap file
-        DEBUG('e', "In evacuate page, the entry is: \n dirty: %d\n valid: %d\n", entry->dirty, entry->valid);
+        DEBUG('a', "In evacuate page, the entry is: \n dirty: %d\n valid: %d\n", entry->dirty, entry->valid);
         if(entry->dirty) {
             char *mainMemory = machine->GetMMU()->mainMemory;
             unsigned physicalAddressToWrite = victim * PAGE_SIZE;
-            DEBUG('e',"Writing into swap...\n");
+            DEBUG('a',"Writing into swap...\n");
             runningProcesses->Get(coreMap[victim].spaceId)->space->openSwapFile->WriteAt(&mainMemory[physicalAddressToWrite], PAGE_SIZE, coreMap[victim].virtualPage * PAGE_SIZE);   //save the evacuated information in the N file block
         }
         // we do not update the coremap here because it always has to happen, regardless there is an EvacuatePage or not
@@ -385,7 +385,7 @@ AddressSpace::RestoreState()
 #else
 
     //tenemos TLB, la limpiamos para cambiar de proceso
-    DEBUG('e', "Cleaning TLB...\n");
+    DEBUG('a', "Cleaning TLB...\n");
     for(unsigned i=0; i < TLB_SIZE; i++){
       machine->GetMMU()->tlb[i].valid = false;
     }

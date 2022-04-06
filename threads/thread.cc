@@ -25,6 +25,9 @@
 
 #include <inttypes.h>
 #include <stdio.h>
+#ifdef USER_PROGRAM
+#include <string.h>
+#endif
 
 /// This is put at the top of the execution stack, for detecting stack
 /// overflows.
@@ -44,13 +47,12 @@ IsThreadStatus(ThreadStatus s)
 Thread::Thread(const char *threadName, bool isJoinable, size_t priorityParam)
 {
     name     = threadName;
+    DEBUG('e',"El nombre del thread creado es %s\n", this->name);
     stackTop = nullptr;
     stack    = nullptr;
     status   = JUST_CREATED;
     joinable = isJoinable;
     priority = priorityParam;
-
-    Print();
 
     numFaults = 0;
 
@@ -197,12 +199,21 @@ Thread::Finish(int st)
 
     interrupt->SetLevel(INT_OFF);
 
+    bool consoleRunning = false;
+    #ifdef USER_PROGRAM
+        DEBUG('t', "el nombre cursed: %s\n" , currentThread->name);
+        if(! strcmp(currentThread->name, "main")) {
+            printf("Finishing thread main and the console still running!\nGetting the interrupt handler ready.\n");
+            consoleRunning = true;  // para eliminar el loop infinito de la consola esperando en Idle
+        } 
+    #endif
     if (joinable) joinChannel->Send(st);
 
     DEBUG('t', "Finishing thread \"%s\"\n", GetName());
 
     threadToBeDestroyed = currentThread;
-    Sleep();  // Invokes `SWITCH`.
+
+    Sleep(consoleRunning);  // Invokes `SWITCH`.
     // Not reached.
 }
 
@@ -229,9 +240,8 @@ Thread::Yield()
 
     Thread *nextThread = scheduler->FindNextToRun();
 
-    DEBUG('t', "Yielding thread \"%s\" to %s\n", currentThread != nullptr ? currentThread->GetName() : "vacio current", nextThread != nullptr ? nextThread->GetName() : "vacio next");
     if (nextThread != nullptr) {
-        DEBUG('t', "Yielding thread \"%s\" to %s\n", currentThread->GetName(), nextThread->GetName());
+        DEBUG('t', "Yielding thread \"%s\" to %s\n", name, nextThread->GetName());
         scheduler->ReadyToRun(this);
         scheduler->Run(nextThread);
     }
@@ -254,7 +264,7 @@ Thread::Yield()
 /// atomicity.  We need interrupts off so that there cannot be a time slice
 /// between pulling the first thread off the ready list, and switching to it.
 void
-Thread::Sleep()
+Thread::Sleep(bool consoleRunning)
 {
     ASSERT(this == currentThread);
     ASSERT(interrupt->GetLevel() == INT_OFF);
@@ -265,7 +275,7 @@ Thread::Sleep()
     status = BLOCKED;
     // Wait for another thread to come in
     while ((nextThread = scheduler->FindNextToRun()) == nullptr) {
-        interrupt->Idle();  // No one to run, wait for an interrupt.
+        interrupt->Idle(consoleRunning);  // No one to run, wait for an interrupt.
     }
 
     scheduler->Run(nextThread);  // Returns when we have been signalled.

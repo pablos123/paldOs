@@ -250,16 +250,12 @@ Initialize(int argc, char **argv)
     addressesBitMap = new Bitmap(NUM_PHYS_PAGES);
     SetExceptionHandlers();
 
-#ifdef CONSOLE_NEEDED
     consoleSys = new SynchConsole(nullptr, nullptr);
-#endif
 
     runningProcesses = new Table<Thread*>;
 
-#ifdef FIXED_NEEDED
     if(! randomYield)
         timer = new Timer(TimerInterruptHandler, 0, false); //fixed time slicing every TIMER_TICKS
-#endif
 #endif
 
 #ifdef SWAP
@@ -301,9 +297,7 @@ Cleanup()
 #endif
 
 #ifdef USER_PROGRAM
-#ifdef CONSOLE_NEEDED
     delete consoleSys;
-#endif
     delete runningProcesses;
     delete addressesBitMap;
     delete machine;
@@ -324,6 +318,7 @@ Cleanup()
     delete timer;
     delete scheduler;
     delete interrupt;
+    delete stats; 
 
     exit(0);
 }

@@ -9,6 +9,7 @@
 /// * `t` -- thread system.
 /// * `s` -- semaphores, locks, and conditions.
 /// * `i` -- interrupt emulation.
+/// * `y` -- memory related 
 /// * `m` -- machine emulation (requires *USER_PROGRAM*).
 /// * `d` -- disk emulation (requires *FILESYS*).
 /// * `f` -- file system (requires *FILESYS*).

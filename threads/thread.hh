@@ -116,7 +116,7 @@ public:
     void Yield();
 
     /// Put the thread to sleep and relinquish the processor.
-    void Sleep();
+    void Sleep(bool consoleRunning = false);
 
     //Blocks the callee until the thread has finished. Returns the exit status.
 

@@ -9,7 +9,7 @@
 #include <stdio.h>
 
 
-void ReadBufferFromUser(int userAddress, char *outBuffer,
+unsigned ReadBufferFromUser(int userAddress, char *outBuffer,
                         unsigned byteCount)
 {
     ASSERT(userAddress != 0);
@@ -33,7 +33,7 @@ void ReadBufferFromUser(int userAddress, char *outBuffer,
 
     *outBuffer = (unsigned char)'\0';
 
-    return;
+    return count;
 }
 
 bool ReadStringFromUser(int userAddress, char *outString,
@@ -70,7 +70,6 @@ void WriteBufferToUser(const char *buffer, int userAddress,
 
     do{
         count++;
-        ///int temp = *buffer;
         for(unsigned i = 0; i < NUMBER_OF_TRIES; ++i){
             if(machine->WriteMem(userAddress, 1, *(int*) buffer)){
                 userAddress++;

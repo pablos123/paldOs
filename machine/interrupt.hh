@@ -114,7 +114,7 @@ public:
 
     // The ready queue is empty, roll simulated time forward until the next
     // interrupt.
-    void Idle();
+    void Idle(bool consoleRunning = false);
 
     // Quit and print out stats.
     void Halt();

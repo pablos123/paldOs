@@ -194,11 +194,13 @@ Interrupt::YieldOnReturn()
 /// If there are no pending interrupts, stop.  There is nothing more for us
 /// to do.
 void
-Interrupt::Idle()
+Interrupt::Idle(bool consoleRunning)
 {
     DEBUG('i', "Machine idling; checking for interrupts.\n");
     status = IDLE_MODE;
-    if (CheckIfDue(true)) {           // Check for any pending interrupts.
+
+    if (CheckIfDue(true) && ! consoleRunning) {           // Check for any pending interrupts and check if the console is unnecessary waiting
+
         while (CheckIfDue(false)) {}  // Check for any other pending
                                       // interrupts.
         yieldOnReturn = false;        // Since there is nothing in the ready

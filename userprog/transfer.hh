@@ -8,7 +8,7 @@
 
 
 /// Copy a byte array from virtual machine to host.
-void ReadBufferFromUser(int userAddress, char *outBuffer,
+unsigned ReadBufferFromUser(int userAddress, char *outBuffer,
                         unsigned byteCount);
 
 /// Copy a C string from virtual machine to host.
