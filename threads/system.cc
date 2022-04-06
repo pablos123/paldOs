@@ -19,7 +19,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-
+#include <stdlib.h>
 
 /// This defines *all* of the global data structures used by Nachos.
 ///
@@ -33,7 +33,7 @@ Statistics *stats;            ///< Performance metrics.
 Timer *timer;                 ///< The hardware timer device, for invoking
                               ///< context switches.
 #ifdef SWAP
-CoreMapEntry* coreMap;
+CoreMapEntry** coreMap;
 #endif
 // 2007, Jose Miguel Santos Espino
 PreemptiveScheduler *preemptiveScheduler = nullptr;
@@ -47,6 +47,7 @@ FileSystem *fileSystem;
 
 #ifdef FILESYS
 SynchDisk *synchDisk;
+OpenFileEntry* openFileTable;
 #endif
 
 #ifdef USER_PROGRAM  // Requires either *FILESYS* or *FILESYS_STUB*.
@@ -259,11 +260,15 @@ Initialize(int argc, char **argv)
 #endif
 
 #ifdef SWAP
-    coreMap = new CoreMapEntry[NUM_PHYS_PAGES];
+    coreMap = (CoreMapEntry**)calloc(NUM_PHYS_PAGES, sizeof(CoreMapEntry*));
+    for(unsigned i = 0; i < NUM_PHYS_PAGES; ++i) {
+        coreMap[i] = new CoreMapEntry;
+    }
 #endif
 
 #ifdef FILESYS
     synchDisk = new SynchDisk("DISK");
+    openFileTable = new OpenFileEntry[NUM_DIR_ENTRIES]; // por ahora lo multiplicamos por 1 pq no hay jerarquias en los directorios
 #endif
 
 #ifdef FILESYS_NEEDED
@@ -304,7 +309,8 @@ Cleanup()
 #endif
 
 #ifdef SWAP
-    delete coreMap;
+    for(unsigned i = 0; i < NUM_PHYS_PAGES; ++i) delete coreMap[i];
+    free(coreMap);
 #endif
 
 #ifdef FILESYS_NEEDED

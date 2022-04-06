@@ -10,6 +10,7 @@
 
 
 #include "thread.hh"
+#include "lock.hh"
 #include "scheduler.hh"
 #include "lib/utility.hh"
 #include "machine/interrupt.hh"
@@ -35,7 +36,7 @@ typedef struct {
 #endif
 } CoreMapEntry;
 
-extern CoreMapEntry* coreMap;
+extern CoreMapEntry** coreMap;
 #endif
 
 #ifdef PRPOLICY_FIFO
@@ -73,6 +74,13 @@ extern FileSystem *fileSystem;
 #ifdef FILESYS
 #include "filesys/synch_disk.hh"
 extern SynchDisk *synchDisk;
+typedef struct _openFileEntry {
+    int count;
+    Lock* lock;
+} OpenFileEntry;
+
+extern OpenFileEntry* openFilesTable; 
+
 #endif
 
 #ifdef NETWORK

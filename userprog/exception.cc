@@ -499,7 +499,7 @@ static void TLBPageFaultHandler(ExceptionType exc) {
 
 #ifdef PRPOLICY_LRU
         references_done++;
-        coreMap[frame].last_use_counter = references_done;
+        coreMap[frame]->last_use_counter = references_done;
 #endif
 
         currentThread->space->LoadPage(vpnAddress, pageTableEntry->physicalPage);

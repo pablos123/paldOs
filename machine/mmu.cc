@@ -211,7 +211,7 @@ MMU::RetrievePageEntry(unsigned vpn, TranslationEntry **entry) const
                 *entry = e;  // FOUND!
                 tlbHitCount++;
 #ifdef PRPOLICY_LRU
-                coreMap[e->physicalPage].last_use_counter = references_done;
+                coreMap[e->physicalPage]->last_use_counter = references_done;
 #endif
                 return NO_EXCEPTION;
             }

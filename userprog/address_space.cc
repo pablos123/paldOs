@@ -205,10 +205,7 @@ AddressSpace::LoadPage(unsigned vpnAddress, unsigned physicalPage) {
 
 #ifdef SWAP
     // //Update the coremap
-    // coreMap[physicalPage].spaceId = addressSpaceId;
-    // coreMap[physicalPage].virtualPage = vpn;
-
-    CoreMapEntry* chosenCoreMapEntry = &coreMap[physicalPage];
+    CoreMapEntry* chosenCoreMapEntry = coreMap[physicalPage];
     chosenCoreMapEntry->spaceId = addressSpaceId;
     chosenCoreMapEntry->virtualPage = vpn;
 
@@ -216,11 +213,10 @@ AddressSpace::LoadPage(unsigned vpnAddress, unsigned physicalPage) {
 
     DEBUG('a',"State of the coremap: \n");
     for(unsigned i = 0; i < NUM_PHYS_PAGES; i++){
-        DEBUG('a',"Physical page: %u, spaceId: %d, virtualPage of the mentioned process: %u \n", i, coreMap[i].spaceId, coreMap[i].virtualPage);
+        DEBUG('a',"Physical page: %u, spaceId: %d, virtualPage of the mentioned process: %u \n", i, coreMap[i]->spaceId, coreMap[i]->virtualPage);
     }
 #endif
 
-    //ASSERT(readed == PAGE_SIZE);
     DEBUG('a', "Finished loading page! :)\n");
     return;
 }
@@ -230,10 +226,10 @@ unsigned
 AddressSpace::EvacuatePage() {
     unsigned victim = PickVictim();
     DEBUG('a',"VICTIM PICKED in EvacuatePage: %u\n", victim);
-    SpaceId victimSpace = coreMap[victim].spaceId;
+    SpaceId victimSpace = coreMap[victim]->spaceId;
 
     if(runningProcesses->HasKey(victimSpace)) { // the victim process is alive
-        TranslationEntry* entry = runningProcesses->Get(victimSpace)->space->getPageTableEntry(coreMap[victim].virtualPage);
+        TranslationEntry* entry = runningProcesses->Get(victimSpace)->space->getPageTableEntry(coreMap[victim]->virtualPage);
 
         for(unsigned i = 0; i < TLB_SIZE; ++i) { // save the bits if the page is in the TLB
             if(machine->GetMMU()->tlb[i].physicalPage == victim && machine->GetMMU()->tlb[i].valid) {
@@ -248,13 +244,9 @@ AddressSpace::EvacuatePage() {
             char *mainMemory = machine->GetMMU()->mainMemory;
             unsigned physicalAddressToWrite = victim * PAGE_SIZE;
             DEBUG('a',"Writing into swap...\n");
-            runningProcesses->Get(coreMap[victim].spaceId)->space->openSwapFile->WriteAt(&mainMemory[physicalAddressToWrite], PAGE_SIZE, coreMap[victim].virtualPage * PAGE_SIZE);   //save the evacuated information in the N file block
+            runningProcesses->Get(coreMap[victim]->spaceId)->space->openSwapFile->WriteAt(&mainMemory[physicalAddressToWrite], PAGE_SIZE, coreMap[victim]->virtualPage * PAGE_SIZE);   //save the evacuated information in the N file block
         }
         // we do not update the coremap here because it always has to happen, regardless there is an EvacuatePage or not
-        // CoreMapEntry* chosenCoreMapEntry = &coreMap[victim];
-        // chosenCoreMapEntry->spaceId = currentThread->space->addressSpaceId;
-        // chosenCoreMapEntry->virtualPage = vpn;
-        //coreMap->Update(victim, chosenCoreMapEntry);
 
         entry->physicalPage = INT_MAX; // mark the entry out of the memory for the pageTable
         entry->valid = false; // mark the entry out of the memory for the machine
@@ -272,13 +264,13 @@ AddressSpace::PickVictim() {
     if(references_done == UINT_MAX) {
         references_done = 0;
         for(unsigned i = 0; i < NUM_PHYS_PAGES; i++)    // to avoid using the same frame once the UINT_MAX is reached
-            coreMap[i].last_use_counter = 0;
+            coreMap[i]->last_use_counter = 0;
     }
 
     unsigned min = UINT_MAX;
     for(unsigned i = 0; i < NUM_PHYS_PAGES; i++) {
-        if(coreMap[i].last_use_counter < min) {
-            min = coreMap[i].last_use_counter;
+        if(coreMap[i]->last_use_counter < min) {
+            min = coreMap[i]->last_use_counter;
             victim = i;
         }
     }
@@ -363,7 +355,7 @@ AddressSpace::SaveState()
     for(unsigned i=0; i < TLB_SIZE; i++){
         if(machine->GetMMU()->tlb[i].valid){
             unsigned physicalPageToSave = machine->GetMMU()->tlb[i].physicalPage;
-            TranslationEntry* entry = getPageTableEntry(coreMap[physicalPageToSave].virtualPage);
+            TranslationEntry* entry = getPageTableEntry(coreMap[physicalPageToSave]->virtualPage);
             machine->GetMMU()->tlb[i].valid = false;
             *entry = machine->GetMMU()->tlb[i];
         }
