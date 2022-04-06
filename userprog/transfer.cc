@@ -9,7 +9,7 @@
 #include <stdio.h>
 
 
-unsigned ReadBufferFromUser(int userAddress, char *outBuffer,
+void ReadBufferFromUser(int userAddress, char *outBuffer,
                         unsigned byteCount)
 {
     ASSERT(userAddress != 0);
@@ -33,7 +33,7 @@ unsigned ReadBufferFromUser(int userAddress, char *outBuffer,
 
     *outBuffer = (unsigned char)'\0';
 
-    return count;
+    return;
 }
 
 bool ReadStringFromUser(int userAddress, char *outString,

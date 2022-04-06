@@ -47,7 +47,6 @@ IsThreadStatus(ThreadStatus s)
 Thread::Thread(const char *threadName, bool isJoinable, size_t priorityParam)
 {
     name     = threadName;
-    DEBUG('e',"El nombre del thread creado es %s\n", this->name);
     stackTop = nullptr;
     stack    = nullptr;
     status   = JUST_CREATED;
@@ -58,6 +57,7 @@ Thread::Thread(const char *threadName, bool isJoinable, size_t priorityParam)
 
     joinChannel = new Channel("Join Channel");
 
+    DEBUG('e',"The thread created is:%s\n", name);
 #ifdef USER_PROGRAM
     space    = nullptr;
     openedFilesTable = new Table<OpenFile*>;

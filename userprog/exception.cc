@@ -238,7 +238,7 @@ SyscallHandler(ExceptionType _et)
                 break;
             }
 
-            char filename[FILE_NAME_MAX_LEN + 1];
+            char* filename = new char[FILE_NAME_MAX_LEN + 1];
             if (!ReadStringFromUser(filenameAddr,
                                     filename, sizeof filename)) {
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
@@ -267,7 +267,7 @@ SyscallHandler(ExceptionType _et)
                 break;
             }
 
-            char filename[FILE_NAME_MAX_LEN + 1];
+            char* filename = new char[FILE_NAME_MAX_LEN + 1];
             if (!ReadStringFromUser(filenameAddr,
                                     filename, sizeof filename)) {
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
@@ -297,7 +297,7 @@ SyscallHandler(ExceptionType _et)
                 break;
             }
 
-            char filename[FILE_NAME_MAX_LEN + 1];
+            char* filename = new char[FILE_NAME_MAX_LEN + 1];
 
             if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
