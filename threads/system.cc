@@ -19,7 +19,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdlib.h>
 
 /// This defines *all* of the global data structures used by Nachos.
 ///
@@ -260,7 +259,7 @@ Initialize(int argc, char **argv)
 #endif
 
 #ifdef SWAP
-    coreMap = (CoreMapEntry**)calloc(NUM_PHYS_PAGES, sizeof(CoreMapEntry*));
+    coreMap = new CoreMapEntry*[NUM_PHYS_PAGES];
     for(unsigned i = 0; i < NUM_PHYS_PAGES; ++i) {
         coreMap[i] = new CoreMapEntry;
     }
@@ -310,7 +309,7 @@ Cleanup()
 
 #ifdef SWAP
     for(unsigned i = 0; i < NUM_PHYS_PAGES; ++i) delete coreMap[i];
-    free(coreMap);
+    delete [] coreMap;
 #endif
 
 #ifdef FILESYS_NEEDED

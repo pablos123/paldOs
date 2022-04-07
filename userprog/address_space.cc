@@ -21,7 +21,6 @@ AddressSpace::AddressSpace(OpenFile *executable_file, SpaceId spaceId)
 {
     ASSERT(executable_file != nullptr);
 
-
 #ifdef DEMAND_LOADING
     exeFile = executable_file;
     #ifdef SWAP
@@ -34,6 +33,7 @@ AddressSpace::AddressSpace(OpenFile *executable_file, SpaceId spaceId)
         // very poor number of physical pages.
         openSwapFile = fileSystem->Open(swapFile);
 
+        delete [] swapFile;
         if(openSwapFile == nullptr) {
             DEBUG('a', "Cannot open SWAP FILE!!!!\n");
             ASSERT(false);
