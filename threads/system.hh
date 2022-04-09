@@ -27,16 +27,16 @@ extern void Initialize(int argc, char **argv);
 extern void Cleanup();
 
 #ifdef SWAP
-typedef struct {
+typedef struct _coreMapEntry{
     SpaceId spaceId;
     unsigned virtualPage;
 #ifdef PRPOLICY_LRU
     unsigned last_use_counter;  // this will represent the last recently use page.
                                 // to search for the victim we will search directly for the minimun value of the array
 #endif
-} CoreMapEntry;
+}* CoreMapEntry;
 
-extern CoreMapEntry** coreMap;
+extern CoreMapEntry* coreMap;
 #endif
 
 #ifdef PRPOLICY_FIFO
@@ -75,9 +75,9 @@ extern FileSystem *fileSystem;
 #include "filesys/synch_disk.hh"
 extern SynchDisk *synchDisk;
 typedef struct _openFileEntry {
-    int count;
+    int count = 0;
     Lock* lock;
-} OpenFileEntry;
+}* OpenFileEntry;
 
 extern OpenFileEntry* openFilesTable; 
 

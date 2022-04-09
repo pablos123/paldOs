@@ -71,7 +71,7 @@ typedef struct _lockParam {
     void* debugName;
 }* LockParam;
 
-void LockParamDestructor(LockParam semaphoreParam);
+void LockParamDestructor(LockParam lockParam);
 LockParam LockParamConstructor(void* debugName, Lock* lock);
 
 #endif

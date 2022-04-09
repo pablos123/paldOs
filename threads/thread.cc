@@ -55,7 +55,7 @@ Thread::Thread(const char *threadName, bool isJoinable, size_t priorityParam)
 
     numFaults = 0;
 
-    joinChannel = new Channel("Join Channel");
+    if(joinable) joinChannel = new Channel("Join Channel");
 
     DEBUG('e',"The thread created is:%s\n", name);
 #ifdef USER_PROGRAM
@@ -86,7 +86,7 @@ Thread::~Thread()
     }
 
 #ifdef USER_PROGRAM
-    delete joinChannel;
+    if(joinable) delete joinChannel;
 #ifdef DEMAND_LOADING
 #ifdef SWAP
     runningProcesses->Remove(space->GetSpaceId());
@@ -201,15 +201,14 @@ Thread::Finish(int st)
 
     bool consoleRunning = false;
     #ifdef USER_PROGRAM
-        DEBUG('t', "el nombre cursed: %s\n" , currentThread->name);
-        if(! strcmp(currentThread->name, "main")) {
+        if(! strcmp(name, "main")) {
             printf("Finishing thread main and the console still running!\nGetting the interrupt handler ready.\n");
             consoleRunning = true;  // para eliminar el loop infinito de la consola esperando en Idle
         } 
     #endif
     if (joinable) joinChannel->Send(st);
 
-    DEBUG('t', "Finishing thread \"%s\"\n", GetName());
+    DEBUG('t', "Finishing thread \"%s\"\n", name);
 
     threadToBeDestroyed = currentThread;
 

@@ -68,13 +68,23 @@ private:
 
 };
 
-///Struct to pass Semaphores with a name as parameters to threads
-typedef struct _semaphoreParam {
+class SemaphoreParamClass {
+public:
+    SemaphoreParamClass(const char* name, Semaphore* sempahore, void* optional = nullptr);
+
+    ~SemaphoreParamClass();
+
+    const char* GetName();
+
+    Semaphore* GetSemaphore();
+
+    void* GetOptional();
+
+private:
+    const char* name;
+
     Semaphore* semaphore;
-    void* debugName;
-}* SemaphoreParam;
 
-void SemaphoreParamDestructor(SemaphoreParam semaphoreParam);
-SemaphoreParam SemaphoreParamConstructor(void* debugName, Semaphore* semaphore);
-
+    void* optional;
+};
 #endif

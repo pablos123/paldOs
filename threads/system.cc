@@ -32,7 +32,7 @@ Statistics *stats;            ///< Performance metrics.
 Timer *timer;                 ///< The hardware timer device, for invoking
                               ///< context switches.
 #ifdef SWAP
-CoreMapEntry** coreMap;
+CoreMapEntry* coreMap;
 #endif
 // 2007, Jose Miguel Santos Espino
 PreemptiveScheduler *preemptiveScheduler = nullptr;
@@ -259,15 +259,18 @@ Initialize(int argc, char **argv)
 #endif
 
 #ifdef SWAP
-    coreMap = new CoreMapEntry*[NUM_PHYS_PAGES];
+    coreMap = new CoreMapEntry[NUM_PHYS_PAGES];
     for(unsigned i = 0; i < NUM_PHYS_PAGES; ++i) {
-        coreMap[i] = new CoreMapEntry;
+        coreMap[i] = new struct _coreMapEntry;
     }
 #endif
 
 #ifdef FILESYS
     synchDisk = new SynchDisk("DISK");
     openFileTable = new OpenFileEntry[NUM_DIR_ENTRIES]; // por ahora lo multiplicamos por 1 pq no hay jerarquias en los directorios
+    for(unsigned i = 0; i < NUM_DIR_ENTRIES; ++i) {
+        openFileTable[i] = new struct _openFileEntry;
+    }
 #endif
 
 #ifdef FILESYS_NEEDED
@@ -317,6 +320,8 @@ Cleanup()
 #endif
 
 #ifdef FILESYS
+    for(unsigned i = 0; i < NUM_DIR_ENTRIES; ++i) delete openFileTable[i];
+    delete [] openFileTable;
     delete synchDisk;
 #endif
 

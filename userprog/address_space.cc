@@ -205,7 +205,7 @@ AddressSpace::LoadPage(unsigned vpnAddress, unsigned physicalPage) {
 
 #ifdef SWAP
     // //Update the coremap
-    CoreMapEntry* chosenCoreMapEntry = coreMap[physicalPage];
+    CoreMapEntry chosenCoreMapEntry = coreMap[physicalPage];
     chosenCoreMapEntry->spaceId = addressSpaceId;
     chosenCoreMapEntry->virtualPage = vpn;
 

@@ -45,7 +45,7 @@ Scheduler::ReadyToRun(Thread *thread)
 {
     ASSERT(thread != nullptr);
 
-    DEBUG('t', "Putting thread %s on ready list\n", thread->GetName());
+    DEBUG('t', "Putting thread %s on ready list\n",  (char*)thread->GetName());
 
     thread->SetStatus(READY);
 #ifdef MULTILEVEL_PRIORITY_QUEUE
@@ -94,7 +94,7 @@ Scheduler::Run(Thread *nextThread)
 #endif
 
     DEBUG('t', "Switching from thread \"%s\" to thread \"%s\"\n",
-          oldThread->GetName(), nextThread->GetName());
+          (const char*)oldThread->GetName(), (const char*)nextThread->GetName());
 
     oldThread->CheckOverflow();  // Check if the old thread had an undetected
                                  // stack overflow.

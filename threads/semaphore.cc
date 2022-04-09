@@ -94,18 +94,28 @@ Semaphore::V()
     interrupt->SetLevel(oldLevel);
 }
 
-///Semaphore param library
 
-SemaphoreParam SemaphoreParamConstructor(void* debugName, Semaphore* semaphore) {
-    SemaphoreParam semaphoreParam = (SemaphoreParam)malloc(sizeof(struct _semaphoreParam));
-    semaphoreParam->debugName = debugName;
-    semaphoreParam->semaphore = semaphore;
-    
-    return semaphoreParam;
+//----------------Class for debugging semaphores inside threads-------------//
+SemaphoreParamClass::SemaphoreParamClass(const char* debugName, Semaphore* semaphoreParam, void* optionalParam) {
+    name = debugName;
+    semaphore = semaphoreParam;
+    optional =  optionalParam;
 }
 
+SemaphoreParamClass::~SemaphoreParamClass() {}
 
-void SemaphoreParamDestructor(SemaphoreParam semaphoreParam) {
-    free(semaphoreParam);
-    return;
+//----------------Getters----------------//
+const char*
+SemaphoreParamClass::GetName() {
+    return name;
+}
+
+Semaphore*
+SemaphoreParamClass::GetSemaphore() {
+    return semaphore;
+}
+
+void*
+SemaphoreParamClass::GetOptional() {
+    return optional;
 }

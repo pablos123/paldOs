@@ -35,12 +35,12 @@ SimpleThread(void *name_)
 }
 
 void
-SimpleThreadSemaphore(void *semaphore_param) 
+SimpleThreadSemaphore(void *semaphore_param)
 {
     // Reinterpret arg `name` as a string.
-    char *name = (char *)((SemaphoreParam)semaphore_param)->debugName;
-    Semaphore* semaphore = (Semaphore *)((SemaphoreParam)semaphore_param)->semaphore;
-    
+    const char *name = ((SemaphoreParamClass*)semaphore_param)->GetName();
+    Semaphore* semaphore = ((SemaphoreParamClass*)semaphore_param)->GetSemaphore();
+
     // If the lines dealing with interrupts are commented, the code will
     // behave incorrectly, because printf execution may cause race
     // conditions.
@@ -53,8 +53,8 @@ SimpleThreadSemaphore(void *semaphore_param)
         currentThread->Yield();
         DEBUG('s', "*** Thread `%s` called V()\n", name);
     }
-    
-    
+
+
     printf("!!! Thread `%s` has finished\n", name);
 }
 
@@ -67,61 +67,69 @@ SimpleThreadSemaphore(void *semaphore_param)
 void
 ThreadTestSimple()
 {
-char *name2 = new char [64], *name3 = new char [64],
-*name4 = new char [64], *name5 = new char [64];
+char *name1 = new char [8];
+strncpy(name1, "1nd", 8);
+
+char *name2 = new char [8];
+strncpy(name2, "2nd", 8);
+
+char *name3 = new char [8];
+strncpy(name3, "3nd", 8);
+
+char *name4 = new char [8];
+strncpy(name4, "4nd", 8);
+
+char *name5 = new char [8];
+strncpy(name5, "5nd", 8);
+
 
 #ifndef SEMAPHORE_TEST
-    strncpy(name2, "2nd", 64);
     Thread *newThread = new Thread(name2);
     newThread->Fork(SimpleThread, (void *) name2);
 
-    strncpy(name3, "3nd", 64);
     Thread *newThread3 = new Thread(name3);
     newThread3->Fork(SimpleThread, (void *) name3);
 
-    strncpy(name4, "4nd", 64);
     Thread *newThread4 = new Thread(name4);
     newThread4->Fork(SimpleThread, (void *) name4);
 
-    strncpy(name5, "5nd", 64);
     Thread *newThread5 = new Thread(name5);
     newThread5->Fork(SimpleThread, (void *) name5);
 
-    SimpleThread((void *) "1st");
-#endif
-
-#ifdef SEMAPHORE_TEST     
-    char* name = new char [64];
+    SimpleThread((void *) name1);
+#else
     Semaphore* semaphore = new Semaphore("Semaforo test", 3);
 
-    strncpy(name2, "2nd", 64);
-    Thread *newThread = new Thread(name2);
-    SemaphoreParam param2 = SemaphoreParamConstructor((void*)name2, semaphore);
-    newThread->Fork(SimpleThreadSemaphore, (void *) param2);
+    Thread *newThread2 = new Thread(name2);
+    SemaphoreParamClass* param2 = new SemaphoreParamClass(name2, semaphore);
+    newThread2->Fork(SimpleThreadSemaphore, (void *) param2);
 
-    strncpy(name3, "3nd", 64);
     Thread *newThread3 = new Thread(name3);
-    SemaphoreParam param3 = SemaphoreParamConstructor((void*)name3, semaphore);
+    SemaphoreParamClass* param3 = new SemaphoreParamClass(name3, semaphore);
     newThread3->Fork(SimpleThreadSemaphore, (void *) param3);
 
-    strncpy(name4, "4nd", 64);
     Thread *newThread4 = new Thread(name4);
-    SemaphoreParam param4 = SemaphoreParamConstructor((void*)name4, semaphore);
+    SemaphoreParamClass* param4 = new SemaphoreParamClass(name4, semaphore);
     newThread4->Fork(SimpleThreadSemaphore, (void *) param4);
 
-    strncpy(name5, "5nd", 64);
     Thread *newThread5 = new Thread(name5);
-    SemaphoreParam param5 = SemaphoreParamConstructor((void*)name5, semaphore);
+    SemaphoreParamClass* param5 = new SemaphoreParamClass(name5, semaphore);
     newThread5->Fork(SimpleThreadSemaphore, (void *) param5);
 
-    strncpy(name, "1st", 64);
-    SemaphoreParam param1 = SemaphoreParamConstructor((void *)name, semaphore);
+    SemaphoreParamClass* param1 = new SemaphoreParamClass(name1, semaphore);
     SimpleThreadSemaphore((void *) param1);
 
-    SemaphoreParamDestructor(param1);
-    SemaphoreParamDestructor(param2);
-    SemaphoreParamDestructor(param3);
-    SemaphoreParamDestructor(param4);
-    SemaphoreParamDestructor(param5);
+    delete param5;
+    delete param4;
+    delete param3;
+    delete param2;
+    delete param1;
+    delete semaphore;
 #endif
+
+    delete [] name1;
+    delete [] name2;
+    delete [] name3;
+    delete [] name4;
+    delete [] name5;
 }
