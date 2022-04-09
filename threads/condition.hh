@@ -62,7 +62,6 @@ public:
     ~Condition();
 
     const char *GetName() const;
-    Lock* GetLock();
 
     /// The three operations on condition variables.
     ///
@@ -76,9 +75,9 @@ public:
     // Wait() aca entro uno (o mas pero supongo que no), hasta que se cumpla la condicion
     // candado->adquire;
     //  //espera a que se cumpla la condicion
-    // ejecutan cosas 
-    // condicion es true //ponele que el contador es 50 y queria 50. 
-    // mando signal 
+    // ejecutan cosas
+    // condicion es true //ponele que el contador es 50 y queria 50.
+    // mando signal
     // wait ok
 
     void Wait();

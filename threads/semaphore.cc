@@ -34,7 +34,7 @@ Semaphore::Semaphore(const char *debugName, int initialValue)
 {
     name  = debugName;
     value = initialValue;
-    
+
     queue = new List<Thread *>;
 }
 

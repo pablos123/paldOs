@@ -125,8 +125,9 @@ thread.o: ../threads/thread.cc ../threads/thread.hh ../lib/utility.hh \
  ../threads/condition.hh ../threads/channel.hh
 thread_test.o: ../threads/thread_test.cc ../threads/thread_test_garden.hh \
  ../threads/thread_test_prod_cons.hh ../threads/thread_test_simple.hh \
- ../threads/test.hh ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh \
- ../lib/debug_opts.hh ../machine/system_dep.hh
+ ../threads/thread_test_channel.hh ../threads/test.hh ../lib/utility.hh \
+ ../lib/assert.hh ../lib/debug.hh ../lib/debug_opts.hh \
+ ../machine/system_dep.hh
 thread_test_garden.o: ../threads/thread_test_garden.cc \
  ../threads/thread_test_garden.hh ../threads/system.hh \
  ../threads/thread.hh ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh \
@@ -160,7 +161,7 @@ thread_test_prod_cons.o: ../threads/thread_test_prod_cons.cc \
  ../machine/interrupt.hh ../machine/statistics.hh ../machine/timer.hh \
  ../machine/synch_console.hh ../machine/console.hh ../threads/lock.hh \
  ../threads/semaphore.hh ../filesys/synch_disk.hh ../network/post.hh \
- ../machine/network.hh ../threads/synch_list.hh ../threads/channel.hh
+ ../machine/network.hh ../threads/synch_list.hh
 thread_test_simple.o: ../threads/thread_test_simple.cc \
  ../threads/thread_test_simple.hh ../threads/system.hh \
  ../threads/thread.hh ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh \
@@ -178,6 +179,19 @@ thread_test_simple.o: ../threads/thread_test_simple.cc \
  ../threads/lock.hh ../threads/semaphore.hh ../filesys/synch_disk.hh \
  ../network/post.hh ../machine/network.hh ../threads/synch_list.hh \
  ../threads/condition.hh
+thread_test_channel.o: ../threads/thread_test_channel.cc \
+ ../threads/channel.hh ../threads/condition.hh ../threads/lock.hh \
+ ../threads/semaphore.hh ../threads/thread.hh ../lib/utility.hh \
+ ../lib/assert.hh ../lib/debug.hh ../lib/debug_opts.hh \
+ ../machine/system_dep.hh ../machine/machine.hh \
+ ../machine/exception_type.hh ../machine/mmu.hh ../machine/disk.hh \
+ ../machine/translation_entry.hh ../machine/single_stepper.hh \
+ ../userprog/address_space.hh ../filesys/file_system.hh \
+ ../filesys/open_file.hh ../filesys/directory_entry.hh ../machine/disk.hh \
+ ../machine/translation_entry.hh ../userprog/syscall.h \
+ ../userprog/executable.hh ../bin/noff.h ../filesys/open_file.hh \
+ ../lib/bitmap.hh ../lib/utility.hh ../lib/table.hh ../lib/list.hh \
+ ../lib/list.hh ../threads/thread_test_channel.hh
 assert.o: ../lib/assert.cc ../lib/assert.hh
 debug.o: ../lib/debug.cc ../lib/debug.hh ../lib/debug_opts.hh \
  ../lib/utility.hh ../lib/assert.hh ../machine/system_dep.hh
@@ -709,6 +723,7 @@ thread_test.o: ../threads/thread_test.hh
 thread_test_garden.o: ../threads/thread_test_garden.hh
 thread_test_prod_cons.o: ../threads/thread_test_prod_cons.hh
 thread_test_simple.o: ../threads/thread_test_simple.hh
+thread_test_channel.o: ../threads/thread_test_channel.hh
 assert.o: ../lib/assert.hh
 debug.o: ../lib/debug.hh ../lib/debug_opts.hh
 debug_opts.o: ../lib/debug_opts.hh

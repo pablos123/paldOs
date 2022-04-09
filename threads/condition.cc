@@ -33,6 +33,10 @@ Condition::Condition(const char* debugName, Lock* lock) //tener en cuenta que no
 
 Condition::~Condition()
 {
+    DEBUG('t', "Removing condition.\n");
+    while(Semaphore* semaphore = queue->Pop())
+        delete semaphore;
+
     delete queue;
 }
 
@@ -42,12 +46,6 @@ Condition::GetName() const
     return name;
 }
 
-Lock*
-Condition::GetLock() {
-    return conditionLock;
-}
-
-
 void
 Condition::Wait()
 {
@@ -55,14 +53,12 @@ Condition::Wait()
     ASSERT(conditionLock->IsHeldByCurrentThread()); //tiene que tener agarrado el candado
     //conditionLock->Release(); //si es dueño del candado entonces lo libera
     Semaphore* new_semaphore = new Semaphore("dummy", 0); //esto lo iniciamos en 0 para dormir.
-    
+
     queue->Append(new_semaphore);
-    
+
     conditionLock->Release(); //aca hago el yield que es lo mismo //si no hago el yield en release esto es un bardo
     new_semaphore->P(); //lo mandamos a dormir
-    
-    delete new_semaphore;
-    
+
     conditionLock->Acquire();
 }
 
@@ -71,7 +67,7 @@ Condition::Signal()
 {
     ASSERT(conditionLock->IsHeldByCurrentThread());
     if(queue->IsEmpty()) return;
-    Semaphore* semaphore = queue->Pop();
+    Semaphore* semaphore = queue->Head();
     semaphore->V();
 }
 

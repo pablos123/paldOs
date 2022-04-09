@@ -59,7 +59,6 @@ SimpleThreadSemaphore(void *semaphore_param)
 }
 
 
-
 /// Set up a ping-pong between several threads.
 ///
 /// Do it by launching one thread which calls `SimpleThread`, and finally

@@ -204,7 +204,7 @@ Thread::Finish(int st)
         if(! strcmp(name, "main")) {
             printf("Finishing thread main and the console still running!\nGetting the interrupt handler ready.\n");
             consoleRunning = true;  // para eliminar el loop infinito de la consola esperando en Idle
-        } 
+        }
     #endif
     if (joinable) joinChannel->Send(st);
 
@@ -289,10 +289,10 @@ int Thread::Join(){
     joinChannel->Receive(value);
 
     int value_copy = *value;
-
-    DEBUG('t', "Received %d... joining thread :)\n", *value);
-
     delete value;
+
+    DEBUG('t', "Received %d... joining thread :)\n", value_copy);
+
     return value_copy;
 }
 
