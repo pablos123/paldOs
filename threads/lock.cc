@@ -32,7 +32,7 @@ Lock::Lock(const char *debugName)
 
     oldPriority = 0;
 
-} //esto parece que tambien pero no me acuerdo 
+} //esto parece que tambien pero no me acuerdo
 
 Lock::~Lock()
 {
@@ -50,7 +50,7 @@ Lock::Acquire()
 {
     ASSERT(! this->IsHeldByCurrentThread());
 #ifdef MULTILEVEL_PRIORITY_QUEUE
-/*  
+/*
     Herencia de prioridades:
     obtengo la propiedad del proceso de mayor prioridad
     guardo la prioridad del actual (el de baja prioridad, por ej)
@@ -103,18 +103,29 @@ Lock::IsHeldByCurrentThread() const
     return lockOwner == currentThread;
 }
 
-///Lock param library
+//--------------LockParam---------------//
+LockParam::LockParam(const char* paramName, Lock* lockParam, void* optionalParam) {
+    name = paramName;
 
-LockParam LockParamConstructor(void* debugName, Lock* lock) {
-    LockParam lockParam = (LockParam)malloc(sizeof(struct _lockParam));
-    lockParam->debugName = debugName;
-    lockParam->lock = lock;
-    
-    return lockParam;
+    lock = lockParam;
+
+    optional = optionalParam;
 }
 
+LockParam::~LockParam(){}
 
-void LockParamDestructor(LockParam lockParam) {
-    free(lockParam);
-    return;
+//------------Getters---------------//
+const char*
+LockParam::GetName() {
+    return name;
+}
+
+Lock*
+LockParam::GetLock() {
+    return lock;
+}
+
+void*
+LockParam::GetOptional() {
+    return optional;
 }

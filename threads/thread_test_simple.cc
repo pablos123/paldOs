@@ -38,8 +38,8 @@ void
 SimpleThreadSemaphore(void *semaphore_param)
 {
     // Reinterpret arg `name` as a string.
-    const char *name = ((SemaphoreParamClass*)semaphore_param)->GetName();
-    Semaphore* semaphore = ((SemaphoreParamClass*)semaphore_param)->GetSemaphore();
+    const char *name = ((SemaphoreParam*)semaphore_param)->GetName();
+    Semaphore* semaphore = ((SemaphoreParam*)semaphore_param)->GetSemaphore();
 
     // If the lines dealing with interrupts are commented, the code will
     // behave incorrectly, because printf execution may cause race
@@ -101,22 +101,22 @@ strncpy(name5, "5nd", 8);
     Semaphore* semaphore = new Semaphore("Semaforo test", 3);
 
     Thread *newThread2 = new Thread(name2);
-    SemaphoreParamClass* param2 = new SemaphoreParamClass(name2, semaphore);
+    SemaphoreParam* param2 = new SemaphoreParam(name2, semaphore);
     newThread2->Fork(SimpleThreadSemaphore, (void *) param2);
 
     Thread *newThread3 = new Thread(name3);
-    SemaphoreParamClass* param3 = new SemaphoreParamClass(name3, semaphore);
+    SemaphoreParam* param3 = new SemaphoreParam(name3, semaphore);
     newThread3->Fork(SimpleThreadSemaphore, (void *) param3);
 
     Thread *newThread4 = new Thread(name4);
-    SemaphoreParamClass* param4 = new SemaphoreParamClass(name4, semaphore);
+    SemaphoreParam* param4 = new SemaphoreParam(name4, semaphore);
     newThread4->Fork(SimpleThreadSemaphore, (void *) param4);
 
     Thread *newThread5 = new Thread(name5);
-    SemaphoreParamClass* param5 = new SemaphoreParamClass(name5, semaphore);
+    SemaphoreParam* param5 = new SemaphoreParam(name5, semaphore);
     newThread5->Fork(SimpleThreadSemaphore, (void *) param5);
 
-    SemaphoreParamClass* param1 = new SemaphoreParamClass(name1, semaphore);
+    SemaphoreParam* param1 = new SemaphoreParam(name1, semaphore);
     SimpleThreadSemaphore((void *) param1);
 
     delete param5;

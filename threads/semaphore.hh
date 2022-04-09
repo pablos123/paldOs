@@ -47,7 +47,7 @@ public:
 
     /// For debugging.
     const char *GetName() const;
-    
+
 
     /// The only public operations on the semaphore.
     ///
@@ -68,11 +68,11 @@ private:
 
 };
 
-class SemaphoreParamClass {
+class SemaphoreParam {
 public:
-    SemaphoreParamClass(const char* name, Semaphore* sempahore, void* optional = nullptr);
+    SemaphoreParam(const char* name, Semaphore* semaphore, void* optional = nullptr);
 
-    ~SemaphoreParamClass();
+    ~SemaphoreParam();
 
     const char* GetName();
 

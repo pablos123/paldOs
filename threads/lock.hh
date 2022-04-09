@@ -62,16 +62,28 @@ private:
 
     Thread* lockOwner;
 
-    size_t oldPriority; 
+    size_t oldPriority;
 };
 
-///Struct to pass Locks with a name as parameters to threads
-typedef struct _lockParam {
+class LockParam {
+public:
+    LockParam(const char * name, Lock* lock, void* optional);
+
+    ~LockParam();
+
+    const char* GetName();
+
+    Lock* GetLock();
+
+    void* GetOptional();
+
+private:
+
     Lock* lock;
-    void* debugName;
-}* LockParam;
 
-void LockParamDestructor(LockParam lockParam);
-LockParam LockParamConstructor(void* debugName, Lock* lock);
+    const char* name;
 
+    void* optional;
+
+};
 #endif

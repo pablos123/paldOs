@@ -27,7 +27,7 @@ Turnstile(void *n_)
         count = temp + 1;
         currentThread->Yield();
     }
-    printf("Turnstile %u finished. Count is now %u.\n", *n, count);
+    printf("Turnstile %u finished. Count is now %i.\n", *n, count);
     done[*n] = true;
     delete n;
 }
@@ -55,7 +55,7 @@ ThreadTestGarden()
             currentThread->Yield();
         }
     }
-    printf("All turnstiles finished. Final count is %u (should be %u).\n",
+    printf("All turnstiles finished. Final count is %i (should be %u).\n",
            count, ITERATIONS_PER_TURNSTILE * NUM_TURNSTILES);
 }
 
@@ -63,8 +63,8 @@ ThreadTestGarden()
 static void
 TurnstileSemaphore(void *param)
 {
-    unsigned *n = (unsigned*)((SemaphoreParamClass*)param)->GetOptional();
-    Semaphore* semaphore = ((SemaphoreParamClass*) param)->GetSemaphore();
+    unsigned *n = (unsigned*)((SemaphoreParam*)param)->GetOptional();
+    Semaphore* semaphore = ((SemaphoreParam*) param)->GetSemaphore();
 
 
     for (unsigned i = 0; i < ITERATIONS_PER_TURNSTILE; i++) {
@@ -88,7 +88,7 @@ TurnstileSemaphore(void *param)
     //     semaphore->V();
     // }
 
-    printf("Turnstile %u finished. Count is now %u.\n", *n, count);
+    printf("Turnstile %u finished. Count is now %i.\n", *n, count);
     done[*n] = true;
     delete n;
 }
@@ -108,7 +108,7 @@ ThreadTestGardenSemaphore()
         *n = i;
         Thread *t = new Thread(name);
 
-        SemaphoreParamClass* semaphoreParam = new SemaphoreParamClass(name, semaphore, (void*)n);
+        SemaphoreParam* semaphoreParam = new SemaphoreParam(name, semaphore, (void*)n);
         t->Fork(TurnstileSemaphore, (void*)semaphoreParam);
         delete semaphoreParam;
         delete [] name;
@@ -124,7 +124,7 @@ ThreadTestGardenSemaphore()
     }
     delete semaphore;
 
-    printf("All turnstiles finished. Final count is %u (should be %u).\n",
+    printf("All turnstiles finished. Final count is %i (should be %u).\n",
            count, ITERATIONS_PER_TURNSTILE * NUM_TURNSTILES);
 }
 
@@ -132,8 +132,8 @@ ThreadTestGardenSemaphore()
 static void
 TurnstileLocks(void* lockParam)
 {
-    unsigned *n = (unsigned *) ((LockParam) lockParam)->debugName;
-    Lock* lock = (Lock *)((LockParam) lockParam)->lock;
+    unsigned *n = (unsigned*)((LockParam*)lockParam)->GetOptional();
+    Lock* lock = ((LockParam*)lockParam)->GetLock();
 
     for (unsigned i = 0; i < ITERATIONS_PER_TURNSTILE; i++) {
 
@@ -144,7 +144,8 @@ TurnstileLocks(void* lockParam)
         lock->Release();
         currentThread->Yield();
     }
-    printf("Turnstile %u finished. Count is now %u.\n", *n, count);
+
+    printf("Turnstile %u finished. Count is now %i.\n", *n, count);
     done[*n] = true;
     delete n;
 }
@@ -164,9 +165,11 @@ void ThreadTestGardenLocks() {
         *n = i;
         Thread *t = new Thread(name);
 
-        LockParam param = LockParamConstructor((void*)n, lock);
-        t->Fork(TurnstileLocks, (void*)param);
+        LockParam* lockParam = new LockParam("Dummy", lock, (void*)n);
+        t->Fork(TurnstileLocks, (void*)lockParam);
+
         delete [] name;
+        delete lockParam;
     }
 
     // Wait until all turnstile threads finish their work.  `Thread::Join` is
@@ -177,7 +180,7 @@ void ThreadTestGardenLocks() {
             currentThread->Yield();
         }
     }
-    printf("All turnstiles finished. Final count is %u (should be %u).\n",
+    printf("All turnstiles finished. Final count is %i (should be %u).\n",
            count, ITERATIONS_PER_TURNSTILE * NUM_TURNSTILES);
 
     delete lock;

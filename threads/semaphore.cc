@@ -96,26 +96,26 @@ Semaphore::V()
 
 
 //----------------Class for debugging semaphores inside threads-------------//
-SemaphoreParamClass::SemaphoreParamClass(const char* debugName, Semaphore* semaphoreParam, void* optionalParam) {
+SemaphoreParam::SemaphoreParam(const char* debugName, Semaphore* semaphoreParam, void* optionalParam) {
     name = debugName;
     semaphore = semaphoreParam;
     optional =  optionalParam;
 }
 
-SemaphoreParamClass::~SemaphoreParamClass() {}
+SemaphoreParam::~SemaphoreParam() {}
 
 //----------------Getters----------------//
 const char*
-SemaphoreParamClass::GetName() {
+SemaphoreParam::GetName() {
     return name;
 }
 
 Semaphore*
-SemaphoreParamClass::GetSemaphore() {
+SemaphoreParam::GetSemaphore() {
     return semaphore;
 }
 
 void*
-SemaphoreParamClass::GetOptional() {
+SemaphoreParam::GetOptional() {
     return optional;
 }
