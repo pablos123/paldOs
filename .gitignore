@@ -20,7 +20,7 @@ __pycache__
 /bin/coff2flat
 /bin/coff2noff
 /bin/disassemble
-*.depends
+*depends
 nachos
 switch*.s
 /userland/filetest

@@ -46,6 +46,7 @@ public:
     /// Returns the old item.
     T Update(int i, T item);
 
+
 private:
     /// Data items.
     T data[SIZE];
@@ -95,6 +96,7 @@ Table<T>::Get(int i) const
 
     return HasKey(i) ? data[i] : T();
 }
+
 
 template <class T>
 bool

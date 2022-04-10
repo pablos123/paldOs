@@ -33,6 +33,8 @@ public:
     /// Dequeue first thread on the ready list, if any, and return thread.
     Thread *FindNextToRun();
 
+    Thread * FindIfRun();
+
     /// Cause `nextThread` to start running.
     void Run(Thread *nextThread);
 
@@ -42,17 +44,13 @@ public:
 #ifdef MULTILEVEL_PRIORITY_QUEUE
     //Modifies the thread priority (for priority inheritance)
     void ModifyPriority(Thread* thread);
-
-    //Gets the priority of the highest priority thread in the ready to run processes list
-    //Deprecated.
-    //size_t GetMaxPriority();
 #endif
 
 private:
 
     // Queue of threads that are ready to run, but not running.
     List<Thread*> *readyList;
-    
+
 };
 
 

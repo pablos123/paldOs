@@ -34,10 +34,9 @@ Condition::Condition(const char* debugName, Lock* lock) //tener en cuenta que no
 Condition::~Condition()
 {
     DEBUG('t', "Removing condition.\n");
-    while(Semaphore* semaphore = queue->Pop())
-        delete semaphore;
-
-    delete queue;
+    while(queue != nullptr && (! queue->IsEmpty())) {
+        delete queue->Pop();
+    }
 }
 
 const char *

@@ -22,16 +22,22 @@
 /// memory while the file is open.
 ///
 /// * `sector` is the location on disk of the file header for this file.
-OpenFile::OpenFile(int sector)
+OpenFile::OpenFile(int sectorParam)
 {
     hdr = new FileHeader;
-    hdr->FetchFrom(sector);
+    hdr->FetchFrom(sectorParam);
     seekPosition = 0;
+    sector = sectorParam;
 }
 
 /// Close a Nachos file, de-allocating any in-memory data structures.
 OpenFile::~OpenFile()
 {
+    // Decrease the counter meaning one less open file for this sector
+    openFilesTable[sector]->count--;
+    // If this is the last open file of this sector free the lock
+    if(openFilesTable[sector]->count == 0)
+        delete openFilesTable[sector]->lock;
     delete hdr;
 }
 
@@ -75,7 +81,11 @@ OpenFile::Write(const char *into, unsigned numBytes)
     ASSERT(into != nullptr);
     ASSERT(numBytes > 0);
 
+
+    openFilesTable[sector]->lock->Acquire();
     int result = WriteAt(into, numBytes, seekPosition);
+    openFilesTable[sector]->lock->Release();
+
     seekPosition += result;
     return result;
 }
@@ -197,4 +207,10 @@ unsigned
 OpenFile::Length() const
 {
     return hdr->FileLength();
+}
+
+int
+OpenFile::GetSector()
+{
+    return sector;
 }

@@ -122,7 +122,7 @@ public:
 
     int Join();
 
-    /// The thread is done executing. 
+    /// The thread is done executing.
     void Finish(int status = 0);
 
     /// Check if thread has overflowed its stack.
@@ -135,6 +135,8 @@ public:
     size_t GetPriority();
 
     void SetPriority(size_t);
+
+    int GetSpaceId();
 
     void Print() const;
 
@@ -154,6 +156,8 @@ private:
 
     const char *name;
 
+    int spaceId;    // Returned by the Add() method in Table class for the runningprocesses table
+
     /// Allocate a stack for thread.  Used internally by `Fork`.
     void StackAllocate(VoidFunctionPtr func, void *arg);
 
@@ -172,7 +176,7 @@ private:
     /// registers -- one for its state while executing user code, one for its
     /// state while executing kernel code.
     int userRegisters[NUM_TOTAL_REGS];
-    Table<OpenFile*> *openedFilesTable;    //tabla de los archivos abiertos del hilo 
+    Table<OpenFile*> *openedFilesTable;    //tabla de los archivos abiertos del hilo
 
 public:
 

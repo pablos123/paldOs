@@ -12,10 +12,10 @@ Channel::Channel(const char * debugName)
 }
 
 Channel::~Channel() {
-    delete conditionForSenders; // not freeing the lock here
-    delete conditionForReceivers;
     delete buzon;
     delete lock;
+    delete conditionForSenders; // not freeing the lock here
+    delete conditionForReceivers;
 }
 
 void Channel::Send(int message){

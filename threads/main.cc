@@ -98,6 +98,7 @@
 void Copy(const char *unixFile, const char *nachosFile);
 void Print(const char *file);
 void PerformanceTest(void);
+void PerformanceTestSync(void);
 void StartProcess(const char *file);
 void ConsoleTest(const char *in, const char *out);
 void MailTest(int networkID);
@@ -212,6 +213,8 @@ srand(time(NULL));
             printf("Filesystem check %s.\n", result ? "succeeded" : "failed");
         } else if (!strcmp(*argv, "-tf")) {  // Performance test.
             PerformanceTest();
+        } else if (!strcmp(*argv, "-tfs")) {  // Performance test.
+            PerformanceTestSync();
         }
 #endif
 #ifdef NETWORK

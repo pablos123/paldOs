@@ -25,9 +25,6 @@
 
 #include <inttypes.h>
 #include <stdio.h>
-#ifdef USER_PROGRAM
-#include <string.h>
-#endif
 
 /// This is put at the top of the execution stack, for detecting stack
 /// overflows.
@@ -64,6 +61,8 @@ Thread::Thread(const char *threadName, bool isJoinable, size_t priorityParam)
 
     openedFilesTable->Add(nullptr); //for console input
     openedFilesTable->Add(nullptr); //for console output
+
+    spaceId = runningProcesses->Add(this);
 #endif
 }
 
@@ -89,12 +88,19 @@ Thread::~Thread()
     if(joinable) delete joinChannel;
 #ifdef DEMAND_LOADING
 #ifdef SWAP
-    runningProcesses->Remove(space->GetSpaceId());
+    runningProcesses->Remove(spaceId);
 #endif
 #endif
-    delete space;
+    if(space != nullptr) delete space;
     delete openedFilesTable;
 #endif
+}
+
+//Gets the thread's priority
+int
+Thread::GetSpaceId()
+{
+    return spaceId;
 }
 
 //Gets the thread's priority
@@ -201,11 +207,13 @@ Thread::Finish(int st)
 
     bool consoleRunning = false;
     #ifdef USER_PROGRAM
-        if(! strcmp(name, "main")) {
+        runningProcesses->HasKey(0);
+        if(spaceId == 0) {
             printf("Finishing thread main and the console still running!\nGetting the interrupt handler ready.\n");
             consoleRunning = true;  // para eliminar el loop infinito de la consola esperando en Idle
         }
     #endif
+
     if (joinable) joinChannel->Send(st);
 
     DEBUG('t', "Finishing thread \"%s\"\n", name);

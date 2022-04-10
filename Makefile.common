@@ -141,6 +141,7 @@ FILESYS_SRC = filesys/directory.cc   \
               filesys/file_header.cc \
               filesys/file_system.cc \
               filesys/fs_test.cc     \
+              filesys/fs_test_sync.cc\
               filesys/open_file.cc   \
               filesys/synch_disk.cc  \
               machine/disk.cc

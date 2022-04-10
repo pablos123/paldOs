@@ -76,10 +76,11 @@ extern FileSystem *fileSystem;
 extern SynchDisk *synchDisk;
 typedef struct _openFileEntry {
     int count = 0;
+    bool removing = false;
     Lock* lock;
 }* OpenFileEntry;
 
-extern OpenFileEntry* openFilesTable; 
+extern OpenFileEntry* openFilesTable;
 
 #endif
 

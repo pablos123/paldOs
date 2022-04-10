@@ -112,21 +112,15 @@ PrintSync(const char *name)
 /// * `PerformanceTest` -- overall control, and print out performance #'s.
 
 static const char FILE_NAME[] = "TestFile";
-static const char CONTENTS[] = "1234567890";
+static const char CONTENTS[] = "1234";
 static const unsigned CONTENT_SIZE = sizeof CONTENTS - 1;
-static const unsigned FILE_SIZE = CONTENT_SIZE * 5000;
+static const unsigned FILE_SIZE = 1239;
 
 static void
 FileWriteSync(void* threadName)
 {
-    DEBUG('t', "Executing %s thread\n", (char *)threadName);
     printf("Sequential write of %u byte file, in %u byte chunks\n",
            FILE_SIZE, CONTENT_SIZE);
-
-    if (!fileSystem->Create(FILE_NAME, 0)) {
-        fprintf(stderr, "Perf test: cannot create %s\n", FILE_NAME);
-        return;
-    }
 
     OpenFile *openFile = fileSystem->Open(FILE_NAME);
     if (openFile == nullptr) {
@@ -135,11 +129,13 @@ FileWriteSync(void* threadName)
     }
 
     for (unsigned i = 0; i < FILE_SIZE; i += CONTENT_SIZE) {
-        int numBytes = openFile->Write(CONTENTS, CONTENT_SIZE);
-        if (numBytes < 10) {
+        DEBUG('f', "THREAD Writing %s, with %s thread\n", (char *)threadName, (char *)threadName);
+        unsigned numBytes = (unsigned)openFile->Write((char *)threadName, CONTENT_SIZE);
+        if (numBytes < CONTENT_SIZE) {
             fprintf(stderr, "Perf test: unable to write %s\n", FILE_NAME);
             break;
         }
+        break;
     }
 
     delete openFile;
@@ -177,26 +173,43 @@ PerformanceTestSync()
     printf("Starting syncronous file system performance test:\n");
     stats->Print();
 
-    char *name = new char [64], *name1 = new char [64],
-    *name2 = new char [64];
+    Thread** threads = new Thread*[3];
 
-    strncpy(name, "1st", 64);
+    char *name  = new char [8];
+    char *name1 = new char [8];
+    char *name2 = new char [8];
+
+    strncpy(name,  "2sta", 8);
+    strncpy(name1, "3rda", 8);
+    strncpy(name2, "4tha", 8);
+
+    if (!fileSystem->Create(FILE_NAME, FILE_SIZE)) {
+        fprintf(stderr, "Perf test: cannot create %s\n", FILE_NAME);
+        return;
+    }
+
     Thread *newThread = new Thread(name, true);
     newThread->Fork(FileWriteSync, (void *) name);
+    threads[0] = newThread;
 
-    strncpy(name1, "2nd", 64);
     Thread *newThread1 = new Thread(name1, true);
     newThread1->Fork(FileWriteSync, (void *) name1);
+    threads[1] = newThread1;
 
-    strncpy(name2, "3nd", 64);
     Thread *newThread2 = new Thread(name2, true);
     newThread2->Fork(FileWriteSync, (void *) name2);
+    threads[2] = newThread2;
 
-    FileWriteSync((void *) "1st");
+    FileWriteSync((void *) "1sta");
 
-    newThread->Join();
-    newThread1->Join();
-    newThread2->Join();
+    for(int i = 0; i < 3; ++i)
+        threads[i]->Join();
+
+    delete [] threads;
+
+    delete [] name;
+    delete [] name1;
+    delete [] name2;
 
     //strncpy(name2, "2nd", 64);
     //Thread *newThread = new Thread(name2);
@@ -215,9 +228,9 @@ PerformanceTestSync()
     //newThread5->Fork(FileWriteSync, (void *) name5);
 
 
-    if (!fileSystem->Remove(FILE_NAME)) {
-        printf("Perf test: unable to remove %s\n", FILE_NAME);
-        return;
-    }
-    stats->Print();
+    //if (!fileSystem->Remove(FILE_NAME)) {
+    //    printf("Perf test: unable to remove %s\n", FILE_NAME);
+    //    return;
+    //}
+    //stats->Print();
 }

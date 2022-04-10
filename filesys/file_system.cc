@@ -46,6 +46,8 @@
 #include "directory.hh"
 #include "file_header.hh"
 #include "lib/bitmap.hh"
+#include "threads/lock.hh"
+#include "threads/system.hh"
 
 #include <stdio.h>
 #include <string.h>
@@ -175,9 +177,7 @@ FileSystem::Create(const char *name, unsigned initialSize)
     dir->FetchFrom(directoryFile);
 
     bool success;
-    bool unlock = true;
 
-    //lock
     if (dir->Find(name) != -1) {
         success = false;  // File is already in directory.
     } else {
@@ -198,16 +198,12 @@ FileSystem::Create(const char *name, unsigned initialSize)
                 h->WriteBack(sector);
                 dir->WriteBack(directoryFile);
                 freeMap->WriteBack(freeMapFile);
-                //unlock
-                unlock = false;
             }
             delete h;
         }
         delete freeMap;
     }
     delete dir;
-    if(unlock);
-    //    unlock
     return success;
 }
 
@@ -229,9 +225,16 @@ FileSystem::Open(const char *name)
     DEBUG('f', "Opening file %s\n", name);
     dir->FetchFrom(directoryFile);
     int sector = dir->Find(name);
-    if (sector >= 0) {
-        openFile = new OpenFile(sector);  // `name` was found in directory.
+
+    if (sector >= 0 && !openFilesTable[sector]->removing) { // `name` was found in directory.
+        openFile = new OpenFile(sector);
+        if(openFilesTable[sector]->count == 0) {    // no one else has the file open
+            Lock* lock = new Lock(nullptr);
+            openFilesTable[sector]->lock = lock;
+        }
+        openFilesTable[sector]->count++; // add one user to the count of the threads that have the file open
     }
+
     delete dir;
     return openFile;  // Return null if not found.
 }
@@ -265,6 +268,11 @@ FileSystem::Remove(const char *name)
 
     Bitmap *freeMap = new Bitmap(NUM_SECTORS);
     freeMap->FetchFrom(freeMapFile);
+
+    // Set the file in "removing" state
+    openFilesTable[sector]->removing = true;
+    // Wait for the other threads with the file open to finish their work
+    while(openFilesTable[sector]->count > 0);
 
     fileH->Deallocate(freeMap);  // Remove data blocks.
     freeMap->Clear(sector);      // Remove header block.

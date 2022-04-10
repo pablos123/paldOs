@@ -193,8 +193,7 @@ SyscallHandler(ExceptionType _et)
 
             Thread *newThread = new Thread(filename, isJoinable);
 
-            SpaceId spaceId = (SpaceId)runningProcesses->Add(newThread);
-
+            SpaceId spaceId = (SpaceId)newThread->GetSpaceId();
             AddressSpace *space = new AddressSpace(executable, spaceId);
 
             newThread->space = space;

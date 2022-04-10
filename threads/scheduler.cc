@@ -67,6 +67,12 @@ Scheduler::FindNextToRun()
     return readyList->Pop();    //hay que cambiar esto por la correción que nos dieron?
 }
 
+Thread *
+Scheduler::FindIfRun()
+{
+    return readyList->Head();
+}
+
 /// Dispatch the CPU to `nextThread`.
 ///
 /// Save the state of the old thread, and load the state of the new thread,
@@ -111,7 +117,6 @@ Scheduler::Run(Thread *nextThread)
 
     DEBUG('t', "Now in thread \"%s\"\n", currentThread->GetName());
 
-    DEBUG('t', "thread to be destroyed %s\n", currentThread->GetName());
     // If the old thread gave up the processor because it was finishing, we
     // need to delete its carcass.  Note we cannot delete the thread before
     // now (for example, in `Thread::Finish`), because up to this point, we

@@ -46,7 +46,7 @@ FileSystem *fileSystem;
 
 #ifdef FILESYS
 SynchDisk *synchDisk;
-OpenFileEntry* openFileTable;
+OpenFileEntry* openFilesTable;
 #endif
 
 #ifdef USER_PROGRAM  // Requires either *FILESYS* or *FILESYS_STUB*.
@@ -229,6 +229,9 @@ Initialize(int argc, char **argv)
 
     threadToBeDestroyed = nullptr;
 
+#ifdef USER_PROGRAM
+    runningProcesses = new Table<Thread*>;
+#endif
     // We did not explicitly allocate the current thread we are running in.
     // But if it ever tries to give up the CPU, we better have a `Thread`
     // object to save its state.
@@ -252,8 +255,6 @@ Initialize(int argc, char **argv)
 
     consoleSys = new SynchConsole(nullptr, nullptr);
 
-    runningProcesses = new Table<Thread*>;
-
     if(! randomYield)
         timer = new Timer(TimerInterruptHandler, 0, false); //fixed time slicing every TIMER_TICKS
 #endif
@@ -267,9 +268,9 @@ Initialize(int argc, char **argv)
 
 #ifdef FILESYS
     synchDisk = new SynchDisk("DISK");
-    openFileTable = new OpenFileEntry[NUM_DIR_ENTRIES]; // por ahora lo multiplicamos por 1 pq no hay jerarquias en los directorios
+    openFilesTable = new OpenFileEntry[NUM_DIR_ENTRIES]; // por ahora lo multiplicamos por 1 pq no hay jerarquias en los directorios
     for(unsigned i = 0; i < NUM_DIR_ENTRIES; ++i) {
-        openFileTable[i] = new struct _openFileEntry;
+        openFilesTable[i] = new struct _openFileEntry;
     }
 #endif
 
@@ -320,15 +321,15 @@ Cleanup()
 #endif
 
 #ifdef FILESYS
-    for(unsigned i = 0; i < NUM_DIR_ENTRIES; ++i) delete openFileTable[i];
-    delete [] openFileTable;
+    for(unsigned i = 0; i < NUM_DIR_ENTRIES; ++i) delete openFilesTable[i];
+    delete [] openFilesTable;
     delete synchDisk;
 #endif
 
     delete timer;
     delete scheduler;
     delete interrupt;
-    delete stats; 
+    delete stats;
 
     exit(0);
 }

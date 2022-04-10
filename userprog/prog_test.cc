@@ -32,9 +32,7 @@ StartProcess(const char *filename)
         return;
     }
 
-    SpaceId spaceId = (SpaceId)runningProcesses->Add(currentThread);
-
-    AddressSpace *space = new AddressSpace(executable, spaceId);
+    AddressSpace *space = new AddressSpace(executable, (SpaceId)currentThread->GetSpaceId());
     currentThread->space = space;
 
 #ifndef DEMAND_LOADING

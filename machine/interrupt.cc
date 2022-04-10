@@ -199,7 +199,8 @@ Interrupt::Idle(bool consoleRunning)
     DEBUG('i', "Machine idling; checking for interrupts.\n");
     status = IDLE_MODE;
 
-    if (CheckIfDue(true) && ! consoleRunning) {           // Check for any pending interrupts and check if the console is unnecessary waiting
+    DEBUG('i', "The console is: %i.\n", consoleRunning);
+    if (! consoleRunning && CheckIfDue(true)) {           // Check for any pending interrupts and check if the console is unnecessary waiting
 
         while (CheckIfDue(false)) {}  // Check for any other pending
                                       // interrupts.
