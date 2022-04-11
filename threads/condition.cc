@@ -23,7 +23,7 @@
 /// Note -- without a correct implementation of `Condition::Wait`, the test
 /// case in the network assignment will not work!
 
-Condition::Condition(const char* debugName, Lock* lock) //tener en cuenta que no se libera la memoria ocupada por el lock.
+Condition::Condition(const char* debugName, Lock* lock)
 {
     name = debugName;
     conditionLock = lock;
@@ -31,12 +31,13 @@ Condition::Condition(const char* debugName, Lock* lock) //tener en cuenta que no
     queue = new List<Semaphore *>;
 }
 
+/// We do not free the memory of the lock here
 Condition::~Condition()
 {
     DEBUG('t', "Removing condition.\n");
-    while(queue != nullptr && (! queue->IsEmpty())) {
+    while(queue != nullptr && (! queue->IsEmpty()))
         delete queue->Pop();
-    }
+    delete queue;
 }
 
 const char *
@@ -55,7 +56,7 @@ Condition::Wait()
 
     queue->Append(new_semaphore);
 
-    conditionLock->Release(); //aca hago el yield que es lo mismo //si no hago el yield en release esto es un bardo
+    conditionLock->Release(); //aca hago el yield que es lo mismo
     new_semaphore->P(); //lo mandamos a dormir
 
     conditionLock->Acquire();
@@ -76,4 +77,6 @@ Condition::Broadcast()
     while(!queue->IsEmpty()) {
         Signal();
     }
+
+    // delete semaphore?
 }

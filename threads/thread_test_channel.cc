@@ -29,7 +29,7 @@ static void receiverTest(void* param) {
 }
 
 void ThreadTestChannel() {
-    int i = 0;
+    int i = 123;
     printf("Mandando mensaje: %d\n", i);
     Channel* channel = new Channel("canal1");
 
@@ -42,7 +42,7 @@ void ThreadTestChannel() {
     sender->Fork(senderTest, (void*) param);
 
     int* j = new int;
-    *j = 123;
+    *j = 0;
     ChannelParam2 param2 = new struct _channelParam2;
     param2->channel = channel;
     param2->i = j;
@@ -50,8 +50,6 @@ void ThreadTestChannel() {
 
     sender->Join();
     receiver->Join();
-    ///saque un join  porque uno de los dos esta esperando y entonces con el otro quiero mandarle la señal :D
-    //si voy a esperar entonces no me sirve, un owr around podría ser, agarrar y fijarme si esta
 
     printf("Recibiendo mensaje: %d\n", *j);
 

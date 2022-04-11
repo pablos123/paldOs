@@ -272,7 +272,7 @@ FileSystem::Remove(const char *name)
     // Set the file in "removing" state
     openFilesTable[sector]->removing = true;
     // Wait for the other threads with the file open to finish their work
-    while(openFilesTable[sector]->count > 0);
+    while(openFilesTable[sector]->count > 0); // mejorar con una variable de condicion para que el main largue el procesador y los otros hilos puedan cerrar los files
 
     fileH->Deallocate(freeMap);  // Remove data blocks.
     freeMap->Clear(sector);      // Remove header block.

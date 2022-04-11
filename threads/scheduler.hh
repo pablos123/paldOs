@@ -33,7 +33,7 @@ public:
     /// Dequeue first thread on the ready list, if any, and return thread.
     Thread *FindNextToRun();
 
-    Thread * FindIfRun();
+    List<Thread*>* GetReadyList();
 
     /// Cause `nextThread` to start running.
     void Run(Thread *nextThread);

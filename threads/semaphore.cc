@@ -87,6 +87,7 @@ Semaphore::V()
     Thread *thread = queue->Pop();
     if (thread != nullptr) {
         // Make thread ready, consuming the `V` immediately.
+        DEBUG('t', "Calling ready to run in semaphore V.\n");
         scheduler->ReadyToRun(thread);
     }
     value++;

@@ -12,10 +12,10 @@ Channel::Channel(const char * debugName)
 }
 
 Channel::~Channel() {
-    delete buzon;
-    delete lock;
     delete conditionForSenders; // not freeing the lock here
     delete conditionForReceivers;
+    delete lock;
+    delete buzon;
 }
 
 void Channel::Send(int message){
@@ -24,7 +24,8 @@ void Channel::Send(int message){
     buzon->Append(message);
 
     conditionForReceivers->Signal();
-    conditionForSenders->Wait(); //quiero esperar (y que otros senders no manden cosas) hasta que
+    int msg = buzon->Head();
+    while(! buzon->IsEmpty() && msg == buzon->Head()) conditionForSenders->Wait(); //quiero esperar (y que otros senders no manden cosas) hasta que
                                 // se llame a Receive() y hagan el Pop del buffer en el otro lado
     lock->Release();
 }

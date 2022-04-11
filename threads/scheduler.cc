@@ -50,6 +50,7 @@ Scheduler::ReadyToRun(Thread *thread)
     thread->SetStatus(READY);
 #ifdef MULTILEVEL_PRIORITY_QUEUE
     readyList->SortedInsertInverted(thread, thread->GetPriority());
+    DEBUG('t', "Sorted insert invert put %s first.\n", readyList->Head()->GetName());
 #else
     readyList->Append(thread);
 #endif
@@ -67,10 +68,10 @@ Scheduler::FindNextToRun()
     return readyList->Pop();    //hay que cambiar esto por la correción que nos dieron?
 }
 
-Thread *
-Scheduler::FindIfRun()
-{
-    return readyList->Head();
+///Gets the ready list.
+List<Thread*>*
+Scheduler::GetReadyList() {
+    return readyList;
 }
 
 /// Dispatch the CPU to `nextThread`.
@@ -122,7 +123,7 @@ Scheduler::Run(Thread *nextThread)
     // now (for example, in `Thread::Finish`), because up to this point, we
     // were still running on the old thread's stack!
     if (threadToBeDestroyed != nullptr) {
-        DEBUG('t', "Thread to be destroyed %s\n", threadToBeDestroyed->GetName());
+        DEBUG('t', "SCHEDULER: Thread to be destroyed %s\n", threadToBeDestroyed->GetName());
         delete threadToBeDestroyed;
         threadToBeDestroyed = nullptr;
     }

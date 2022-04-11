@@ -112,9 +112,9 @@ PrintSync(const char *name)
 /// * `PerformanceTest` -- overall control, and print out performance #'s.
 
 static const char FILE_NAME[] = "TestFile";
-static const char CONTENTS[] = "1234";
+static const char CONTENTS[] = "1234567890";
 static const unsigned CONTENT_SIZE = sizeof CONTENTS - 1;
-static const unsigned FILE_SIZE = 1239;
+static const unsigned FILE_SIZE = 2000;
 
 static void
 FileWriteSync(void* threadName)
@@ -130,12 +130,11 @@ FileWriteSync(void* threadName)
 
     for (unsigned i = 0; i < FILE_SIZE; i += CONTENT_SIZE) {
         DEBUG('f', "THREAD Writing %s, with %s thread\n", (char *)threadName, (char *)threadName);
-        unsigned numBytes = (unsigned)openFile->Write((char *)threadName, CONTENT_SIZE);
+        unsigned numBytes = (unsigned)openFile->Write(CONTENTS, CONTENT_SIZE);
         if (numBytes < CONTENT_SIZE) {
             fprintf(stderr, "Perf test: unable to write %s\n", FILE_NAME);
             break;
         }
-        break;
     }
 
     delete openFile;
@@ -157,6 +156,7 @@ FileReadSync(void* threadName)
     char *buffer = new char [CONTENT_SIZE];
     for (unsigned i = 0; i < FILE_SIZE; i += CONTENT_SIZE) {
         int numBytes = openFile->Read(buffer, CONTENT_SIZE);
+        printf("Readed: %s\n", buffer);
         if (numBytes < 10 || strncmp(buffer, CONTENTS, CONTENT_SIZE)) {
             printf("Perf test: unable to read %s\n", FILE_NAME);
             break;
@@ -173,21 +173,28 @@ PerformanceTestSync()
     printf("Starting syncronous file system performance test:\n");
     stats->Print();
 
-    Thread** threads = new Thread*[3];
+    Thread** threads = new Thread*[6];
 
     char *name  = new char [8];
     char *name1 = new char [8];
     char *name2 = new char [8];
+    char *name3 = new char [8];
+    char *name4 = new char [8];
+    char *name5 = new char [8];
 
-    strncpy(name,  "2sta", 8);
-    strncpy(name1, "3rda", 8);
-    strncpy(name2, "4tha", 8);
+    strncpy(name,  "2st", 8);
+    strncpy(name1, "3rd", 8);
+    strncpy(name2, "4th", 8);
+    strncpy(name3, "5st", 8);
+    strncpy(name4, "6rd", 8);
+    strncpy(name5, "7th", 8);
 
     if (!fileSystem->Create(FILE_NAME, FILE_SIZE)) {
         fprintf(stderr, "Perf test: cannot create %s\n", FILE_NAME);
         return;
     }
 
+    ////////////////////WRITE//////////////////////
     Thread *newThread = new Thread(name, true);
     newThread->Fork(FileWriteSync, (void *) name);
     threads[0] = newThread;
@@ -200,37 +207,66 @@ PerformanceTestSync()
     newThread2->Fork(FileWriteSync, (void *) name2);
     threads[2] = newThread2;
 
-    FileWriteSync((void *) "1sta");
+    Thread *newThread3 = new Thread(name3, true);
+    newThread3->Fork(FileWriteSync, (void *) name3);
+    threads[3] = newThread3;
 
-    for(int i = 0; i < 3; ++i)
-        threads[i]->Join();
+    Thread *newThread4 = new Thread(name4, true);
+    newThread4->Fork(FileWriteSync, (void *) name4);
+    threads[4] = newThread4;
+
+    fileSystem->Remove(FILE_NAME);
+
+    Thread *newThread5 = new Thread(name5, true);
+    newThread5->Fork(FileWriteSync, (void *) name5);
+    threads[5] = newThread5;
+
+    FileWriteSync((void *) "1st");
+
+    for(int i = 0; i < 6; ++i) threads[i]->Join();
+
+    ////////////////////READ//////////////////////
+
+    newThread = new Thread(name, true);
+    newThread->Fork(FileReadSync, (void *) name);
+    threads[0] = newThread;
+
+    newThread1 = new Thread(name1, true);
+    newThread1->Fork(FileReadSync, (void *) name1);
+    threads[1] = newThread1;
+
+    newThread2 = new Thread(name2, true);
+    newThread2->Fork(FileReadSync, (void *) name2);
+    threads[2] = newThread2;
+
+    newThread3 = new Thread(name3, true);
+    newThread3->Fork(FileReadSync, (void *) name3);
+    threads[3] = newThread3;
+
+    newThread4 = new Thread(name4, true);
+    newThread4->Fork(FileReadSync, (void *) name4);
+    threads[4] = newThread4;
+
+    newThread5 = new Thread(name5, true);
+    newThread5->Fork(FileReadSync, (void *) name5);
+    threads[5] = newThread5;
+
+    FileReadSync((void *) "1st");
+
+    for(int i = 0; i < 6; ++i) threads[i]->Join();
 
     delete [] threads;
 
     delete [] name;
     delete [] name1;
     delete [] name2;
+    delete [] name3;
+    delete [] name4;
+    delete [] name5;
 
-    //strncpy(name2, "2nd", 64);
-    //Thread *newThread = new Thread(name2);
-    //newThread->Fork(FileWriteSync, (void *) name2);
-
-    //strncpy(name3, "3nd", 64);
-    //Thread *newThread3 = new Thread(name3);
-    //newThread3->Fork(FileWriteSync, (void *) name3);
-
-    //strncpy(name4, "4nd", 64);
-    //Thread *newThread4 = new Thread(name4);
-    //newThread4->Fork(FileWriteSync, (void *) name4);
-
-    //strncpy(name5, "5nd", 64);
-    //Thread *newThread5 = new Thread(name5);
-    //newThread5->Fork(FileWriteSync, (void *) name5);
-
-
-    //if (!fileSystem->Remove(FILE_NAME)) {
-    //    printf("Perf test: unable to remove %s\n", FILE_NAME);
-    //    return;
-    //}
-    //stats->Print();
+    if (!fileSystem->Remove(FILE_NAME)) {
+        printf("Perf test: unable to remove %s\n", FILE_NAME);
+        return;
+    }
+    stats->Print();
 }

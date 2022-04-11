@@ -54,7 +54,7 @@ Thread::Thread(const char *threadName, bool isJoinable, size_t priorityParam)
 
     if(joinable) joinChannel = new Channel("Join Channel");
 
-    DEBUG('e',"The thread created is:%s\n", name);
+    DEBUG('t',"The thread created is:%s\n", name);
 #ifdef USER_PROGRAM
     space    = nullptr;
     openedFilesTable = new Table<OpenFile*>;
@@ -63,6 +63,8 @@ Thread::Thread(const char *threadName, bool isJoinable, size_t priorityParam)
     openedFilesTable->Add(nullptr); //for console output
 
     spaceId = runningProcesses->Add(this);
+    DEBUG('t', "The spaceId asigned for the thread %s is: %d\n", name, spaceId);
+    DEBUG('t', "The assigned priority is: %d\n", priority);
 #endif
 }
 
@@ -92,6 +94,9 @@ Thread::~Thread()
 #endif
 #endif
     if(space != nullptr) delete space;
+    for(int i = 0; openedFilesTable->HasKey(i); ++i) {
+        delete openedFilesTable->Get(i);
+    }
     delete openedFilesTable;
 #endif
 }
@@ -201,24 +206,26 @@ Thread::Print() const
 void
 Thread::Finish(int st)
 {
-    ASSERT(this == currentThread);
-
     interrupt->SetLevel(INT_OFF);
+
+    ASSERT(this == currentThread);
 
     bool consoleRunning = false;
     #ifdef USER_PROGRAM
-        runningProcesses->HasKey(0);
-        if(spaceId == 0) {
+        if(spaceId == 0) { // If the space Id is the main thread we need to halt the nachos
             printf("Finishing thread main and the console still running!\nGetting the interrupt handler ready.\n");
-            consoleRunning = true;  // para eliminar el loop infinito de la consola esperando en Idle
+            consoleRunning = true;
         }
     #endif
 
+
+    DEBUG('t', "Sending message with\"%s\"\n", name);
     if (joinable) joinChannel->Send(st);
 
     DEBUG('t', "Finishing thread \"%s\"\n", name);
 
     threadToBeDestroyed = currentThread;
+    DEBUG('t', "FUNCTION FINISH: Putting the thread \"%s\" to be destroyed.\n", threadToBeDestroyed->GetName());
 
     Sleep(consoleRunning);  // Invokes `SWITCH`.
     // Not reached.
@@ -299,7 +306,10 @@ int Thread::Join(){
     int value_copy = *value;
     delete value;
 
-    DEBUG('t', "Received %d... joining thread :)\n", value_copy);
+    DEBUG('t', "JOINING %d... joining thread %s :)))\n", value_copy, name);
+
+    if(currentThread->GetSpaceId() == 0 && !scheduler->GetReadyList()->IsEmpty())
+        currentThread->Yield();
 
     return value_copy;
 }
