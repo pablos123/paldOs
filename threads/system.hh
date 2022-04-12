@@ -84,6 +84,7 @@ typedef struct _openFileEntry {
 }* OpenFileEntry;
 
 extern OpenFileEntry* openFilesTable;
+extern Lock* filesysCreateLock;
 
 #endif
 

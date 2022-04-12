@@ -42,13 +42,12 @@
 /// limitation of liability and disclaimer of warranty provisions.
 
 
+#include "threads/system.hh"
+#include "threads/channel.hh"
 #include "file_system.hh"
 #include "directory.hh"
 #include "file_header.hh"
 #include "lib/bitmap.hh"
-#include "threads/lock.hh"
-#include "threads/system.hh"
-#include "threads/channel.hh"
 
 #include <stdio.h>
 #include <string.h>
@@ -133,15 +132,12 @@ FileSystem::FileSystem(bool format)
         freeMapFile   = new OpenFile(FREE_MAP_SECTOR);
         directoryFile = new OpenFile(DIRECTORY_SECTOR);
     }
-
-    createLock = new Lock("Create Lock");
 }
 
 FileSystem::~FileSystem()
 {
     delete freeMapFile;
     delete directoryFile;
-    delete createLock;
 }
 
 /// Create a file in the Nachos file system (similar to UNIX `create`).
@@ -181,10 +177,11 @@ FileSystem::Create(const char *name, unsigned initialSize)
     dir->FetchFrom(directoryFile);
 
     bool success;
-    createLock->Acquire();
+    filesysCreateLock->Acquire();
     if (dir->Find(name) != -1) {
+        DEBUG('f',"File is already in directory\n");
         success = false;  // File is already in directory.
-        createLock->Release();
+        filesysCreateLock->Release();
     } else {
         Bitmap *freeMap = new Bitmap(NUM_SECTORS);
         freeMap->FetchFrom(freeMapFile);
@@ -204,12 +201,22 @@ FileSystem::Create(const char *name, unsigned initialSize)
                 h->WriteBack(sector);
                 dir->WriteBack(directoryFile);
                 freeMap->WriteBack(freeMapFile);
+
+                // To make sure that removed is false if nachos creates two files with the same index
+                openFilesTable[sector]->removed = false;
+                openFilesTable[sector]->removing = false;
+                openFilesTable[sector]->writeLock = nullptr;
+                openFilesTable[sector]->count = 0;
+
+                DEBUG('f',"File created successfully!\n");
+                filesysCreateLock->Release();
             }
             delete h;
         }
-        createLock->Release();
+
         delete freeMap;
     }
+    DEBUG('f', "fileSysCreate Lock released!\n");
     delete dir;
     return success;
 }
@@ -273,15 +280,14 @@ FileSystem::Remove(const char *name)
 
     if (sector == -1) {
        delete dir;
+       DEBUG('f',"File to remove not found\n");
        return false;  // file not found
     }
-    #ifdef USER_PROGRAM
     openFilesTable[sector]->removeLock->Acquire();
     if(openFilesTable[sector]->removed) {
        delete dir;
        return false;  // file already removed
     }
-    #endif
 
     FileHeader *fileH = new FileHeader;
     fileH->FetchFrom(sector);
@@ -289,7 +295,6 @@ FileSystem::Remove(const char *name)
     Bitmap *freeMap = new Bitmap(NUM_SECTORS);
     freeMap->FetchFrom(freeMapFile);
 
-    #ifdef USER_PROGRAM
     // Set the file in "removing" state
     openFilesTable[sector]->removing = true;
     openFilesTable[sector]->removerSpaceId = currentThread->GetSpaceId();
@@ -302,7 +307,6 @@ FileSystem::Remove(const char *name)
         ASSERT(!*msg);
         delete msg;
     }
-    #endif
 
     fileH->Deallocate(freeMap);  // Remove data blocks.
     freeMap->Clear(sector);      // Remove header block.
@@ -311,19 +315,15 @@ FileSystem::Remove(const char *name)
     freeMap->WriteBack(freeMapFile);  // Flush to disk.
     dir->WriteBack(directoryFile);    // Flush to disk.
 
-    #ifdef USER_PROGRAM
     openFilesTable[sector]->removed = true; // For supporting multi threading in this subrutine
     openFilesTable[sector]->removeLock->Release();
-    #endif
 
     delete fileH;
     delete dir;
     delete freeMap;
 
-    #ifdef USER_PROGRAM
     DEBUG('f', "Setting removing to false.\n");
     openFilesTable[sector]->removing = false;
-    #endif
     DEBUG('f', "File removed successfully!\n");
     return true;
 }

@@ -36,7 +36,7 @@ OpenFile::~OpenFile()
 {
     DEBUG('f', "Removing open file\n");
     // Decrease the counter meaning one less open file for this sector
-    #ifdef USER_PROGRAM
+    #ifdef FILESYS
     openFilesTable[sector]->count--;
     // If this is the last open file of this sector free the lock
     DEBUG('f', "The count for the file is: %d\n", openFilesTable[sector]->count);

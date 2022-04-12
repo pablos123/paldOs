@@ -168,6 +168,22 @@ FileReadSync(void* threadName)
     delete openFile;
 }
 
+static void
+FileRemoveSync(void* threadName)
+{
+    DEBUG('f', "Executing %s thread\n", (char *)threadName);
+    DEBUG('f', "Removing file: %s\n", FILE_NAME);
+    fileSystem->Remove(FILE_NAME);
+}
+
+static void
+FileCreateSync(void* threadName)
+{
+    DEBUG('f', "Executing %s thread\n", (char *)threadName);
+    DEBUG('f', "Creating file: %s\n", FILE_NAME);
+    fileSystem->Create(FILE_NAME, FILE_SIZE);
+}
+
 void
 PerformanceTestSync()
 {
@@ -252,9 +268,48 @@ PerformanceTestSync()
 
     FileReadSync((void *) "1st");
 
-    fileSystem->Remove(FILE_NAME);
+    fileSystem->Remove(FILE_NAME);  // to test the wait for the other threads
 
     for(int i = 0; i < 6; ++i) threads[i]->Join();
+
+
+    ////////////// REMOVE ///////////
+
+    if (!fileSystem->Create(FILE_NAME, FILE_SIZE)) {
+        fprintf(stderr, "Perf test: cannot create %s\n", FILE_NAME);
+    }
+
+    printf("About to try 3 sequetial removes\n");
+
+    newThread = new Thread(name, true);
+    newThread->Fork(FileRemoveSync, (void *) name);
+    threads[0] = newThread;
+
+    newThread1 = new Thread(name1, true);
+    newThread1->Fork(FileRemoveSync, (void *) name1);
+    threads[1] = newThread1;
+
+    newThread2 = new Thread(name2, true);
+    newThread2->Fork(FileRemoveSync, (void *) name2);
+    threads[2] = newThread2;
+
+    for(int i = 0; i < 3; ++i) threads[i]->Join();
+
+    /////////////// CREATE ///////////
+
+    newThread = new Thread(name, true);
+    newThread->Fork(FileCreateSync, (void *) name);
+    threads[0] = newThread;
+
+    newThread1 = new Thread(name1, true);
+    newThread1->Fork(FileCreateSync, (void *) name1);
+    threads[1] = newThread1;
+
+    newThread2 = new Thread(name2, true);
+    newThread2->Fork(FileCreateSync, (void *) name2);
+    threads[2] = newThread2;
+
+    for(int i = 0; i < 3; ++i) threads[i]->Join();
 
     delete [] threads;
 
@@ -265,9 +320,5 @@ PerformanceTestSync()
     delete [] name4;
     delete [] name5;
 
-    if (!fileSystem->Remove(FILE_NAME)) {
-        printf("Perf test: unable to remove %s\n", FILE_NAME);
-        return;
-    }
     stats->Print();
 }

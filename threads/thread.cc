@@ -66,6 +66,8 @@ Thread::Thread(const char *threadName, bool isJoinable, size_t priorityParam)
     DEBUG('t', "The spaceId asigned for the thread %s is: %d\n", name, spaceId);
     DEBUG('t', "The assigned priority is: %d\n", priority);
 
+#endif
+#ifdef FILESYS
     removeChannel = new Channel("Remove Channel");
 #endif
 }
@@ -402,10 +404,12 @@ Thread::GetOpenedFilesTable() {
     return openedFilesTable;
 }
 
+#endif
+
+#ifdef FILESYS
 Channel*
 Thread::GetRemoveChannel()
 {
     return removeChannel;
 }
-
 #endif

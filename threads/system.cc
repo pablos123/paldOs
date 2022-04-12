@@ -47,6 +47,7 @@ FileSystem *fileSystem;
 #ifdef FILESYS
 SynchDisk *synchDisk;
 OpenFileEntry* openFilesTable;
+Lock* filesysCreateLock;
 #endif
 
 #ifdef USER_PROGRAM  // Requires either *FILESYS* or *FILESYS_STUB*.
@@ -272,6 +273,7 @@ Initialize(int argc, char **argv)
     for(unsigned i = 0; i < NUM_DIR_ENTRIES; ++i) {
         openFilesTable[i] = new struct _openFileEntry;
     }
+    filesysCreateLock = new Lock("Create Lock");
 #endif
 
 #ifdef FILESYS_NEEDED
@@ -328,6 +330,7 @@ Cleanup()
     }
     delete [] openFilesTable;
     delete synchDisk;
+    delete filesysCreateLock;
 #endif
 
     delete timer;

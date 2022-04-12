@@ -169,9 +169,11 @@ private:
 
     Channel* joinChannel;
 
+#ifdef FILESYS
+    Channel* removeChannel;
+#endif
 
 #ifdef USER_PROGRAM
-    Channel* removeChannel;
 
     /// User-level CPU register state.
     /// A thread running a user program actually has *two* sets of CPU
@@ -192,10 +194,10 @@ public:
     AddressSpace *space;
 
     Table<OpenFile*>* GetOpenedFilesTable();
-
+#endif
+#ifdef FILESYS
     Channel* GetRemoveChannel();
 #endif
-
 };
 
 /// Magical machine-dependent routines, defined in `switch.s`.
