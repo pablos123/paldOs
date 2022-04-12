@@ -34,7 +34,6 @@ void
 Channel::Receive(int* message) //como usuario llamo a receive y espero que el resultado exista en la direccion de memoria de message
 {
     //se llamo a receive, por lo tanto hacemos la signal aca
-
     lock->Acquire(); //tomamos el lock
 
     while(buzon->IsEmpty())

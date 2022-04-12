@@ -65,6 +65,8 @@ Thread::Thread(const char *threadName, bool isJoinable, size_t priorityParam)
     spaceId = runningProcesses->Add(this);
     DEBUG('t', "The spaceId asigned for the thread %s is: %d\n", name, spaceId);
     DEBUG('t', "The assigned priority is: %d\n", priority);
+
+    removeChannel = new Channel("Remove Channel");
 #endif
 }
 
@@ -398,6 +400,12 @@ Thread::RestoreUserState()
 Table<OpenFile*>*
 Thread::GetOpenedFilesTable() {
     return openedFilesTable;
+}
+
+Channel*
+Thread::GetRemoveChannel()
+{
+    return removeChannel;
 }
 
 #endif

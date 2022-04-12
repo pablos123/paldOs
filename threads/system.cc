@@ -321,7 +321,11 @@ Cleanup()
 #endif
 
 #ifdef FILESYS
-    for(unsigned i = 0; i < NUM_DIR_ENTRIES; ++i) delete openFilesTable[i];
+    for(unsigned i = 0; i < NUM_DIR_ENTRIES; ++i) {
+        if(openFilesTable[i]->removeLock != nullptr)
+            delete openFilesTable[i]->removeLock;
+        delete openFilesTable[i];
+    }
     delete [] openFilesTable;
     delete synchDisk;
 #endif

@@ -77,7 +77,10 @@ extern SynchDisk *synchDisk;
 typedef struct _openFileEntry {
     int count = 0;
     bool removing = false;
-    Lock* lock;
+    bool removed = false;
+    Lock* writeLock;
+    Lock* removeLock;
+    SpaceId removerSpaceId;
 }* OpenFileEntry;
 
 extern OpenFileEntry* openFilesTable;

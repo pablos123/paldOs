@@ -537,7 +537,7 @@ file_system.o: ../filesys/file_system.cc ../filesys/file_system.hh \
  ../machine/statistics.hh ../machine/timer.hh ../machine/synch_console.hh \
  ../machine/console.hh ../threads/semaphore.hh ../filesys/synch_disk.hh \
  ../network/post.hh ../machine/network.hh ../threads/synch_list.hh \
- ../threads/condition.hh
+ ../threads/condition.hh ../threads/channel.hh
 fs_test.o: ../filesys/fs_test.cc ../filesys/file_system.hh \
  ../filesys/open_file.hh ../lib/utility.hh ../lib/assert.hh \
  ../lib/debug.hh ../lib/debug_opts.hh ../machine/system_dep.hh \
@@ -588,7 +588,7 @@ open_file.o: ../filesys/open_file.cc ../filesys/open_file.hh \
  ../machine/timer.hh ../machine/synch_console.hh ../machine/console.hh \
  ../threads/lock.hh ../threads/semaphore.hh ../filesys/synch_disk.hh \
  ../network/post.hh ../machine/network.hh ../threads/synch_list.hh \
- ../threads/condition.hh
+ ../threads/condition.hh ../threads/channel.hh
 synch_disk.o: ../filesys/synch_disk.cc ../filesys/synch_disk.hh \
  ../machine/disk.hh ../lib/utility.hh ../lib/assert.hh ../lib/debug.hh \
  ../lib/debug_opts.hh ../machine/system_dep.hh ../threads/lock.hh \

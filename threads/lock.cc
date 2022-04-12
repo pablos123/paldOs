@@ -17,6 +17,7 @@
 #include "lock.hh"
 #include "system.hh"
 #include <stdlib.h>
+#include <string.h>
 
 /// Dummy functions -- so we can compile our later assignments.
 
@@ -74,6 +75,7 @@ Lock::Acquire()
 
     lock->P(); //Primero resto el semaforo dado que puede pasar que no pueda entrar pero cambio el dueño igual
                //therefore hay alta explotacion con el assert
+
     lockOwner = currentThread;
 }
 

@@ -91,10 +91,12 @@ public:
 
 #else  // FILESYS
 
-
 #include "directory_entry.hh"
 #include "machine/disk.hh"
 
+#include "threads/system.hh"
+#include "threads/thread.hh"
+#include "threads/lock.hh"
 
 /// Initial file sizes for the bitmap and directory; until the file system
 /// supports extensible files, the directory size sets the maximum number of
@@ -140,6 +142,8 @@ private:
                             ///< file.
     OpenFile *directoryFile;  ///< “Root” directory -- list of file names,
                               ///< represented as a file.
+
+    Lock* createLock;
 };
 
 #endif

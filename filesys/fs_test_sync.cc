@@ -114,7 +114,7 @@ PrintSync(const char *name)
 static const char FILE_NAME[] = "TestFile";
 static const char CONTENTS[] = "1234567890";
 static const unsigned CONTENT_SIZE = sizeof CONTENTS - 1;
-static const unsigned FILE_SIZE = 2000;
+static const unsigned FILE_SIZE = 20;
 
 static void
 FileWriteSync(void* threadName)
@@ -135,6 +135,7 @@ FileWriteSync(void* threadName)
             fprintf(stderr, "Perf test: unable to write %s\n", FILE_NAME);
             break;
         }
+        printf("Writed: %s\n", CONTENTS);
     }
 
     delete openFile;
@@ -156,11 +157,11 @@ FileReadSync(void* threadName)
     char *buffer = new char [CONTENT_SIZE];
     for (unsigned i = 0; i < FILE_SIZE; i += CONTENT_SIZE) {
         int numBytes = openFile->Read(buffer, CONTENT_SIZE);
-        printf("Readed: %s\n", buffer);
         if (numBytes < 10 || strncmp(buffer, CONTENTS, CONTENT_SIZE)) {
             printf("Perf test: unable to read %s\n", FILE_NAME);
             break;
         }
+        printf("Readed: %s\n", buffer);
     }
 
     delete [] buffer;
@@ -215,8 +216,6 @@ PerformanceTestSync()
     newThread4->Fork(FileWriteSync, (void *) name4);
     threads[4] = newThread4;
 
-    fileSystem->Remove(FILE_NAME);
-
     Thread *newThread5 = new Thread(name5, true);
     newThread5->Fork(FileWriteSync, (void *) name5);
     threads[5] = newThread5;
@@ -252,6 +251,8 @@ PerformanceTestSync()
     threads[5] = newThread5;
 
     FileReadSync((void *) "1st");
+
+    fileSystem->Remove(FILE_NAME);
 
     for(int i = 0; i < 6; ++i) threads[i]->Join();
 

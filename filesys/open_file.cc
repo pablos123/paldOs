@@ -14,6 +14,7 @@
 #include "open_file.hh"
 #include "file_header.hh"
 #include "threads/system.hh"
+#include "threads/channel.hh"
 #include <stdio.h>
 #include <string.h>
 
@@ -33,11 +34,24 @@ OpenFile::OpenFile(int sectorParam)
 /// Close a Nachos file, de-allocating any in-memory data structures.
 OpenFile::~OpenFile()
 {
+    DEBUG('f', "Removing open file\n");
     // Decrease the counter meaning one less open file for this sector
+    #ifdef USER_PROGRAM
     openFilesTable[sector]->count--;
     // If this is the last open file of this sector free the lock
-    if(openFilesTable[sector]->count == 0)
-        delete openFilesTable[sector]->lock;
+    DEBUG('f', "The count for the file is: %d\n", openFilesTable[sector]->count);
+    if(openFilesTable[sector]->count == 0 ) {
+        if(openFilesTable[sector]->removing) {
+            SpaceId removerSpaceId = openFilesTable[sector]->removerSpaceId;
+            if(runningProcesses->HasKey(removerSpaceId)){
+                DEBUG('f', "About to send msg to remover...\n");
+                runningProcesses->Get(removerSpaceId)->GetRemoveChannel()->Send(0);
+            } // despierto al hilo que esta esperando que los hilos cierren el archivo que quiere borrar
+        }
+
+        delete openFilesTable[sector]->writeLock;
+    }
+    #endif
     delete hdr;
 }
 
@@ -82,9 +96,9 @@ OpenFile::Write(const char *into, unsigned numBytes)
     ASSERT(numBytes > 0);
 
 
-    openFilesTable[sector]->lock->Acquire();
+    openFilesTable[sector]->writeLock->Acquire();
     int result = WriteAt(into, numBytes, seekPosition);
-    openFilesTable[sector]->lock->Release();
+    openFilesTable[sector]->writeLock->Release();
 
     seekPosition += result;
     return result;

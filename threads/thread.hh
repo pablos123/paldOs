@@ -169,9 +169,11 @@ private:
 
     Channel* joinChannel;
 
+
 #ifdef USER_PROGRAM
+    Channel* removeChannel;
+
     /// User-level CPU register state.
-    ///m
     /// A thread running a user program actually has *two* sets of CPU
     /// registers -- one for its state while executing user code, one for its
     /// state while executing kernel code.
@@ -190,7 +192,10 @@ public:
     AddressSpace *space;
 
     Table<OpenFile*>* GetOpenedFilesTable();
+
+    Channel* GetRemoveChannel();
 #endif
+
 };
 
 /// Magical machine-dependent routines, defined in `switch.s`.
