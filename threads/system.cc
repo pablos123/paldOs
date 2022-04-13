@@ -264,6 +264,11 @@ Initialize(int argc, char **argv)
     coreMap = new CoreMapEntry[NUM_PHYS_PAGES];
     for(unsigned i = 0; i < NUM_PHYS_PAGES; ++i) {
         coreMap[i] = new struct _coreMapEntry;
+        coreMap[i]->spaceId = 0;
+        coreMap[i]->virtualPage = 0;
+#ifdef PRPOLICY_LRU
+        coreMap[i]->last_use_counter = 0;
+#endif
     }
 #endif
 
@@ -272,6 +277,11 @@ Initialize(int argc, char **argv)
     openFilesTable = new OpenFileEntry[NUM_DIR_ENTRIES]; // por ahora lo multiplicamos por 1 pq no hay jerarquias en los directorios
     for(unsigned i = 0; i < NUM_DIR_ENTRIES; ++i) {
         openFilesTable[i] = new struct _openFileEntry;
+        openFilesTable[i]->removeLock = nullptr;
+        openFilesTable[i]->writeLock = nullptr;
+        openFilesTable[i]->removed = false;
+        openFilesTable[i]->removing = false;
+        openFilesTable[i]->count = 0;
     }
     filesysCreateLock = new Lock("Create Lock");
 #endif

@@ -35,7 +35,7 @@ Condition::Condition(const char* debugName, Lock* lock)
 Condition::~Condition()
 {
     DEBUG('t', "Removing condition.\n");
-    while(queue != nullptr && (! queue->IsEmpty()))
+    while(! queue->IsEmpty())
         delete queue->Pop();
     delete queue;
 }
@@ -51,7 +51,7 @@ Condition::Wait()
 {
     DEBUG('t', "Thread %s waiting...\n", currentThread->GetName());
     ASSERT(conditionLock->IsHeldByCurrentThread()); //tiene que tener agarrado el candado
-    //conditionLock->Release(); //si es dueño del candado entonces lo libera
+
     Semaphore* new_semaphore = new Semaphore("dummy", 0); //esto lo iniciamos en 0 para dormir.
 
     queue->Append(new_semaphore);

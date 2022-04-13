@@ -216,7 +216,6 @@ FileSystem::Create(const char *name, unsigned initialSize)
 
         delete freeMap;
     }
-    DEBUG('f', "fileSysCreate Lock released!\n");
     delete dir;
     return success;
 }

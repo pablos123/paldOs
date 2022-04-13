@@ -90,8 +90,9 @@ Thread::~Thread()
                                        STACK_SIZE * sizeof *stack);
     }
 
-#ifdef USER_PROGRAM
     if(joinable) delete joinChannel;
+
+#ifdef USER_PROGRAM
 #ifdef DEMAND_LOADING
 #ifdef SWAP
     runningProcesses->Remove(spaceId);

@@ -75,9 +75,9 @@ extern FileSystem *fileSystem;
 #include "filesys/synch_disk.hh"
 extern SynchDisk *synchDisk;
 typedef struct _openFileEntry {
-    int count = 0;
-    bool removing = false;
-    bool removed = false;
+    int count;
+    bool removing;
+    bool removed;
     Lock* writeLock;
     Lock* removeLock;
     SpaceId removerSpaceId;

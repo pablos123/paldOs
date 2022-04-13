@@ -20,11 +20,14 @@ Channel::~Channel() {
 
 void Channel::Send(int message){
     lock->Acquire(); //tomamos el lock
-                     //
+
     buzon->Append(message);
 
     conditionForReceivers->Signal();
-    int msg = buzon->Head();
+    int msg = 0;
+    if(buzon->Head()) {
+       msg = buzon->Head();
+    }
     while(! buzon->IsEmpty() && msg == buzon->Head()) conditionForSenders->Wait(); //quiero esperar (y que otros senders no manden cosas) hasta que
                                 // se llame a Receive() y hagan el Pop del buffer en el otro lado
     lock->Release();

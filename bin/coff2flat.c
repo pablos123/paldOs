@@ -31,7 +31,7 @@
 
 // NOTE -- once you have implemented large files, it is ok to make this
 // bigger!
-#define STACK_SIZE              1024  // In bytes.
+#define STACK_SIZE              2048  // In bytes.
 #define ReadStructOrDie(f, s)  ReadOrDie(f, (char *) &(s), sizeof (s))
 
 static inline void

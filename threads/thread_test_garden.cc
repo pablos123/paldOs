@@ -25,6 +25,7 @@ Turnstile(void *n_)
     for (unsigned i = 0; i < ITERATIONS_PER_TURNSTILE; i++) {
         int temp = count;
         count = temp + 1;
+        printf("Turnstile %u, %d\n", *n, count);
         currentThread->Yield();
     }
     printf("Turnstile %u finished. Count is now %i.\n", *n, count);
@@ -80,6 +81,7 @@ TurnstileSemaphore(void *param)
         semaphore->P(); //sleep() del actual si el value es 0
         int temp = count;
         count = temp + 1;
+        printf("Turnstile %u, %d\n", *n, count);
         semaphore->V(); //marca el ultimo hilo de la pila como ready
         currentThread->Yield(); //es necesario pasarle el control a otro hilo, en este caso en particular
                                 //si no lo hacemos, luego en la función llamante se hace con el join ad-hoc
@@ -152,7 +154,7 @@ TurnstileLocks(void* lockParam)
     for (unsigned i = 0; i < ITERATIONS_PER_TURNSTILE; i++) {
 
         lock->Acquire();
-        int temp = count; //No entendemos por que no funciona si sacamos esto fuera del candado
+        int temp = count;
         count = temp + 1;
         printf("Turnstile %u, %d\n", *n, count);
         lock->Release();

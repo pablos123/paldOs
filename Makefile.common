@@ -48,6 +48,7 @@ THREAD_HDR = threads/condition.hh             \
              threads/thread_test_prod_cons.hh \
              threads/thread_test_simple.hh    \
              threads/thread_test_channel.hh   \
+             threads/multilevel_priority_queue_test.hh   \
              lib/assert.hh                    \
              lib/debug.hh                     \
              lib/debug_opts.hh                \
@@ -59,7 +60,6 @@ THREAD_HDR = threads/condition.hh             \
              machine/timer.hh                 \
              threads/preemptive.hh            \
              threads/channel.hh               \
-             threads/test.hh
 
 THREAD_SRC = threads/main.cc                  \
              threads/condition.cc             \
@@ -75,6 +75,7 @@ THREAD_SRC = threads/main.cc                  \
              threads/thread_test_prod_cons.cc \
              threads/thread_test_simple.cc    \
              threads/thread_test_channel.cc   \
+             threads/multilevel_priority_queue_test.cc   \
              lib/assert.cc                    \
              lib/debug.cc                     \
              lib/utility.cc                   \
@@ -84,7 +85,6 @@ THREAD_SRC = threads/main.cc                  \
              machine/timer.cc                 \
              threads/preemptive.cc            \
              threads/channel.cc               \
-             threads/test.cc
 
 USERPROG_HDR = userprog/address_space.hh            \
                userprog/args.hh                     \

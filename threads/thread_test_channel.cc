@@ -16,13 +16,13 @@ typedef struct _channelParam2 {
     int* i;
 }* ChannelParam2;
 
-static void senderTest(void* param) {
+void senderTest(void* param) {
     ChannelParam channelParam = (ChannelParam)param;
     Channel* channel = (Channel*)(channelParam->channel);
     channel->Send(channelParam->i);
 }
 
-static void receiverTest(void* param) {
+void receiverTest(void* param) {
     ChannelParam2 channelParam = (ChannelParam2)param;
     Channel* channel = (Channel*)(channelParam->channel);
     channel->Receive(channelParam->i);
@@ -30,11 +30,11 @@ static void receiverTest(void* param) {
 
 void ThreadTestChannel() {
     int i = 123;
-    printf("Mandando mensaje: %d\n", i);
-    Channel* channel = new Channel("canal1");
+    printf("Sending message: %d\n", i);
+    Channel* channel = new Channel("Channel");
 
-    Thread* receiver = new Thread("Hilo1", true);
-    Thread* sender = new Thread("Hilo2", true);
+    Thread* receiver = new Thread("Receiver", true);
+    Thread* sender = new Thread("Sender", true);
 
     ChannelParam param = new struct _channelParam;
     param->channel = channel;
@@ -51,7 +51,7 @@ void ThreadTestChannel() {
     sender->Join();
     receiver->Join();
 
-    printf("Recibiendo mensaje: %d\n", *j);
+    printf("Receiving message: %d\n", *j);
 
     delete j;
 

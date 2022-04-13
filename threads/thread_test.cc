@@ -15,7 +15,7 @@
 #include "thread_test_prod_cons.hh"
 #include "thread_test_simple.hh"
 #include "thread_test_channel.hh"
-#include "test.hh"
+#include "multilevel_priority_queue_test.hh"
 #include "lib/utility.hh"
 
 #include <stdio.h>
