@@ -35,7 +35,7 @@
 /// there are not enough free blocks to accomodate the new file.
 ///
 /// * `freeMap` is the bit map of free disk sectors.
-/// * `fileSize` is the bit map of free disk sectors.
+/// * `fileSize` is the size of the file to store in the disk.
 bool
 FileHeader::Allocate(Bitmap *freeMap, unsigned fileSize)
 {
@@ -47,13 +47,26 @@ FileHeader::Allocate(Bitmap *freeMap, unsigned fileSize)
 
     raw.numBytes = fileSize;
     raw.numSectors = DivRoundUp(fileSize, SECTOR_SIZE);
-    if (freeMap->CountClear() < raw.numSectors) {
+
+    extras = TECHO(raw.numSectors/NUM_DIRECT)-1;
+
+    if (freeMap->CountClear() < raw.numSectors + extras) {
         return false;  // Not enough space.
     }
 
-    for (unsigned i = 0; i < raw.numSectors; i++) {
+    do {
+    for (unsigned i = 0; i < NUM_DIRECT - 1; i++) {
         raw.dataSectors[i] = freeMap->Find();
     }
+        //raw.dataSectors[NUM_DIRECT] = new FileHeader();
+        fileheaders[i]= new FileHeader();
+        fileheaders[i]->Allocate();
+    numSectorsTotal = numSectorsTotal - (NUMDIRECT - 1);
+    } while()
+    // decrease numsector by the numsectors allocated
+
+    alocame todaA el nuevo fileheader
+    sectores - numdirect - 1
     return true;
 }
 

@@ -183,6 +183,7 @@ FileSystem::Create(const char *name, unsigned initialSize)
         success = false;  // File is already in directory.
         filesysCreateLock->Release();
     } else {
+        // Creates a copy of the freeMapFile
         Bitmap *freeMap = new Bitmap(NUM_SECTORS);
         freeMap->FetchFrom(freeMapFile);
         int sector = freeMap->Find();

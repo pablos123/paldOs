@@ -10,6 +10,19 @@
 #include "machine/disk.hh"
 
 
+// We need to support indirect addressing, so the MAX_FILE_SIZE will change.
+// The sector count is NUM_SECTORS
+// Each file header has NUM_DIRECT - 2 disk sectors for the file.
+// Note that the dataSectors count is NUM_DIRECT - 2, this is for keeping the 128 bytes structure
+// for consistency with the disk sector size.
+// We need to find how many times FileHeaders + NUM_DIRECT - 2 fits in
+// NUM_SECTORS, so:
+
+// times_fh_fits_num_sector = int(NUM_SECTORS/NUM_DIRECT - 1)
+// file_data_sectors = NUM_SECTORS - times_fh_fits_num_sector
+// bytes_for_file_data_sectors = file_data_sectors * SECTOR SIZE
+
+
 static const unsigned NUM_DIRECT
   = (SECTOR_SIZE - 2 * sizeof (int)) / sizeof (int);
 const unsigned MAX_FILE_SIZE = NUM_DIRECT * SECTOR_SIZE;
@@ -17,9 +30,10 @@ const unsigned MAX_FILE_SIZE = NUM_DIRECT * SECTOR_SIZE;
 struct RawFileHeader {
     unsigned numBytes;  ///< Number of bytes in the file.
     unsigned numSectors;  ///< Number of data sectors in the file.
-    unsigned dataSectors[NUM_DIRECT];  ///< Disk sector numbers for each data
+    unsigned dataSectors[NUM_DIRECT - 2];  ///< Disk sector numbers for each data
                                        ///< block in the file.
+    struct RawFileHeader*    nextFileHeader;  // Pointer to the next
+                                              // FileHeader of the file
 };
-
 
 #endif
