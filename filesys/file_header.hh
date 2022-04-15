@@ -61,7 +61,7 @@ public:
     ///
     /// NOTE: this should only be used by routines that operate on the file
     /// system at a low level.
-    const RawFileHeader *GetRaw() const;
+    RawFileHeader *GetRaw();
 
 private:
     RawFileHeader raw;

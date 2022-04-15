@@ -40,33 +40,17 @@ bool
 FileHeader::Allocate(Bitmap *freeMap, unsigned fileSize)
 {
     ASSERT(freeMap != nullptr);
-
-    if (fileSize > MAX_FILE_SIZE) {
-        return false;
-    }
+    ASSERT(fileSize <= NUM_DIRECT * SECTOR_SIZE);
 
     raw.numBytes = fileSize;
     raw.numSectors = DivRoundUp(fileSize, SECTOR_SIZE);
-
-    extras = TECHO(raw.numSectors/NUM_DIRECT)-1;
-
-    if (freeMap->CountClear() < raw.numSectors + extras) {
+    if (freeMap->CountClear() < raw.numSectors) {
         return false;  // Not enough space.
     }
 
-    do {
-    for (unsigned i = 0; i < NUM_DIRECT - 1; i++) {
+    for (unsigned i = 0; i < raw.numSectors; i++) {
         raw.dataSectors[i] = freeMap->Find();
     }
-        //raw.dataSectors[NUM_DIRECT] = new FileHeader();
-        fileheaders[i]= new FileHeader();
-        fileheaders[i]->Allocate();
-    numSectorsTotal = numSectorsTotal - (NUMDIRECT - 1);
-    } while()
-    // decrease numsector by the numsectors allocated
-
-    alocame todaA el nuevo fileheader
-    sectores - numdirect - 1
     return true;
 }
 
@@ -158,8 +142,8 @@ FileHeader::Print(const char *title)
     delete [] data;
 }
 
-const RawFileHeader *
-FileHeader::GetRaw() const
+RawFileHeader *
+FileHeader::GetRaw()
 {
     return &raw;
 }

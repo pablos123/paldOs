@@ -88,8 +88,10 @@ FileSystem::FileSystem(bool format)
         // of the directory and bitmap files.  There better be enough space!
 
         ASSERT(mapH->Allocate(freeMap, FREE_MAP_FILE_SIZE));
+        mapH->GetRaw()->nextFileHeader = 0; // FAT convention for indicating the end of the current N blocks of a file
         ASSERT(dirH->Allocate(freeMap, DIRECTORY_FILE_SIZE));
-
+        dirH->GetRaw()->nextFileHeader = 0;
+    
         // Flush the bitmap and directory `FileHeader`s back to disk.
         // We need to do this before we can `Open` the file, since open reads
         // the file header off of disk (and currently the disk has garbage on
@@ -131,6 +133,14 @@ FileSystem::FileSystem(bool format)
         // Nachos is running.
         freeMapFile   = new OpenFile(FREE_MAP_SECTOR);
         directoryFile = new OpenFile(DIRECTORY_SECTOR);
+    }
+    if( openFilesTable[FREE_MAP_SECTOR]->closeLock == nullptr ) { 
+        Lock* closeLock = new Lock("Close Lock");
+        openFilesTable[FREE_MAP_SECTOR]->closeLock = closeLock;
+    }
+    if( openFilesTable[DIRECTORY_SECTOR]->closeLock == nullptr ) { 
+        Lock* closeLock = new Lock("Close Lock");
+        openFilesTable[DIRECTORY_SECTOR]->closeLock = closeLock;
     }
 }
 
@@ -186,36 +196,94 @@ FileSystem::Create(const char *name, unsigned initialSize)
         // Creates a copy of the freeMapFile
         Bitmap *freeMap = new Bitmap(NUM_SECTORS);
         freeMap->FetchFrom(freeMapFile);
-        int sector = freeMap->Find();
+        
+        // Create a list of sectors for all the fileheaders
+        unsigned totalSectors = DivRoundUp(initialSize, SECTOR_SIZE);
+        DEBUG('f', "Total data sectors: %u\n", totalSectors);
+        unsigned fileHeaderSectors = DivRoundUp(totalSectors, NUM_DIRECT);
+        DEBUG('f', "Total FH sectors: %u\n", fileHeaderSectors);
+
+        if(freeMap->CountClear() < fileHeaderSectors){
+            delete dir;
+            delete freeMap;
+            DEBUG('f', "There is not enough disk space for the file's FH\n");
+            return false;
+        }
+
+        int* sectors = new int[fileHeaderSectors];
+        for(unsigned i = 0; i < fileHeaderSectors; ++i) {
+            sectors[i] = freeMap->Find();
+        }
 
           // Find a sector to hold the file header.
-        if (sector == -1) {
-            success = false;  // No free block for file header.
-        } else if (!dir->Add(name, sector)) {
+        if (!dir->Add(name, sectors[0])) { // add the first sector as the "identifier" of the file
             success = false;  // No space in directory.
         } else {
-            FileHeader *h = new FileHeader;
-            success = h->Allocate(freeMap, initialSize);
+            // The first file header of the linked list of file headers
+            unsigned maxSize = NUM_DIRECT * SECTOR_SIZE;
+
+            unsigned bytesToAllocate = initialSize <  maxSize ? initialSize : maxSize;
+            initialSize -= bytesToAllocate;  // This will be always zero at some point
+
+            FileHeader *firstHeader = new FileHeader;
+            success = firstHeader->Allocate(freeMap, bytesToAllocate);
+
+            firstHeader->GetRaw()->nextFileHeader = 0;
+            FileHeader* previousFileHeader = firstHeader;
+            
+            FileHeader** fileHeaders = new FileHeader*[fileHeaderSectors];
+            fileHeaders[0] = firstHeader;
+            
+            unsigned allocatedFileHeaders = 1;
+            for (; allocatedFileHeaders < fileHeaderSectors && success; ++allocatedFileHeaders) {
+
+                bytesToAllocate = initialSize <  maxSize ? initialSize : maxSize;
+                initialSize -= bytesToAllocate;  // This will be always zero at some point
+
+                FileHeader *newFileHeader = new FileHeader;
+                success = newFileHeader->Allocate(freeMap, bytesToAllocate);
+                if(success) {
+                    newFileHeader->GetRaw()->nextFileHeader = 0;
+                    previousFileHeader->GetRaw()->nextFileHeader = sectors[allocatedFileHeaders];
+                    previousFileHeader = newFileHeader;
+                    fileHeaders[allocatedFileHeaders] = newFileHeader;
+                }
+            }
+
               // Fails if no space on disk for data.
             if (success) {
                 // Everything worked, flush all changes back to disk.
-                h->WriteBack(sector);
+                // bucle
+                //otro for por cada sector
+                for(unsigned i = 0; i < fileHeaderSectors; ++i) {
+                    fileHeaders[i]->WriteBack(sectors[i]);
+                }
+                
                 dir->WriteBack(directoryFile);
                 freeMap->WriteBack(freeMapFile);
 
-                // To make sure that removed is false if nachos creates two files with the same index
-                openFilesTable[sector]->removed = false;
-                openFilesTable[sector]->removing = false;
-                openFilesTable[sector]->writeLock = nullptr;
-                openFilesTable[sector]->count = 0;
+                // To make sure that removed is false because in the same execution of nachos 
+                // we can have this situation:
+                // 1: nachos creates a file in sector x
+                // 2: we delete this file, so sector x have removed = true
+                // 3: nachos creates again a file in sector x
+                openFilesTable[sectors[0]]->removed = false;
+                openFilesTable[sectors[0]]->removing = false;
+                openFilesTable[sectors[0]]->writeLock = nullptr;
+                openFilesTable[sectors[0]]->count = 0;
 
                 DEBUG('f',"File created successfully!\n");
-                filesysCreateLock->Release();
+                //filesysCreateLock->Release();
             }
-            delete h;
+            filesysCreateLock->Release();
+            for(unsigned i = 0; i < allocatedFileHeaders; ++i) {
+                delete fileHeaders[i];
+            }
+            delete [] fileHeaders;
         }
 
         delete freeMap;
+        delete [] sectors;
     }
     delete dir;
     return success;
@@ -244,9 +312,14 @@ FileSystem::Open(const char *name)
         openFile = new OpenFile(sector);
         if(openFilesTable[sector]->count == 0) {    // no one else has the file open
             Lock* writeLock = new Lock("Write Lock");
+
             if( openFilesTable[sector]->removeLock == nullptr ) { // We do not have a removelock yet
                 Lock* removeLock = new Lock("Remove Lock");
                 openFilesTable[sector]->removeLock = removeLock;
+            }
+            if( openFilesTable[sector]->closeLock == nullptr ) { // We do not have a removelock yet
+                Lock* closeLock = new Lock("Close Lock");
+                openFilesTable[sector]->closeLock = closeLock;
             }
             openFilesTable[sector]->writeLock = writeLock;
         }
@@ -276,7 +349,7 @@ FileSystem::Remove(const char *name)
 
     Directory *dir = new Directory(NUM_DIR_ENTRIES);
     dir->FetchFrom(directoryFile);
-    int sector = dir->Find(name);
+    int sector = dir->Find(name);   // first sector
 
     if (sector == -1) {
        delete dir;
@@ -307,9 +380,17 @@ FileSystem::Remove(const char *name)
         ASSERT(!*msg);
         delete msg;
     }
-
+    
     fileH->Deallocate(freeMap);  // Remove data blocks.
-    freeMap->Clear(sector);      // Remove header block.
+    freeMap->Clear(sector); 
+    unsigned nextSector  = fileH->GetRaw()->nextFileHeader;
+    while(nextSector) {
+        fileH->FetchFrom(nextSector);
+        fileH->Deallocate(freeMap);  // Remove data blocks.
+        freeMap->Clear(nextSector);      // Remove header block.
+        nextSector  = fileH->GetRaw()->nextFileHeader;
+    }
+
     dir->Remove(name);
 
     freeMap->WriteBack(freeMapFile);  // Flush to disk.

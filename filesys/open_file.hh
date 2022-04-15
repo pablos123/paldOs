@@ -116,6 +116,9 @@ public:
 
     int GetSector();
 
+    // Closes a file (just calls the deconstructor of the class)
+    void Close();
+
   private:
     FileHeader *hdr;  ///< Header for this file.
     unsigned seekPosition;  ///< Current position within the file.

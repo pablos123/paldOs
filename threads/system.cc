@@ -279,6 +279,7 @@ Initialize(int argc, char **argv)
         openFilesTable[i] = new struct _openFileEntry;
         openFilesTable[i]->removeLock = nullptr;
         openFilesTable[i]->writeLock = nullptr;
+        openFilesTable[i]->closeLock = nullptr;
         openFilesTable[i]->removed = false;
         openFilesTable[i]->removing = false;
         openFilesTable[i]->count = 0;
@@ -334,8 +335,12 @@ Cleanup()
 
 #ifdef FILESYS
     for(unsigned i = 0; i < NUM_DIR_ENTRIES; ++i) {
-        if(openFilesTable[i]->removeLock != nullptr)
+        if(openFilesTable[i]->removeLock != nullptr) {
             delete openFilesTable[i]->removeLock;
+        }
+        if(openFilesTable[i]->closeLock != nullptr) {
+            delete openFilesTable[i]->closeLock;
+        }
         delete openFilesTable[i];
     }
     delete [] openFilesTable;

@@ -175,8 +175,16 @@ Directory::Print() const
                    "    name: %s\n"
                    "    sector: %u\n",
                    raw.table[i].name, raw.table[i].sector);
+
             hdr->FetchFrom(raw.table[i].sector);
             hdr->Print(nullptr);
+
+            unsigned nextSector = hdr->GetRaw()->nextFileHeader;
+            while(nextSector) {
+                hdr->FetchFrom(nextSector);
+                hdr->Print(nullptr);
+                nextSector = hdr->GetRaw()->nextFileHeader;
+            }
         }
     }
     printf("\n");

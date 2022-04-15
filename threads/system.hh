@@ -80,6 +80,7 @@ typedef struct _openFileEntry {
     bool removed;
     Lock* writeLock;
     Lock* removeLock;
+    Lock* closeLock;
     SpaceId removerSpaceId;
 }* OpenFileEntry;
 

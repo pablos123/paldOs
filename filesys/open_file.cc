@@ -37,7 +37,16 @@ OpenFile::~OpenFile()
     DEBUG('f', "Removing open file\n");
     // Decrease the counter meaning one less open file for this sector
     #ifdef FILESYS
-    openFilesTable[sector]->count--;
+    openFilesTable[sector]->closeLock->Acquire();
+    if(openFilesTable[sector]->count > 0)
+        openFilesTable[sector]->count--;
+    else { // To support more close calls than open calls
+        openFilesTable[sector]->closeLock->Release();
+        return;
+    }
+    openFilesTable[sector]->closeLock->Release();
+    
+
     // If this is the last open file of this sector free the lock
     DEBUG('f', "The count for the file is: %d\n", openFilesTable[sector]->count);
     if(openFilesTable[sector]->count == 0 ) {
@@ -53,6 +62,13 @@ OpenFile::~OpenFile()
     }
     #endif
     delete hdr;
+}
+
+// More meaningfull name for the deconsructor 
+void
+OpenFile::Close()
+{
+  this->~OpenFile();
 }
 
 /// Change the current location within the open file -- the point at which
