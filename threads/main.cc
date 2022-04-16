@@ -99,6 +99,7 @@ void Copy(const char *unixFile, const char *nachosFile);
 void Print(const char *file);
 void PerformanceTest(void);
 void PerformanceTestSync(void);
+void SizeTest(void);
 void StartProcess(const char *file);
 void ConsoleTest(const char *in, const char *out);
 void MailTest(int networkID);
@@ -215,6 +216,8 @@ srand(time(NULL));
             PerformanceTest();
         } else if (!strcmp(*argv, "-tfs")) {  // Performance test.
             PerformanceTestSync();
+        } else if (!strcmp(*argv, "-tfsize")) {  // Performance test.
+            SizeTest();
         }
 #endif
 #ifdef NETWORK

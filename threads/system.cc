@@ -274,11 +274,12 @@ Initialize(int argc, char **argv)
 
 #ifdef FILESYS
     synchDisk = new SynchDisk("DISK");
-    openFilesTable = new OpenFileEntry[NUM_DIR_ENTRIES]; // por ahora lo multiplicamos por 1 pq no hay jerarquias en los directorios
-    for(unsigned i = 0; i < NUM_DIR_ENTRIES; ++i) {
+    openFilesTable = new OpenFileEntry[NUM_SECTORS]; // por ahora lo multiplicamos por 1 pq no hay jerarquias en los directorios
+    for(unsigned i = 0; i < NUM_SECTORS; ++i) {
         openFilesTable[i] = new struct _openFileEntry;
         openFilesTable[i]->removeLock = nullptr;
         openFilesTable[i]->writeLock = nullptr;
+        openFilesTable[i]->closeLock = nullptr;
         openFilesTable[i]->removed = false;
         openFilesTable[i]->removing = false;
         openFilesTable[i]->count = 0;
@@ -334,8 +335,12 @@ Cleanup()
 
 #ifdef FILESYS
     for(unsigned i = 0; i < NUM_DIR_ENTRIES; ++i) {
-        if(openFilesTable[i]->removeLock != nullptr)
+        if(openFilesTable[i]->removeLock != nullptr) {
             delete openFilesTable[i]->removeLock;
+        }
+        if(openFilesTable[i]->closeLock != nullptr) {
+            delete openFilesTable[i]->closeLock;
+        }
         delete openFilesTable[i];
     }
     delete [] openFilesTable;

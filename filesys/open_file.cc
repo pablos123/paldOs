@@ -37,7 +37,16 @@ OpenFile::~OpenFile()
     DEBUG('f', "Removing open file\n");
     // Decrease the counter meaning one less open file for this sector
     #ifdef FILESYS
-    openFilesTable[sector]->count--;
+    openFilesTable[sector]->closeLock->Acquire();
+    if(openFilesTable[sector]->count > 0)
+        openFilesTable[sector]->count--;
+    else { // To support more close calls than open calls
+        openFilesTable[sector]->closeLock->Release();
+        return;
+    }
+    openFilesTable[sector]->closeLock->Release();
+    
+
     // If this is the last open file of this sector free the lock
     DEBUG('f', "The count for the file is: %d\n", openFilesTable[sector]->count);
     if(openFilesTable[sector]->count == 0 ) {
@@ -53,6 +62,13 @@ OpenFile::~OpenFile()
     }
     #endif
     delete hdr;
+}
+
+// More meaningfull name for the deconsructor 
+void
+OpenFile::Close()
+{
+  this->~OpenFile();
 }
 
 /// Change the current location within the open file -- the point at which
@@ -83,9 +99,31 @@ OpenFile::Read(char *into, unsigned numBytes)
     ASSERT(into != nullptr);
     ASSERT(numBytes > 0);
 
-    int result = ReadAt(into, numBytes, seekPosition);
+    int result = 0;
 
-    seekPosition += result;
+    if (seekPosition + numBytes > hdr->GetRaw()->numBytes) {
+        DEBUG('7', "seekPostion is: %u, numBytes is: %u, maximuxbytes is:%u\n",seekPosition,numBytes,hdr->GetRaw()->numBytes);
+        result = ReadAt(into, numBytes, seekPosition);
+        seekPosition += result;
+        numBytes -= result;
+        unsigned nextSector = hdr->GetRaw()->nextFileHeader;
+        while(nextSector && numBytes > 0) {
+            seekPosition = 0;
+            hdr->FetchFrom(nextSector);
+            unsigned result_tmp = ReadAt(into, numBytes, seekPosition);
+            numBytes -= result_tmp;
+            result += result_tmp;
+
+            seekPosition += result_tmp;
+
+            nextSector = hdr->GetRaw()->nextFileHeader;
+        }
+    } else {
+        result = ReadAt(into, numBytes, seekPosition);
+
+        seekPosition += result;
+    }
+
     return result;
 }
 
@@ -97,10 +135,29 @@ OpenFile::Write(const char *into, unsigned numBytes)
 
 
     openFilesTable[sector]->writeLock->Acquire();
-    int result = WriteAt(into, numBytes, seekPosition);
+    int result  = 0;
+    if (seekPosition + numBytes > hdr->GetRaw()->numBytes) {
+        result = WriteAt(into, numBytes, seekPosition);
+        numBytes -= result;
+        unsigned nextSector = hdr->GetRaw()->nextFileHeader;
+        while(nextSector && numBytes > 0) {
+            seekPosition = 0;
+            hdr->FetchFrom(nextSector);
+            unsigned result_tmp = WriteAt(into, numBytes, seekPosition);
+            numBytes -= result_tmp;
+            result += result_tmp;
+
+            seekPosition += result_tmp;
+
+            nextSector = hdr->GetRaw()->nextFileHeader;
+        }
+    } else {
+        result = WriteAt(into, numBytes, seekPosition);
+
+        seekPosition += result;
+    }
     openFilesTable[sector]->writeLock->Release();
 
-    seekPosition += result;
     return result;
 }
 

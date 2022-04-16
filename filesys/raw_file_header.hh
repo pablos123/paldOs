@@ -24,16 +24,18 @@
 
 
 static const unsigned NUM_DIRECT
-  = (SECTOR_SIZE - 2 * sizeof (int)) / sizeof (int);
-const unsigned MAX_FILE_SIZE = NUM_DIRECT * SECTOR_SIZE;
+  = ((SECTOR_SIZE - 2 * sizeof (int)) / sizeof (int)) - 1;
+const unsigned TIMES_FH_FITS = int(NUM_SECTORS / (NUM_DIRECT + 1));
+const unsigned MAX_FILE_SIZE = (NUM_SECTORS - TIMES_FH_FITS) * SECTOR_SIZE;
 
 struct RawFileHeader {
     unsigned numBytes;  ///< Number of bytes in the file.
     unsigned numSectors;  ///< Number of data sectors in the file.
-    unsigned dataSectors[NUM_DIRECT - 2];  ///< Disk sector numbers for each data
+    unsigned dataSectors[NUM_DIRECT];  ///< Disk sector numbers for each data
                                        ///< block in the file.
-    struct RawFileHeader*    nextFileHeader;  // Pointer to the next
-                                              // FileHeader of the file
+    unsigned nextFileHeader;  // Number to the next
+                              // FileHeader of the file
 };
+typedef struct RawFileHeader* RawFileHeaderNode;
 
 #endif
