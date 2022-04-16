@@ -99,9 +99,31 @@ OpenFile::Read(char *into, unsigned numBytes)
     ASSERT(into != nullptr);
     ASSERT(numBytes > 0);
 
-    int result = ReadAt(into, numBytes, seekPosition);
+    int result = 0;
 
-    seekPosition += result;
+    if (seekPosition + numBytes > hdr->GetRaw()->numBytes) {
+        DEBUG('7', "seekPostion is: %u, numBytes is: %u, maximuxbytes is:%u\n",seekPosition,numBytes,hdr->GetRaw()->numBytes);
+        result = ReadAt(into, numBytes, seekPosition);
+        seekPosition += result;
+        numBytes -= result;
+        unsigned nextSector = hdr->GetRaw()->nextFileHeader;
+        while(nextSector && numBytes > 0) {
+            seekPosition = 0;
+            hdr->FetchFrom(nextSector);
+            unsigned result_tmp = ReadAt(into, numBytes, seekPosition);
+            numBytes -= result_tmp;
+            result += result_tmp;
+
+            seekPosition += result_tmp;
+
+            nextSector = hdr->GetRaw()->nextFileHeader;
+        }
+    } else {
+        result = ReadAt(into, numBytes, seekPosition);
+
+        seekPosition += result;
+    }
+
     return result;
 }
 
@@ -113,10 +135,29 @@ OpenFile::Write(const char *into, unsigned numBytes)
 
 
     openFilesTable[sector]->writeLock->Acquire();
-    int result = WriteAt(into, numBytes, seekPosition);
+    int result  = 0;
+    if (seekPosition + numBytes > hdr->GetRaw()->numBytes) {
+        result = WriteAt(into, numBytes, seekPosition);
+        numBytes -= result;
+        unsigned nextSector = hdr->GetRaw()->nextFileHeader;
+        while(nextSector && numBytes > 0) {
+            seekPosition = 0;
+            hdr->FetchFrom(nextSector);
+            unsigned result_tmp = WriteAt(into, numBytes, seekPosition);
+            numBytes -= result_tmp;
+            result += result_tmp;
+
+            seekPosition += result_tmp;
+
+            nextSector = hdr->GetRaw()->nextFileHeader;
+        }
+    } else {
+        result = WriteAt(into, numBytes, seekPosition);
+
+        seekPosition += result;
+    }
     openFilesTable[sector]->writeLock->Release();
 
-    seekPosition += result;
     return result;
 }
 

@@ -267,13 +267,15 @@ FileSystem::Create(const char *name, unsigned initialSize)
                 // 1: nachos creates a file in sector x
                 // 2: we delete this file, so sector x have removed = true
                 // 3: nachos creates again a file in sector x
+                DEBUG('7', "sectors[0]: %u", sectors[0]);
                 openFilesTable[sectors[0]]->removed = false;
                 openFilesTable[sectors[0]]->removing = false;
+                openFilesTable[sectors[0]]->removeLock = new Lock("Remove Lock");
                 openFilesTable[sectors[0]]->writeLock = nullptr;
+                openFilesTable[sectors[0]]->closeLock = nullptr;
                 openFilesTable[sectors[0]]->count = 0;
 
                 DEBUG('f',"File created successfully!\n");
-                //filesysCreateLock->Release();
             }
             filesysCreateLock->Release();
             for(unsigned i = 0; i < allocatedFileHeaders; ++i) {
@@ -356,7 +358,10 @@ FileSystem::Remove(const char *name)
        DEBUG('f',"File to remove not found\n");
        return false;  // file not found
     }
-    openFilesTable[sector]->removeLock->Acquire();
+    // For supporting ad-hoc calls to this function
+    if(openFilesTable[sector]->removeLock != nullptr)
+        openFilesTable[sector]->removeLock->Acquire();
+
     if(openFilesTable[sector]->removed) {
        delete dir;
        return false;  // file already removed
@@ -397,7 +402,9 @@ FileSystem::Remove(const char *name)
     dir->WriteBack(directoryFile);    // Flush to disk.
 
     openFilesTable[sector]->removed = true; // For supporting multi threading in this subrutine
-    openFilesTable[sector]->removeLock->Release();
+    // For supporting ad-hoc calls to this function
+    if(openFilesTable[sector]->removeLock != nullptr)
+        openFilesTable[sector]->removeLock->Release();
 
     delete fileH;
     delete dir;

@@ -90,6 +90,7 @@ Print(const char *name)
     char *buffer = new char [TRANSFER_SIZE];
     int amountRead;
     while ((amountRead = openFile->Read(buffer, TRANSFER_SIZE)) > 0) {
+        DEBUG('7', "amount read: %d\n", amountRead);
         for (unsigned i = 0; i < (unsigned) amountRead; i++) {
             printf("%c", buffer[i]);
         }

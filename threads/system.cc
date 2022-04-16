@@ -274,8 +274,8 @@ Initialize(int argc, char **argv)
 
 #ifdef FILESYS
     synchDisk = new SynchDisk("DISK");
-    openFilesTable = new OpenFileEntry[NUM_DIR_ENTRIES]; // por ahora lo multiplicamos por 1 pq no hay jerarquias en los directorios
-    for(unsigned i = 0; i < NUM_DIR_ENTRIES; ++i) {
+    openFilesTable = new OpenFileEntry[NUM_SECTORS]; // por ahora lo multiplicamos por 1 pq no hay jerarquias en los directorios
+    for(unsigned i = 0; i < NUM_SECTORS; ++i) {
         openFilesTable[i] = new struct _openFileEntry;
         openFilesTable[i]->removeLock = nullptr;
         openFilesTable[i]->writeLock = nullptr;
