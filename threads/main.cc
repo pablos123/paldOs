@@ -96,10 +96,14 @@
 // External functions used by this file.
 
 void Copy(const char *unixFile, const char *nachosFile);
+void BigCopy(const char *unixFile, const char *nachosFile);
+void CopyExactFileHeaderSize(const char *unixFile, const char *nachosFile);
 void Print(const char *file);
 void PerformanceTest(void);
 void PerformanceTestSync(void);
 void SizeTest(void);
+void FileTestCreate(void);
+void BigChunkTest(void);
 void StartProcess(const char *file);
 void ConsoleTest(const char *in, const char *out);
 void MailTest(int networkID);
@@ -194,6 +198,14 @@ srand(time(NULL));
             ASSERT(argc > 2);
             Copy(*(argv + 1), *(argv + 2));
             argCount = 3;
+        } else if (!strcmp(*argv, "-bcp")) {  // Print a Nachos file.
+            ASSERT(argc > 2);
+            BigCopy(*(argv + 1), *(argv + 2));
+            argCount = 3;
+        } else if (!strcmp(*argv, "-cpe")) {  // Print a Nachos file.
+            ASSERT(argc > 2);
+            CopyExactFileHeaderSize(*(argv + 1), *(argv + 2));
+            argCount = 3;
         } else if (!strcmp(*argv, "-pr")) {  // Print a Nachos file.
             ASSERT(argc > 1);
             Print(*(argv + 1));
@@ -218,6 +230,10 @@ srand(time(NULL));
             PerformanceTestSync();
         } else if (!strcmp(*argv, "-tfsize")) {  // Performance test.
             SizeTest();
+        } else if (!strcmp(*argv, "-tfc")) {  // Performance test.
+            FileTestCreate();
+        } else if (!strcmp(*argv, "-tfbigchunk")) {  // Performance test.
+            BigChunkTest();
         }
 #endif
 #ifdef NETWORK

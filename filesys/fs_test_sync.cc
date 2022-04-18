@@ -40,7 +40,7 @@
 static const char FILE_NAME[] = "TestFile";
 static const char CONTENTS[] = "1234567890";
 static const unsigned CONTENT_SIZE = sizeof CONTENTS - 1;
-static const unsigned FILE_SIZE = 20;
+static const unsigned FILE_SIZE = 200000;
 
 static void
 FileWriteSync(void* threadName)
@@ -61,7 +61,6 @@ FileWriteSync(void* threadName)
             fprintf(stderr, "Perf test: unable to write %s\n", FILE_NAME);
             break;
         }
-        printf("Writed: %s\n", CONTENTS);
     }
 
     delete openFile;
@@ -107,7 +106,7 @@ FileCreateSync(void* threadName)
 {
     DEBUG('f', "Executing %s thread\n", (char *)threadName);
     DEBUG('f', "Creating file: %s\n", FILE_NAME);
-    fileSystem->Create(FILE_NAME, FILE_SIZE);
+    fileSystem->Create(FILE_NAME);
 }
 
 void
@@ -132,7 +131,7 @@ PerformanceTestSync()
     strncpy(name4, "6rd", 8);
     strncpy(name5, "7th", 8);
 
-    if (!fileSystem->Create(FILE_NAME, FILE_SIZE)) {
+    if (!fileSystem->Create(FILE_NAME)) {
         fprintf(stderr, "Perf test: cannot create %s\n", FILE_NAME);
         return;
     }
@@ -198,10 +197,9 @@ PerformanceTestSync()
 
     for(int i = 0; i < 6; ++i) threads[i]->Join();
 
+    //////////// REMOVE ///////////
 
-    ////////////// REMOVE ///////////
-
-    if (!fileSystem->Create(FILE_NAME, FILE_SIZE)) {
+    if (!fileSystem->Create(FILE_NAME)) {
         fprintf(stderr, "Perf test: cannot create %s\n", FILE_NAME);
     }
 
@@ -237,6 +235,9 @@ PerformanceTestSync()
 
     for(int i = 0; i < 3; ++i) threads[i]->Join();
 
+    printf("About to terminate the test with the final remove...\n");
+    fileSystem->Remove(FILE_NAME);  // to test the wait for the other threads
+
     delete [] threads;
 
     delete [] name;
@@ -247,4 +248,70 @@ PerformanceTestSync()
     delete [] name5;
 
     stats->Print();
+}
+
+void FileTestCreate() {
+    Thread** threads = new Thread*[6];
+
+    char *name  = new char [8];
+    char *name1 = new char [8];
+    char *name2 = new char [8];
+
+    strncpy(name,  "2st", 8);
+    strncpy(name1, "3rd", 8);
+    strncpy(name2, "4th", 8);
+
+    Thread* newThread = new Thread(name, true);
+    newThread->Fork(FileCreateSync, (void *) name);
+    threads[0] = newThread;
+
+    Thread* newThread1 = new Thread(name1, true);
+    newThread1->Fork(FileCreateSync, (void *) name1);
+    threads[1] = newThread1;
+
+    Thread* newThread2 = new Thread(name2, true);
+    newThread2->Fork(FileCreateSync, (void *) name2);
+    threads[2] = newThread2;
+
+    for(int i = 0; i < 3; ++i) threads[i]->Join();
+
+    newThread = new Thread(name, true);
+    newThread->Fork(FileWriteSync, (void *) name);
+    threads[0] = newThread;
+
+    newThread1 = new Thread(name1, true);
+    newThread1->Fork(FileWriteSync, (void *) name1);
+    threads[1] = newThread1;
+
+    newThread2 = new Thread(name2, true);
+    newThread2->Fork(FileWriteSync, (void *) name2);
+    threads[2] = newThread2;
+
+    for(int i = 0; i < 3; ++i) threads[i]->Join();
+
+    delete [] threads;
+
+    delete [] name;
+    delete [] name1;
+    delete [] name2;
+}
+
+void BigChunkTest() {
+    if (!fileSystem->Create(FILE_NAME)) {
+        fprintf(stderr, "Perf test: cannot create %s\n", FILE_NAME);
+        return;
+    }
+
+    OpenFile *openFile = fileSystem->Open(FILE_NAME);
+    if (openFile == nullptr) {
+        fprintf(stderr, "Perf test: unable to open %s\n", FILE_NAME);
+        return;
+    }
+
+    unsigned contentSize = 200000;
+    unsigned numBytes = (unsigned)openFile->Write(CONTENTS, contentSize);
+    if (numBytes < CONTENT_SIZE)
+        fprintf(stdout, "Writed: %u\n", numBytes);
+
+    delete openFile;
 }

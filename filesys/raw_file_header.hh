@@ -26,7 +26,8 @@
 static const unsigned NUM_DIRECT
   = ((SECTOR_SIZE - 2 * sizeof (int)) / sizeof (int)) - 1;
 const unsigned TIMES_FH_FITS = int(NUM_SECTORS / (NUM_DIRECT + 1));
-const unsigned MAX_FILE_SIZE = (NUM_SECTORS - TIMES_FH_FITS) * SECTOR_SIZE;
+const unsigned FILE_DATA_SECTORS = NUM_SECTORS - TIMES_FH_FITS;
+const unsigned MAX_FILE_SIZE = FILE_DATA_SECTORS * SECTOR_SIZE;
 
 struct RawFileHeader {
     unsigned numBytes;  ///< Number of bytes in the file.

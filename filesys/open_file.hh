@@ -121,6 +121,7 @@ public:
 
   private:
     FileHeader *hdr;  ///< Header for this file.
+    int currentSector;
     unsigned seekPosition;  ///< Current position within the file.
     int sector;
 };

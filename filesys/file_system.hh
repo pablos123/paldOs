@@ -116,7 +116,7 @@ public:
     ~FileSystem();
 
     /// Create a file (UNIX `creat`).
-    bool Create(const char *name, unsigned initialSize);
+    bool Create(const char *name, unsigned initialSize = 0);
 
     /// Open a file (UNIX `open`).
     OpenFile *Open(const char *name);
@@ -132,6 +132,8 @@ public:
 
     /// List all the files and their contents.
     void Print();
+
+    OpenFile* GetFreeMap();
 
 private:
     OpenFile *freeMapFile;  ///< Bit map of free disk blocks, represented as a

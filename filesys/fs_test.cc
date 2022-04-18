@@ -65,8 +65,9 @@ Copy(const char *from, const char *to)
     // Copy the data in `TRANSFER_SIZE` chunks.
     char *buffer = new char [TRANSFER_SIZE];
     int amountRead;
+    int count = 0;
     while ((amountRead = fread(buffer, sizeof(char),
-                               TRANSFER_SIZE, fp)) > 0)
+                               TRANSFER_SIZE, fp)) > 0 && ++count < 20000)
         openFile->Write(buffer, amountRead);
     delete [] buffer;
 
@@ -75,6 +76,96 @@ Copy(const char *from, const char *to)
     fclose(fp);
 }
 
+void
+BigCopy(const char *from, const char *to)
+{
+    ASSERT(from != nullptr);
+    ASSERT(to != nullptr);
+
+    unsigned transferSize = 300000;
+    // Open UNIX file.
+    FILE *fp = fopen(from, "r");
+    if (fp == nullptr) {
+        printf("Copy: could not open input file %s\n", from);
+        return;
+    }
+
+    // Figure out length of UNIX file.
+    fseek(fp, 0, 2);
+    int fileLength = ftell(fp);
+    fseek(fp, 0, 0);
+
+    DEBUG('f', "Copying file %s, size %u, to file %s\n",
+          from, fileLength, to);
+
+    // Create a Nachos file of the same length.
+    if (!fileSystem->Create(to, fileLength)) {  // Create Nachos file.
+        printf("Copy: could not create output file %s\n", to);
+        fclose(fp);
+        return;
+    }
+
+    OpenFile *openFile = fileSystem->Open(to);
+    ASSERT(openFile != nullptr);
+
+    // Copy the data in `TRANSFER_SIZE` chunks.
+    char *buffer = new char [transferSize];
+    int amountRead;
+    int count = 0;
+    while ((amountRead = fread(buffer, sizeof(char),
+                               transferSize, fp)) > 0 && ++count < 200000)
+        openFile->Write(buffer, amountRead);
+    delete [] buffer;
+
+    // Close the UNIX and the Nachos files.
+    delete openFile;
+    fclose(fp);
+}
+
+void
+CopyExactFileHeaderSize(const char *from, const char *to)
+{
+    ASSERT(from != nullptr);
+    ASSERT(to != nullptr);
+
+    unsigned transferSize = 3712;
+    // Open UNIX file.
+    FILE *fp = fopen(from, "r");
+    if (fp == nullptr) {
+        printf("Copy: could not open input file %s\n", from);
+        return;
+    }
+
+    // Figure out length of UNIX file.
+    fseek(fp, 0, 2);
+    int fileLength = ftell(fp);
+    fseek(fp, 0, 0);
+
+    DEBUG('f', "Copying file %s, size %u, to file %s\n",
+          from, fileLength, to);
+
+    // Create a Nachos file of the same length.
+    if (!fileSystem->Create(to, fileLength)) {  // Create Nachos file.
+        printf("Copy: could not create output file %s\n", to);
+        fclose(fp);
+        return;
+    }
+
+    OpenFile *openFile = fileSystem->Open(to);
+    ASSERT(openFile != nullptr);
+
+    // Copy the data in `TRANSFER_SIZE` chunks.
+    char *buffer = new char [3712];
+    int amountRead;
+    amountRead = fread(buffer, sizeof(char), transferSize, fp);
+
+    openFile->Write(buffer, amountRead);
+    delete [] buffer;
+
+    // Close the UNIX and the Nachos files.
+    delete openFile;
+    fclose(fp);
+}
 /// Print the contents of the Nachos file `name`.
 void
 Print(const char *name)
