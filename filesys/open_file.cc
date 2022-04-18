@@ -440,9 +440,7 @@ OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position)
     ASSERT(from != nullptr);
     ASSERT(numBytes > 0);
 
-    DEBUG('7', "the struct raw %p in write at has: numbytes %u, numsectors %u\n", hdr->GetRaw(), hdr->GetRaw()->numBytes, hdr->GetRaw()->numSectors);
     unsigned fileLength = hdr->FileLength();
-    DEBUG('7',"the fileLength in WriteAt is: %u\n", fileLength);
     unsigned firstSector, lastSector, numSectors;
     bool firstAligned, lastAligned;
     char *buf;
