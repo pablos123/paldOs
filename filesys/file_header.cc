@@ -41,14 +41,15 @@ FileHeader::Allocate(Bitmap *freeMap, unsigned fileSize)
 {
 
     ASSERT(freeMap != nullptr);
-    DEBUG('9',"File size to allocate: %u\n", fileSize);
+    DEBUG('w',"File size to allocate: %u\n", fileSize);
+    DEBUG('w',"Num bytes of the current raw: %u\n", raw.numBytes);
     DEBUG('w',"Space available in the current FH: %u", (NUM_DIRECT * SECTOR_SIZE) - raw.numBytes);
+    DEBUG('w',"file header address: %p\n", &raw);
     ASSERT(fileSize <= (NUM_DIRECT * SECTOR_SIZE) - raw.numBytes);
 
     raw.numBytes += fileSize;
 
-    DEBUG('w',"Num bytes of the current raw: %u\n", raw.numBytes);
-
+    DEBUG('w',"raw num bytes sum: %u\n", raw.numBytes);
     unsigned numSectors = raw.numSectors;
     DEBUG('w',"Old cant of total sectors: %u\n", numSectors);
 
@@ -65,10 +66,10 @@ FileHeader::Allocate(Bitmap *freeMap, unsigned fileSize)
 
     DEBUG('w', "The memory of the raw header is: %p\n", &raw);
     if(newSectors) {
-        DEBUG('9',"Alocando sectores nuevos...\n");
+        DEBUG('w',"Alocando sectores nuevos...\n");
         for (unsigned i = numSectors; i < raw.numSectors; i++) {
             raw.dataSectors[i] = freeMap->Find();
-            DEBUG('9', "data sector number allocated for this FH: %u\n", raw.dataSectors[i]);
+            DEBUG('w', "data sector number allocated for this FH: %u\n", raw.dataSectors[i]);
         }
     }
 

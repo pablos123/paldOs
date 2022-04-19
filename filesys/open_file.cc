@@ -18,7 +18,6 @@
 #include <stdio.h>
 #include <string.h>
 
-
 /// Open a Nachos file for reading and writing.  Bring the file header into
 /// memory while the file is open.
 ///
@@ -30,6 +29,20 @@ OpenFile::OpenFile(int sectorParam)
     seekPosition = 0;
     sector = sectorParam;
     currentSector = sectorParam;
+    if(openFilesTable[sector]->count == 0) {    // no one else has the file open
+        Lock* writeLock = new Lock("Write Lock");
+        openFilesTable[sector]->writeLock = writeLock;
+
+        if( openFilesTable[sector]->removeLock == nullptr ) { // We do not have a removelock yet
+            Lock* removeLock = new Lock("Remove Lock");
+            openFilesTable[sector]->removeLock = removeLock;
+        }
+        if( openFilesTable[sector]->closeLock == nullptr ) { // We do not have a removelock yet
+            Lock* closeLock = new Lock("Close Lock");
+            openFilesTable[sector]->closeLock = closeLock;
+        }
+    }
+    openFilesTable[sector]->count++; // add one user to the count of the threads that have the file open
 }
 
 /// Close a Nachos file, de-allocating any in-memory data structures.
@@ -95,15 +108,18 @@ OpenFile::Seek(unsigned position)
 /// * `numBytes` is the number of bytes to transfer.
 
 int
-OpenFile::Read(char *into, unsigned numBytes)
+OpenFile::Read(char *into, unsigned numBytes, bool isDirectory)
 {
+    if(isDirectory)
+        seekPosition = 0;
+
     ASSERT(into != nullptr);
     ASSERT(numBytes > 0);
 
     int result = 0;
 
     if (seekPosition + numBytes > hdr->GetRaw()->numBytes) {
-        DEBUG('7', "seekPostion is: %u, numBytes is: %u, maximuxbytes is:%u\n",seekPosition,numBytes,hdr->GetRaw()->numBytes);
+        DEBUG('w', "seekPostion is: %u, numBytes is: %u, maximuxbytes is:%u\n",seekPosition,numBytes,hdr->GetRaw()->numBytes);
         result = ReadAt(into, numBytes, seekPosition);
         seekPosition += result;
         numBytes -= result;
@@ -129,16 +145,21 @@ OpenFile::Read(char *into, unsigned numBytes)
 }
 
 int
-OpenFile::Write(const char *from, unsigned numBytes)
+OpenFile::Write(const char *from, unsigned numBytes, bool isDirectory)
 {
+    if(isDirectory)
+        seekPosition = 0;
+
     ASSERT(from != nullptr);
     ASSERT(numBytes > 0);
-    ASSERT(numBytes <= strlen(from)); //dummy proof
 
-    DEBUG('8', "the sector is: %d\n", sector);
+    // unsigned fromLength = strlen(from);
+
+    // numBytes = numBytes > fromLength ? fromLength : numBytes;
     openFilesTable[sector]->writeLock->Acquire();
 
     // To support concurrency, because the hdr maybe changed in other thread's execution
+    DEBUG('w', "the current sector is: %u\n", currentSector);
     hdr->FetchFrom(currentSector);
 
     Bitmap *freeMap = new Bitmap(NUM_SECTORS);
@@ -165,9 +186,13 @@ OpenFile::Write(const char *from, unsigned numBytes)
         if(seekPosition + bytesToWrite > hdr->GetRaw()->numBytes) {
             DEBUG('9', "requiring memory\n");
             unsigned bytesToAllocate = (seekPosition + bytesToWrite) - hdr->GetRaw()->numBytes;
+            DEBUG('w',"before allocate hdr memory: %p\n", hdr->GetRaw());
+            DEBUG('w',"before allocate: numBytes: %u, numSectors: %u\n", hdr->GetRaw()->numBytes,hdr->GetRaw()->numSectors);
+            for(unsigned i = 0; i < hdr->GetRaw()->numSectors; i++){
+                DEBUG('w',"%u\n", hdr->GetRaw()->dataSectors[i]);
+            }
             success = hdr->Allocate(freeMap, bytesToAllocate);
             if(!success) {
-                DEBUG('j', "por que no me muero? num bytes writed: %u\n", result);
                 delete freeMap;
                 openFilesTable[sector]->writeLock->Release();
                 return result;
@@ -180,7 +205,7 @@ OpenFile::Write(const char *from, unsigned numBytes)
             DEBUG('w', "The struct raw %p has: numbytes %u, numsectors %u\n", hdr->GetRaw(), hdr->GetRaw()->numBytes, hdr->GetRaw()->numSectors);
         }
 
-        DEBUG('w', "Por escribir en from seekposition: %d\n from: %s\n", seekPosition, from);
+        DEBUG('w', "going to write in seek position %d from: %s\n", seekPosition, from);
         DEBUG('w', "size of from: %lu\n", strlen(from));
         result_tmp = WriteAt(from, bytesToWrite, seekPosition);
 

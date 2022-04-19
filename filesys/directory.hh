@@ -32,16 +32,16 @@ class Directory {
 public:
 
     /// Initialize an empty directory with space for `size` files.
-    Directory(unsigned size);
+    Directory(unsigned size, bool isNew = true);
 
     /// De-allocate the directory.
     ~Directory();
 
     /// Initialize directory contents from disk.
-    void FetchFrom(OpenFile *file);
+    unsigned FetchFrom(OpenFile *file, bool needTableSize = false);
 
     /// Write modifications to directory contents back to disk.
-    void WriteBack(OpenFile *file);
+    void WriteBack(OpenFile *file, bool firstTime = false);
 
     /// Find the sector number of the `FileHeader` for file: `name`.
     int Find(const char *name);

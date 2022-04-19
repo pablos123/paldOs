@@ -24,6 +24,7 @@
 #include "directory_entry.hh"
 #include "file_header.hh"
 #include "lib/utility.hh"
+#include "system.hh"
 
 #include <stdio.h>
 #include <string.h>
@@ -34,10 +35,11 @@
 /// otherwise, we need to call FetchFrom in order to initialize it from disk.
 ///
 /// * `size` is the number of entries in the directory.
-Directory::Directory(unsigned size)
+Directory::Directory(unsigned size, bool isNew)
 {
     ASSERT(size > 0);
     raw.table = new DirectoryEntry [size];
+
     raw.tableSize = size;
     for (unsigned i = 0; i < raw.tableSize; i++) {
         raw.table[i].inUse = false;
@@ -53,23 +55,45 @@ Directory::~Directory()
 /// Read the contents of the directory from disk.
 ///
 /// * `file` is file containing the directory contents.
-void
-Directory::FetchFrom(OpenFile *file)
+unsigned
+Directory::FetchFrom(OpenFile *file, bool needTableSize)
 {
     ASSERT(file != nullptr);
-    file->ReadAt((char *) raw.table,
-                 raw.tableSize * sizeof (DirectoryEntry), 0);
+    DEBUG('0', "getting data fom disk...\n");
+    DEBUG('0', "raw table memory is: %p\n", raw.table);
+    DEBUG('0', "table size is: %d\n", raw.tableSize);
+    int result = file->Read((char *) raw.table,
+                raw.tableSize * sizeof (DirectoryEntry), true);
+
+    if(needTableSize) {
+        DEBUG('0', "table size before return is: %d", result);
+        raw.tableSize = unsigned((unsigned) result/ sizeof (DirectoryEntry));
+        DEBUG('0', "quantity of directoy entries is: %u\n", raw.tableSize);
+        return raw.tableSize;
+    }
+
+    DEBUG('0', "bytes readed: %d\n", result);
+    return (unsigned)result;
 }
 
 /// Write any modifications to the directory back to disk.
 ///
 /// * `file` is a file to contain the new directory contents.
 void
-Directory::WriteBack(OpenFile *file)
+Directory::WriteBack(OpenFile *file, bool firstTime)
 {
     ASSERT(file != nullptr);
-    file->WriteAt((char *) raw.table,
-                  raw.tableSize * sizeof (DirectoryEntry), 0);
+    if(firstTime)
+        file->WriteAt((char *) raw.table,
+                    raw.tableSize * sizeof (DirectoryEntry), 0);
+    else {
+        DEBUG('0', "writing back to disk...\n");
+        unsigned bytesToWrite = raw.tableSize * sizeof (DirectoryEntry);
+        DEBUG('0',"Target bytes to write: %u\n", bytesToWrite);
+        int result = file->Write((char *) raw.table, bytesToWrite, true);
+        DEBUG('0', "bytes writed: %d\n", result);
+        ASSERT(result);
+    }
 }
 
 /// Look up file name in directory, and return its location in the table of
@@ -82,11 +106,13 @@ Directory::FindIndex(const char *name)
     ASSERT(name != nullptr);
 
     for (unsigned i = 0; i < raw.tableSize; i++) {
+        DEBUG('0', "Entry in use: %d, entryFileName: %s\n", raw.table[i].inUse, raw.table[i].name);
         if (raw.table[i].inUse
               && !strncmp(raw.table[i].name, name, FILE_NAME_MAX_LEN)) {
             return i;
         }
     }
+    DEBUG('0', "Name %s not found in directory\n", name);
     return -1;  // name not in directory
 }
 
@@ -99,9 +125,11 @@ int
 Directory::Find(const char *name)
 {
     ASSERT(name != nullptr);
-
+    DEBUG('0', "Finding file in directory...\n");
+    DEBUG('0', "Current table size of the directory: %u\n", raw.tableSize);
     int i = FindIndex(name);
     if (i != -1) {
+        DEBUG('0', "File found! The index found is: %d and the associated sector\n", i,raw.table[i].sector);
         return raw.table[i].sector;
     }
     return -1;
@@ -122,15 +150,46 @@ Directory::Add(const char *name, int newSector)
         return false;
     }
 
-    for (unsigned i = 0; i < raw.tableSize; i++) {
+    DEBUG('0', "adding %s\n", name);
+    unsigned i = 0;
+    for (; i < raw.tableSize; i++) {
         if (!raw.table[i].inUse) {
             raw.table[i].inUse = true;
             strncpy(raw.table[i].name, name, FILE_NAME_MAX_LEN);
             raw.table[i].sector = newSector;
+            DEBUG('0', "%s added!\n", raw.table[i].name);
             return true;
         }
     }
-    return false;  // no space.  Fix when we have extensible files.
+
+    DEBUG('0', "bad size, resizing...\n");
+    unsigned newTableSize = raw.tableSize + 1;
+
+    DirectoryEntry * temp = raw.table;
+
+    DirectoryEntry* newTable = new DirectoryEntry[newTableSize];
+    memcpy(newTable, raw.table, raw.tableSize * sizeof(DirectoryEntry));
+
+    raw.table =  newTable;
+    raw.tableSize = newTableSize;
+    DEBUG('0', "old: %p new: %p\n", temp, raw.table);
+    delete [] temp;
+
+    for (unsigned j = i; j < raw.tableSize; j++) {
+        raw.table[j].inUse = false;
+    }
+    // Now we can mark the deseared entry to create
+    raw.table[i].inUse = true;
+    strncpy(raw.table[i].name, name, FILE_NAME_MAX_LEN);
+    raw.table[i].sector = newSector;
+    DEBUG('0',"Final table size: %u\n", raw.tableSize);
+
+    DEBUG('0',"name in newTable: %s\n", newTable[0].name);
+
+
+    fileSystem->SetDirectorySize(newTableSize);
+
+    return true;
 }
 
 /// Remove a file name from the directory.   Return true if successful;
@@ -169,7 +228,8 @@ Directory::Print() const
     FileHeader *hdr = new FileHeader;
 
     printf("Directory contents:\n");
-    for (unsigned i = 0; i < raw.tableSize; i++) {
+    DEBUG('0', "printing with table size: %u\n", raw.tableSize);
+    for (unsigned i = 0; i < raw.tableSize; i++) {  // !!!!!!!!!
         if (raw.table[i].inUse) {
             printf("\nDirectory entry:\n"
                    "    name: %s\n"

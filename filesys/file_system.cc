@@ -116,7 +116,7 @@ FileSystem::FileSystem(bool format)
 
         DEBUG('f', "Writing bitmap and directory back to disk.\n");
         freeMap->WriteBack(freeMapFile);     // flush changes to disk
-        dir->WriteBack(directoryFile);
+        dir->WriteBack(directoryFile, true);
 
         if (debug.IsEnabled('f')) {
             freeMap->Print();
@@ -133,14 +133,13 @@ FileSystem::FileSystem(bool format)
         // Nachos is running.
         freeMapFile   = new OpenFile(FREE_MAP_SECTOR);
         directoryFile = new OpenFile(DIRECTORY_SECTOR);
-    }
-    if( openFilesTable[FREE_MAP_SECTOR]->closeLock == nullptr ) {
-        Lock* closeLock = new Lock("Close Lock");
-        openFilesTable[FREE_MAP_SECTOR]->closeLock = closeLock;
-    }
-    if( openFilesTable[DIRECTORY_SECTOR]->closeLock == nullptr ) {
-        Lock* closeLock = new Lock("Close Lock");
-        openFilesTable[DIRECTORY_SECTOR]->closeLock = closeLock;
+        // Get the current size of the directory table, this is necessry since we
+        // support 'unlimited' directory headers in the directory
+        Directory  *dir     = new Directory(50); // we dont want to create a new Directory
+        unsigned result = dir->FetchFrom(directoryFile, true);
+        directorySize = result;
+        delete dir;
+        DEBUG('0', "directory size: %u", directorySize);
     }
 }
 
@@ -184,11 +183,12 @@ FileSystem::Create(const char *name, unsigned fileSize)
 
     DEBUG('f', "Creating file %s, size 0\n", name);
 
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
-    dir->FetchFrom(directoryFile);
-
     bool success = true;
     filesysCreateLock->Acquire();
+
+    Directory *dir = new Directory(directorySize);
+    dir->FetchFrom(directoryFile);
+
     if (dir->Find(name) != -1) {
         DEBUG('f',"File is already in directory\n");
         success = false;  // File is already in directory.
@@ -211,6 +211,8 @@ FileSystem::Create(const char *name, unsigned fileSize)
             firstHeader->GetRaw()->nextFileHeader = 0;
             firstHeader->GetRaw()->numBytes = 0;
             firstHeader->GetRaw()->numSectors = 0;
+
+            DEBUG('w', "First FH initialized. FH first sector: %u, Num sectors: %u\n", sector, firstHeader->GetRaw()->numSectors);
 
             firstHeader->WriteBack(sector);
             dir->WriteBack(directoryFile);
@@ -255,34 +257,32 @@ FileSystem::Open(const char *name)
 {
     ASSERT(name != nullptr);
 
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
+    Directory *dir = new Directory(directorySize);
     OpenFile  *openFile = nullptr;
 
-    DEBUG('f', "Opening file %s\n", name);
+    DEBUG('0', "Opening file %s\n", name);
     dir->FetchFrom(directoryFile);
     int sector = dir->Find(name);
 
+    DEBUG('w', "the sector found is: %d!!\n", sector);
     if (sector >= 0 && !openFilesTable[sector]->removing) { // `name` was found in directory.
         openFile = new OpenFile(sector);
-        if(openFilesTable[sector]->count == 0) {    // no one else has the file open
-            Lock* writeLock = new Lock("Write Lock");
-
-            if( openFilesTable[sector]->removeLock == nullptr ) { // We do not have a removelock yet
-                Lock* removeLock = new Lock("Remove Lock");
-                openFilesTable[sector]->removeLock = removeLock;
-            }
-            if( openFilesTable[sector]->closeLock == nullptr ) { // We do not have a removelock yet
-                Lock* closeLock = new Lock("Close Lock");
-                openFilesTable[sector]->closeLock = closeLock;
-            }
-            openFilesTable[sector]->writeLock = writeLock;
-        }
-        openFilesTable[sector]->count++; // add one user to the count of the threads that have the file open
     }
 
     delete dir;
     return openFile;  // Return null if not found.
 }
+
+unsigned
+FileSystem::GetDirectorySize() {
+    return directorySize;
+}
+
+void
+FileSystem::SetDirectorySize(unsigned newDirectorySize) {
+    directorySize = newDirectorySize;
+}
+
 
 /// Delete a file from the file system.
 ///
@@ -301,7 +301,7 @@ FileSystem::Remove(const char *name)
 {
     ASSERT(name != nullptr);
 
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
+    Directory *dir = new Directory(directorySize);
     dir->FetchFrom(directoryFile);
     int sector = dir->Find(name);   // first sector
 
@@ -372,7 +372,7 @@ FileSystem::Remove(const char *name)
 void
 FileSystem::List()
 {
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
+    Directory *dir = new Directory(directorySize);
 
     dir->FetchFrom(directoryFile);
     dir->List();
@@ -536,7 +536,7 @@ FileSystem::Check()
 
     Bitmap *freeMap = new Bitmap(NUM_SECTORS);
     freeMap->FetchFrom(freeMapFile);
-    Directory *dir = new Directory(NUM_DIR_ENTRIES);
+    Directory *dir = new Directory(directorySize);
     const RawDirectory *rdir = dir->GetRaw();
     dir->FetchFrom(directoryFile);
     error |= CheckDirectory(rdir, shadowMap);
@@ -576,7 +576,8 @@ FileSystem::Print()
 
     FileHeader *bitH    = new FileHeader;
     FileHeader *dirH    = new FileHeader;
-    Directory  *dir     = new Directory(NUM_DIR_ENTRIES);
+    Directory  *dir     = new Directory(directorySize); // we dont want to create a new Directory
+    dir->FetchFrom(directoryFile);
 
     printf("--------------------------------\n");
     bitH->FetchFrom(FREE_MAP_SECTOR);
@@ -590,7 +591,6 @@ FileSystem::Print()
     freeMap->Print();
 
     printf("--------------------------------\n");
-    dir->FetchFrom(directoryFile);
     dir->Print();
     printf("--------------------------------\n");
 

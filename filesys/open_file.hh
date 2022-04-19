@@ -102,8 +102,8 @@ public:
     /// Read/write bytes from the file, starting at the implicit position.
     /// Return the # actually read/written, and increment position in file.
 
-    int Read(char *into, unsigned numBytes);
-    int Write(const char *from, unsigned numBytes);
+    int Read(char *into, unsigned numBytes, bool isDirectory = false);
+    int Write(const char *from, unsigned numBytes, bool isDirectory = false);
 
     /// Read/write bytes from the file, bypassing the implicit position.
 
