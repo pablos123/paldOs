@@ -116,7 +116,8 @@ public:
     ~FileSystem();
 
     /// Create a file (UNIX `creat`).
-    bool Create(const char *name, unsigned initialSize = 0);
+    // Dummy param to maintain the same interface with the other 'more simple' create provided
+    bool Create(const char *name, unsigned dummyParam = 0);
 
     /// Open a file (UNIX `open`).
     OpenFile *Open(const char *name);

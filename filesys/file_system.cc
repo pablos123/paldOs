@@ -185,9 +185,8 @@ PrintTable(RawDirectory raw) {
 /// * `initialSize` is the size of file to be created. <-- Deprecated
 /// The created file always has initial size equal to 0
 bool
-FileSystem::Create(const char *name, unsigned fileSize)
+FileSystem::Create(const char *name, unsigned dummyParam) // Dummy param to maintain the same interface with the other 'more simple' create provided
 {
-    fileSize = 0;
     ASSERT(name != nullptr);
 
     DEBUG('f', "Creating file %s, size 0\n", name);
