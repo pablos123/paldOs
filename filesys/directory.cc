@@ -61,7 +61,7 @@ Directory::FetchFrom(OpenFile *file, bool needTableSize)
     ASSERT(file != nullptr);
     DEBUG('0', "getting data fom disk...\n");
     DEBUG('0', "raw table memory is: %p\n", raw.table);
-    DEBUG('0', "table size is: %d\n", raw.tableSize);
+    DEBUG('w', "table size  BEFORE READINNNGGGG is: %d\n", raw.tableSize);
     int result = file->Read((char *) raw.table,
                 raw.tableSize * sizeof (DirectoryEntry), true);
 
@@ -72,7 +72,6 @@ Directory::FetchFrom(OpenFile *file, bool needTableSize)
         return raw.tableSize;
     }
 
-    DEBUG('0', "bytes readed: %d\n", result);
     return (unsigned)result;
 }
 
@@ -89,10 +88,10 @@ Directory::WriteBack(OpenFile *file, bool firstTime)
     else {
         DEBUG('0', "writing back to disk...\n");
         unsigned bytesToWrite = raw.tableSize * sizeof (DirectoryEntry);
+        DEBUG('w', "table size for writing is: %u\n", raw.tableSize);
         DEBUG('0',"Target bytes to write: %u\n", bytesToWrite);
         int result = file->Write((char *) raw.table, bytesToWrite, true);
         DEBUG('0', "bytes writed: %d\n", result);
-        ASSERT(result);
     }
 }
 
@@ -135,6 +134,16 @@ Directory::Find(const char *name)
     return -1;
 }
 
+/// Debug function for the raw table
+void
+PrintTableDir(RawDirectory raw) {
+    DEBUG('w', "DEBUG TABLEE\n\n", raw.tableSize);
+    DEBUG('w', "table size: %u\n", raw.tableSize);
+    for (unsigned i = 100; i < raw.tableSize; i++)
+        DEBUG('w', "Index: %u, InUse? %d Name: %s\n",i,raw.table[i].inUse,raw.table[i].name);
+    DEBUG('w', "\n\n");
+}
+
 /// Add a file into the directory.  Return true if successful; return false
 /// if the file name is already in the directory, or if the directory is
 /// completely full, and has no more space for additional file names.
@@ -150,47 +159,66 @@ Directory::Add(const char *name, int newSector)
         return false;
     }
 
-    DEBUG('0', "adding %s\n", name);
+    DEBUG('w', "adding %s\n", name);
+    DEBUG('w', "table size %u\n", raw.tableSize);
+    DEBUG('w', "table memory: %p\n", &raw.table);
+    if(raw.tableSize > 100)
+        PrintTableDir(raw);
     unsigned i = 0;
     for (; i < raw.tableSize; i++) {
         if (!raw.table[i].inUse) {
             raw.table[i].inUse = true;
             strncpy(raw.table[i].name, name, FILE_NAME_MAX_LEN);
             raw.table[i].sector = newSector;
-            DEBUG('0', "%s added!\n", raw.table[i].name);
+            DEBUG('w', "%s added in index: %u\n", raw.table[i].name, i);
             return true;
         }
     }
 
-    DEBUG('0', "bad size, resizing...\n");
+    DEBUG('w', "bad size, resizing...\n");
+    //if(raw.tableSize > 100)
+    //    PrintTableDir(raw);
+
+
+    // We can change this to be more efficent by
+    // duplicating the table size but this will sacrifice a lot
+    // of sectors for the files
     unsigned newTableSize = raw.tableSize + 1;
+    DirectoryEntry* newTable = new DirectoryEntry[newTableSize];
+
+    memcpy(newTable, raw.table, raw.tableSize * sizeof(DirectoryEntry));
 
     DirectoryEntry * temp = raw.table;
 
-    DirectoryEntry* newTable = new DirectoryEntry[newTableSize];
-    memcpy(newTable, raw.table, raw.tableSize * sizeof(DirectoryEntry));
-
     raw.table =  newTable;
     raw.tableSize = newTableSize;
-    DEBUG('0', "old: %p new: %p\n", temp, raw.table);
+
+    DEBUG('w', "old: %p new: %p\n", temp, raw.table);
     delete [] temp;
 
-    for (unsigned j = i; j < raw.tableSize; j++) {
+    /*
+    // if we change the tablesize to be more than one more
+    // we'll need to do this for loop to initialize the new
+    // table indexes
+    for (unsigned j = i; j < newTableSize; j++)
         raw.table[j].inUse = false;
-    }
+    */
+
     // Now we can mark the deseared entry to create
     raw.table[i].inUse = true;
     strncpy(raw.table[i].name, name, FILE_NAME_MAX_LEN);
     raw.table[i].sector = newSector;
-    DEBUG('0',"Final table size: %u\n", raw.tableSize);
 
-    DEBUG('0',"name in newTable: %s\n", newTable[0].name);
+    DEBUG('w', "Table after memcopy and assignation of new entry\n");
 
+    if(raw.tableSize > 100)
+       PrintTableDir(raw);
 
     fileSystem->SetDirectorySize(newTableSize);
 
     return true;
 }
+
 
 /// Remove a file name from the directory.   Return true if successful;
 /// return false if the file is not in the directory.

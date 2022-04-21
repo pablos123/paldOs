@@ -43,7 +43,7 @@ FileHeader::Allocate(Bitmap *freeMap, unsigned fileSize)
     ASSERT(freeMap != nullptr);
     DEBUG('w',"File size to allocate: %u\n", fileSize);
     DEBUG('w',"Num bytes of the current raw: %u\n", raw.numBytes);
-    DEBUG('w',"Space available in the current FH: %u", (NUM_DIRECT * SECTOR_SIZE) - raw.numBytes);
+    DEBUG('w',"Space available in the current FH: %u\n", (NUM_DIRECT * SECTOR_SIZE) - raw.numBytes);
     DEBUG('w',"file header address: %p\n", &raw);
     ASSERT(fileSize <= (NUM_DIRECT * SECTOR_SIZE) - raw.numBytes);
 

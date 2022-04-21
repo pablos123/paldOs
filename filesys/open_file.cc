@@ -110,8 +110,10 @@ OpenFile::Seek(unsigned position)
 int
 OpenFile::Read(char *into, unsigned numBytes, bool isDirectory)
 {
-    if(isDirectory)
+    if(isDirectory) {
+        hdr->FetchFrom(sector);
         seekPosition = 0;
+    }
 
     ASSERT(into != nullptr);
     ASSERT(numBytes > 0);
@@ -123,20 +125,27 @@ OpenFile::Read(char *into, unsigned numBytes, bool isDirectory)
         result = ReadAt(into, numBytes, seekPosition);
         seekPosition += result;
         numBytes -= result;
+        char* temp = into + result;
+        DEBUG('w', "bytes readed: %u\n", result);
         unsigned nextSector = hdr->GetRaw()->nextFileHeader;
+        DEBUG('w', "READING the next file header sector is: %u\n", nextSector);
         while(nextSector && numBytes > 0) {
             seekPosition = 0;
             hdr->FetchFrom(nextSector);
-            unsigned result_tmp = ReadAt(into, numBytes, seekPosition);
+            unsigned result_tmp = ReadAt(temp, numBytes, seekPosition);
+            temp+= result_tmp;
             numBytes -= result_tmp;
             result += result_tmp;
-
+            DEBUG('w', "bytes readed: %u\n", result);
             seekPosition += result_tmp;
 
             nextSector = hdr->GetRaw()->nextFileHeader;
+            DEBUG('w', "READING the next file header sector is: %u\n", nextSector);
         }
     } else {
+        DEBUG('w', "going to read with read at!\n");
         result = ReadAt(into, numBytes, seekPosition);
+        DEBUG('w', "bytes readed: %u\n", result);
 
         seekPosition += result;
     }
@@ -147,16 +156,18 @@ OpenFile::Read(char *into, unsigned numBytes, bool isDirectory)
 int
 OpenFile::Write(const char *from, unsigned numBytes, bool isDirectory)
 {
-    if(isDirectory)
-        seekPosition = 0;
+    DEBUG('w',"Attempting to write: %u bytes\n", numBytes);
+    DEBUG('w',"The sizeof from is: %u\n", sizeof(from));
 
     ASSERT(from != nullptr);
     ASSERT(numBytes > 0);
 
-    // unsigned fromLength = strlen(from);
-
-    // numBytes = numBytes > fromLength ? fromLength : numBytes;
     openFilesTable[sector]->writeLock->Acquire();
+
+    if(isDirectory) {
+        seekPosition = 0;
+        currentSector = sector;
+    }
 
     // To support concurrency, because the hdr maybe changed in other thread's execution
     DEBUG('w', "the current sector is: %u\n", currentSector);
@@ -165,7 +176,6 @@ OpenFile::Write(const char *from, unsigned numBytes, bool isDirectory)
     Bitmap *freeMap = new Bitmap(NUM_SECTORS);
     freeMap->FetchFrom(fileSystem->GetFreeMap());
 
-    DEBUG('8', "going to write in the raw: %p\n", hdr->GetRaw());
     int result  = 0;
 
     // We limit the amount to write in the current FH.
@@ -205,8 +215,7 @@ OpenFile::Write(const char *from, unsigned numBytes, bool isDirectory)
             DEBUG('w', "The struct raw %p has: numbytes %u, numsectors %u\n", hdr->GetRaw(), hdr->GetRaw()->numBytes, hdr->GetRaw()->numSectors);
         }
 
-        DEBUG('w', "going to write in seek position %d from: %s\n", seekPosition, from);
-        DEBUG('w', "size of from: %lu\n", strlen(from));
+        DEBUG('w', "going to write in seek position %d\n", seekPosition);
         result_tmp = WriteAt(from, bytesToWrite, seekPosition);
 
         ////////////////// Updating data //////////////////////
@@ -226,8 +235,11 @@ OpenFile::Write(const char *from, unsigned numBytes, bool isDirectory)
     // if it exists that means that another thread created the fileheader
     // previously
     unsigned iterFh = hdr->GetRaw()->nextFileHeader;
+    DEBUG('w', "the next file header for the condition is: %u\n", iterFh);
     while(numBytes > 0 && iterFh != 0) {
         hdr->FetchFrom(iterFh);
+
+        DEBUG('w', "the numBytes of the hdr is: %u\n", hdr->GetRaw()->numBytes);
 
         // We limit the amount to write in the current FH.
         maxBytesToWrite = NUM_DIRECT * SECTOR_SIZE;
@@ -235,7 +247,7 @@ OpenFile::Write(const char *from, unsigned numBytes, bool isDirectory)
         bytesToWrite =  numBytes > maxBytesToWrite ? maxBytesToWrite : numBytes;
 
         if(bytesToWrite > hdr->GetRaw()->numBytes) {
-            DEBUG('9', "Requiring memory in existing fh\n");
+            DEBUG('w', "Requiring memory in existing fh\n");
             unsigned bytesToAllocate =  bytesToWrite - hdr->GetRaw()->numBytes;
             success = hdr->Allocate(freeMap, bytesToAllocate);
             if(!success) {
@@ -243,7 +255,7 @@ OpenFile::Write(const char *from, unsigned numBytes, bool isDirectory)
                 openFilesTable[sector]->writeLock->Release();
                 return result;
             }
-            DEBUG('9',"Flushing allocated disk memory...\n");
+            DEBUG('w',"Flushing allocated disk memory...\n");
             // We need to write back the hdr when there is a change in the raw file header
             freeMap->WriteBack(fileSystem->GetFreeMap());
             hdr->WriteBack(iterFh);
@@ -261,17 +273,16 @@ OpenFile::Write(const char *from, unsigned numBytes, bool isDirectory)
         numBytes -= result_tmp;  // This will be always zero at some point
 
         iterFh = hdr->GetRaw()->nextFileHeader;
-        DEBUG('9',"iter fh is %u, number of bytes %u\n", iterFh, numBytes);
+        DEBUG('w',"iter fh is %u, number of bytes %u\n", iterFh, numBytes);
     }
+
 
     if (numBytes > 0) {
         DEBUG('w',"a new file header is needed!!!!!!!\n");
 
         //Create a list of sectors for all the fileheaders
         unsigned totalSectors = DivRoundUp(numBytes, SECTOR_SIZE);
-        DEBUG('f', "Total data sectors: %u\n", totalSectors);
         unsigned fileHeaderSectors = DivRoundUp(totalSectors, NUM_DIRECT);
-        DEBUG('f', "Total FH sectors: %u\n", fileHeaderSectors);
 
         if(freeMap->CountClear() < fileHeaderSectors){
             delete freeMap;
@@ -308,11 +319,12 @@ OpenFile::Write(const char *from, unsigned numBytes, bool isDirectory)
             return result;
         }
 
-        DEBUG('w', "Writing file header and bitmap back to disk...");
+        DEBUG('w', "Writing the bitmap back to disk...\n");
         freeMap->WriteBack(fileSystem->GetFreeMap());
+
+        DEBUG('w', "Writing new file header back to disk in the sector: %u...\n", sectors[0]);
         firstHeader->WriteBack(sectors[0]);
 
-        DEBUG('w', "Setting the next file header for the original file header...\n");
         hdr->GetRaw()->nextFileHeader = sectors[0];
         DEBUG('w', "Writing back the original hdr with next header: %u\n", sectors[0]);
         hdr->WriteBack(currentSector); // !!!!!!!!
@@ -329,8 +341,9 @@ OpenFile::Write(const char *from, unsigned numBytes, bool isDirectory)
         seekPosition = 0;
 
         result_tmp = WriteAt(from, bytesToAllocate, seekPosition);
+        DEBUG('w', "The bytes writed in the current FH are: %u\n", result_tmp);
         result += result_tmp;
-        from += result_tmp; //Move the array of char pointers reslt_tmp times
+        from += result_tmp; //Move the array of char pointers result_tmp times
 
         seekPosition += result_tmp;
         numBytes -= result_tmp;  // This will be always zero at some point
@@ -339,6 +352,8 @@ OpenFile::Write(const char *from, unsigned numBytes, bool isDirectory)
         fileHeaders[0] = firstHeader;
 
         FileHeader* previousFileHeader = firstHeader;
+
+        DEBUG('w', "the final character in the array is: %u\n", (from[result] == '\0'));
 
         unsigned allocatedFileHeaders = 1;
         while(allocatedFileHeaders < fileHeaderSectors && success) {
@@ -365,6 +380,7 @@ OpenFile::Write(const char *from, unsigned numBytes, bool isDirectory)
                 result_tmp = WriteAt(from, bytesToAllocate, seekPosition);
                 result += result_tmp;
                 from += result_tmp; //Move the array of char pointers reslt_tmp times
+                DEBUG('w', "the size of from is: %u\n", sizeof(from));
 
                 seekPosition += result_tmp;
                 numBytes -= result_tmp;  // This will be always zero at some point
@@ -393,6 +409,8 @@ OpenFile::Write(const char *from, unsigned numBytes, bool isDirectory)
     }
     delete freeMap;
     openFilesTable[sector]->writeLock->Release();
+
+    DEBUG('w',"The bytes writed are: %u\n", result);
 
     return result;
 }
@@ -428,7 +446,7 @@ OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position)
     ASSERT(into != nullptr);
     ASSERT(numBytes > 0);
 
-    unsigned fileLength = hdr->FileLength();
+    unsigned fileLength = hdr->FileLength(); // raw.numBytes (size): 416
     unsigned firstSector, lastSector, numSectors;
     char *buf;
 
@@ -449,7 +467,9 @@ OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position)
     // Read in all the full and partial sectors that we need.
     buf = new char [numSectors * SECTOR_SIZE];
     for (unsigned i = firstSector; i <= lastSector; i++) {
-        synchDisk->ReadSector(hdr->ByteToSector(i * SECTOR_SIZE),
+        unsigned sectorToRead = hdr->ByteToSector(i * SECTOR_SIZE);
+        DEBUG('9', "Sector to read in ReadAt: %u\n", sectorToRead);
+        synchDisk->ReadSector(sectorToRead,
                               &buf[(i - firstSector) * SECTOR_SIZE]);
     }
 

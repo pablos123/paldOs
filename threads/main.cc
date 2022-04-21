@@ -103,6 +103,7 @@ void PerformanceTest(void);
 void PerformanceTestSync(void);
 void SizeTest(void);
 void FileTestCreate(void);
+void FileCreateALot(void*);
 void BigChunkTest(void);
 void StartProcess(const char *file);
 void ConsoleTest(const char *in, const char *out);
@@ -226,13 +227,13 @@ srand(time(NULL));
             printf("Filesystem check %s.\n", result ? "succeeded" : "failed");
         } else if (!strcmp(*argv, "-tf")) {  // Performance test.
             PerformanceTest();
-        } else if (!strcmp(*argv, "-tfs")) {  // Performance test.
+        } else if (!strcmp(*argv, "-tfs")) {  // Performance test sync
             PerformanceTestSync();
-        } else if (!strcmp(*argv, "-tfsize")) {  // Performance test.
+        } else if (!strcmp(*argv, "-tfsize")) {  // Biiig files test.
             SizeTest();
-        } else if (!strcmp(*argv, "-tfc")) {  // Performance test.
+        } else if (!strcmp(*argv, "-tfc")) {  // Concurrent create a lot of files test.
             FileTestCreate();
-        } else if (!strcmp(*argv, "-tfbigchunk")) {  // Performance test.
+        } else if (!strcmp(*argv, "-tfbigchunk")) {  // Performance test. NO ANDAAA
             BigChunkTest();
         }
 #endif

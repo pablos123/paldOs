@@ -28,10 +28,10 @@ SizeTest()
 
     openFile->Close();
 
-    if(! fileSystem->Remove("Big file")){
-       printf("Perf test: cannot remove %s\n", "Big file");
-    } else{
-        printf("Perf test: File %s removed successfully!\n", "Big file");
-    }
+    //if(! fileSystem->Remove("Big file")){
+    //   printf("Perf test: cannot remove %s\n", "Big file");
+    //} else{
+    //    printf("Perf test: File %s removed successfully!\n", "Big file");
+    //}
     stats->Print();
 }

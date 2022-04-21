@@ -135,11 +135,10 @@ FileSystem::FileSystem(bool format)
         directoryFile = new OpenFile(DIRECTORY_SECTOR);
         // Get the current size of the directory table, this is necessry since we
         // support 'unlimited' directory headers in the directory
-        Directory  *dir     = new Directory(50); // we dont want to create a new Directory
+        Directory  *dir = new Directory(2000); // we dont want to create a new Directory
         unsigned result = dir->FetchFrom(directoryFile, true);
         directorySize = result;
         delete dir;
-        DEBUG('0', "directory size: %u", directorySize);
     }
 }
 
@@ -147,6 +146,16 @@ FileSystem::~FileSystem()
 {
     delete freeMapFile;
     delete directoryFile;
+}
+
+/// Debug function for the raw table
+void
+PrintTable(RawDirectory raw) {
+    DEBUG('w', "DEBUG TABLEE\n\n", raw.tableSize);
+    DEBUG('w', "table size: %u\n", raw.tableSize);
+    for (unsigned i = 100; i < raw.tableSize; i++)
+        DEBUG('w', "Index: %u, InUse? %d Name: %s\n",i,raw.table[i].inUse,raw.table[i].name);
+    DEBUG('w', "\n\n");
 }
 
 /// Create a file in the Nachos file system (similar to UNIX `create`).
@@ -215,9 +224,13 @@ FileSystem::Create(const char *name, unsigned fileSize)
             DEBUG('w', "First FH initialized. FH first sector: %u, Num sectors: %u\n", sector, firstHeader->GetRaw()->numSectors);
 
             firstHeader->WriteBack(sector);
-            dir->WriteBack(directoryFile);
             freeMap->WriteBack(freeMapFile);
+            dir->WriteBack(directoryFile);
 
+            Directory *dirTest = new Directory(directorySize);
+            dirTest->FetchFrom(directoryFile);
+            DEBUG('w',"The writed table is: \n");
+            PrintTable(*dirTest->GetRaw());
             // To make sure that removed is false because in the same execution of nachos
             // we can have this situation:
             // 1: nachos creates a file in sector x
@@ -239,6 +252,7 @@ FileSystem::Create(const char *name, unsigned fileSize)
     delete dir;
     return success;
 }
+
 
 OpenFile*
 FileSystem::GetFreeMap() {

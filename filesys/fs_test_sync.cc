@@ -109,6 +109,19 @@ FileCreateSync(void* threadName)
     fileSystem->Create(FILE_NAME);
 }
 
+static void
+FileCreateALot(void* threadName) {
+    char *fileName = new char [10];
+    for(int i = 0; i < 1000; i++) {
+        printf("---------------ABOUT TO CREATE FILE NUMBER %u----------------\n", i);
+        sprintf(fileName, "test%d", i);
+        if (!fileSystem->Create(fileName)) {
+            fprintf(stderr, "Perf test: cannot create %s\n", fileName);
+            return;
+        }
+    }
+}
+
 void
 PerformanceTestSync()
 {
@@ -257,43 +270,45 @@ void FileTestCreate() {
     char *name1 = new char [8];
     char *name2 = new char [8];
 
-    strncpy(name,  "2st", 8);
-    strncpy(name1, "3rd", 8);
-    strncpy(name2, "4th", 8);
+    strncpy(name,  "1st", 8);
+    strncpy(name1, "2nd", 8);
+    strncpy(name2, "3rd", 8);
 
     Thread* newThread = new Thread(name, true);
-    newThread->Fork(FileCreateSync, (void *) name);
+    newThread->Fork(FileCreateALot, (void *) name);
     threads[0] = newThread;
 
     Thread* newThread1 = new Thread(name1, true);
-    newThread1->Fork(FileCreateSync, (void *) name1);
+    newThread1->Fork(FileCreateALot, (void *) name1);
     threads[1] = newThread1;
 
     Thread* newThread2 = new Thread(name2, true);
-    newThread2->Fork(FileCreateSync, (void *) name2);
+    newThread2->Fork(FileCreateALot, (void *) name2);
     threads[2] = newThread2;
 
     for(int i = 0; i < 3; ++i) threads[i]->Join();
 
-    newThread = new Thread(name, true);
-    newThread->Fork(FileWriteSync, (void *) name);
-    threads[0] = newThread;
-
-    newThread1 = new Thread(name1, true);
-    newThread1->Fork(FileWriteSync, (void *) name1);
-    threads[1] = newThread1;
-
-    newThread2 = new Thread(name2, true);
-    newThread2->Fork(FileWriteSync, (void *) name2);
-    threads[2] = newThread2;
-
-    for(int i = 0; i < 3; ++i) threads[i]->Join();
+//    newThread = new Thread(name, true);
+//    newThread->Fork(FileWriteSync, (void *) name);
+//    threads[0] = newThread;
+//
+//    newThread1 = new Thread(name1, true);
+//    newThread1->Fork(FileWriteSync, (void *) name1);
+//    threads[1] = newThread1;
+//
+//    newThread2 = new Thread(name2, true);
+//    newThread2->Fork(FileWriteSync, (void *) name2);
+//    threads[2] = newThread2;
+//
+//    for(int i = 0; i < 3; ++i) threads[i]->Join();
 
     delete [] threads;
 
     delete [] name;
     delete [] name1;
     delete [] name2;
+
+    FileCreateALot(nullptr);
 }
 
 void BigChunkTest() {
