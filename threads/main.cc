@@ -101,7 +101,6 @@ void CopyExactFileHeaderSize(const char *unixFile, const char *nachosFile);
 void Print(const char *file);
 void PerformanceTest(void);
 void PerformanceTestSync(void);
-void SizeTest(void);
 void FileTestCreate(void);
 void FileCreateALot(void*);
 void BigChunkTest(void);
@@ -229,8 +228,6 @@ srand(time(NULL));
             PerformanceTest();
         } else if (!strcmp(*argv, "-tfs")) {  // Performance test sync
             PerformanceTestSync();
-        } else if (!strcmp(*argv, "-tfsize")) {  // Biiig files test.
-            SizeTest();
         } else if (!strcmp(*argv, "-tfc")) {  // Concurrent create a lot of files test.
             FileTestCreate();
         } else if (!strcmp(*argv, "-tfbigchunk")) {  // Performance test. NO ANDAAA
