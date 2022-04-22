@@ -103,7 +103,6 @@ void PerformanceTest(void);
 void PerformanceTestSync(void);
 void FileTestCreate(void);
 void FileCreateALot(void*);
-void BigChunkTest(void);
 void StartProcess(const char *file);
 void ConsoleTest(const char *in, const char *out);
 void MailTest(int networkID);
@@ -230,8 +229,6 @@ srand(time(NULL));
             PerformanceTestSync();
         } else if (!strcmp(*argv, "-tfc")) {  // Concurrent create a lot of files test.
             FileTestCreate();
-        } else if (!strcmp(*argv, "-tfbigchunk")) {  // Performance test. NO ANDAAA
-            BigChunkTest();
         }
 #endif
 #ifdef NETWORK

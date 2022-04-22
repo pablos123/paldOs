@@ -82,7 +82,7 @@ BigCopy(const char *from, const char *to)
     ASSERT(from != nullptr);
     ASSERT(to != nullptr);
 
-    unsigned transferSize = 300000;
+    unsigned transferSize = 500000;
     // Open UNIX file.
     FILE *fp = fopen(from, "r");
     if (fp == nullptr) {
@@ -111,10 +111,12 @@ BigCopy(const char *from, const char *to)
     // Copy the data in `TRANSFER_SIZE` chunks.
     char *buffer = new char [transferSize];
     int amountRead;
-    int count = 0;
-    while ((amountRead = fread(buffer, sizeof(char),
-                               transferSize, fp)) > 0 && ++count < 200000)
-        openFile->Write(buffer, amountRead);
+    while ((amountRead = fread(buffer, sizeof(char), transferSize, fp)) > 0) {
+        printf("Amount to write: %d\n", amountRead);
+        int result = openFile->Write(buffer, amountRead);
+        printf("Amount writed: %d\n", result);
+        if(result == 0) break;
+    }
     delete [] buffer;
 
     // Close the UNIX and the Nachos files.

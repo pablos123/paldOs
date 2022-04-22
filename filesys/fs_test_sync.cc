@@ -288,20 +288,6 @@ void FileTestCreate() {
 
     for(int i = 0; i < 3; ++i) threads[i]->Join();
 
-//    newThread = new Thread(name, true);
-//    newThread->Fork(FileWriteSync, (void *) name);
-//    threads[0] = newThread;
-//
-//    newThread1 = new Thread(name1, true);
-//    newThread1->Fork(FileWriteSync, (void *) name1);
-//    threads[1] = newThread1;
-//
-//    newThread2 = new Thread(name2, true);
-//    newThread2->Fork(FileWriteSync, (void *) name2);
-//    threads[2] = newThread2;
-//
-//    for(int i = 0; i < 3; ++i) threads[i]->Join();
-
     delete [] threads;
 
     delete [] name;
@@ -309,24 +295,4 @@ void FileTestCreate() {
     delete [] name2;
 
     FileCreateALot(nullptr);
-}
-
-void BigChunkTest() {
-    if (!fileSystem->Create(FILE_NAME)) {
-        fprintf(stderr, "Perf test: cannot create %s\n", FILE_NAME);
-        return;
-    }
-
-    OpenFile *openFile = fileSystem->Open(FILE_NAME);
-    if (openFile == nullptr) {
-        fprintf(stderr, "Perf test: unable to open %s\n", FILE_NAME);
-        return;
-    }
-
-    unsigned contentSize = 200000;
-    unsigned numBytes = (unsigned)openFile->Write(CONTENTS, contentSize);
-    if (numBytes < CONTENT_SIZE)
-        fprintf(stdout, "Writed: %u\n", numBytes);
-
-    delete openFile;
 }

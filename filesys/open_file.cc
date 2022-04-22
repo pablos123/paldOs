@@ -157,7 +157,6 @@ int
 OpenFile::Write(const char *from, unsigned numBytes, bool isDirectory)
 {
     DEBUG('w',"Attempting to write: %u bytes\n", numBytes);
-    DEBUG('w',"The sizeof from is: %u\n", sizeof(from));
 
     ASSERT(from != nullptr);
     ASSERT(numBytes > 0);
@@ -194,7 +193,6 @@ OpenFile::Write(const char *from, unsigned numBytes, bool isDirectory)
         DEBUG('w', "writing in the same file header\n");
 
         if(seekPosition + bytesToWrite > hdr->GetRaw()->numBytes) {
-            DEBUG('9', "requiring memory\n");
             unsigned bytesToAllocate = (seekPosition + bytesToWrite) - hdr->GetRaw()->numBytes;
             DEBUG('w',"before allocate hdr memory: %p\n", hdr->GetRaw());
             DEBUG('w',"before allocate: numBytes: %u, numSectors: %u\n", hdr->GetRaw()->numBytes,hdr->GetRaw()->numSectors);
@@ -365,7 +363,15 @@ OpenFile::Write(const char *from, unsigned numBytes, bool isDirectory)
             newFileHeader->GetRaw()->nextFileHeader = 0;
             newFileHeader->GetRaw()->numBytes = 0;
             newFileHeader->GetRaw()->numSectors = 0;
-            success = newFileHeader->Allocate(freeMap, bytesToAllocate);
+            if(freeMap->CountClear() < DivRoundUp(bytesToAllocate, SECTOR_SIZE)) {
+                bytesToAllocate = freeMap->CountClear() * SECTOR_SIZE;
+            }
+
+            if(bytesToAllocate > 0)
+                success = newFileHeader->Allocate(freeMap, bytesToAllocate);
+            else
+                success = false;
+
             if(success) {
                 DEBUG('w', "Writing file headers and bitmap back to disk...");
                 freeMap->WriteBack(fileSystem->GetFreeMap());
