@@ -351,8 +351,6 @@ OpenFile::Write(const char *from, unsigned numBytes, bool isDirectory)
 
         FileHeader* previousFileHeader = firstHeader;
 
-        DEBUG('w', "the final character in the array is: %u\n", (from[result] == '\0'));
-
         unsigned allocatedFileHeaders = 1;
         while(allocatedFileHeaders < fileHeaderSectors && success) {
 

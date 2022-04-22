@@ -211,8 +211,8 @@ Directory::Add(const char *name, int newSector)
 
     DEBUG('w', "Table after memcopy and assignation of new entry\n");
 
-    if(raw.tableSize > 100)
-       PrintTableDir(raw);
+    //if(raw.tableSize > 100)
+    //   PrintTableDir(raw);
 
     fileSystem->SetDirectorySize(newTableSize);
 
