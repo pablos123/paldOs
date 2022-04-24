@@ -117,10 +117,10 @@ public:
 
     /// Create a file (UNIX `creat`).
     // Dummy param to maintain the same interface with the other 'more simple' create provided
-    bool Create(const char *name, unsigned dummyParam = 0);
+    bool Create(const char *name, unsigned dummyParam = 0, bool isBin = false);
 
     /// Open a file (UNIX `open`).
-    OpenFile *Open(const char *name);
+    OpenFile *Open(const char *name, bool isBin = false);
 
     /// Delete a file (UNIX `unlink`).
     bool Remove(const char *name);

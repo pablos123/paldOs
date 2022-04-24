@@ -185,11 +185,20 @@ PrintTable(RawDirectory raw) {
 /// * `initialSize` is the size of file to be created. <-- Deprecated
 /// The created file always has initial size equal to 0
 bool
-FileSystem::Create(const char *name, unsigned dummyParam) // Dummy param to maintain the same interface with the other 'more simple' create provided
+FileSystem::Create(const char *name, unsigned dummyParam, bool isBin) // Dummy param to maintain the same interface with the other 'more simple' create provided
 {
     ASSERT(name != nullptr);
 
     DEBUG('f', "Creating file %s, size 0\n", name);
+
+    if(isBin){
+        int fileDescriptor = SystemDep::OpenForWrite(name);
+            if (fileDescriptor == -1) {
+                return false;
+            }
+            SystemDep::Close(fileDescriptor);
+            return true;
+    }
 
     bool success = true;
     filesysCreateLock->Acquire();
@@ -266,9 +275,17 @@ FileSystem::GetFreeMap() {
 ///
 /// * `name` is the text name of the file to be opened.
 OpenFile *
-FileSystem::Open(const char *name)
+FileSystem::Open(const char *name, bool isBin)
 {
     ASSERT(name != nullptr);
+
+    if(isBin) {
+        int fileDescriptor = SystemDep::OpenForReadWrite(name, false);
+        if (fileDescriptor == -1) {
+            return nullptr;
+        }
+        return new OpenFile(fileDescriptor, isBin);
+    }
 
     Directory *dir = new Directory(directorySize);
     OpenFile  *openFile = nullptr;

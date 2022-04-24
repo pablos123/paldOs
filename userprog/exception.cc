@@ -184,7 +184,12 @@ SyscallHandler(ExceptionType _et)
 
             DEBUG('e', "abriendo: %s\n", filename);
 
+            #ifdef FILESYS
+            OpenFile *executable = fileSystem->Open(filename, true);
+            #else
             OpenFile *executable = fileSystem->Open(filename);
+            #endif
+
             if (executable == nullptr) {
                 DEBUG('e', "Unable to open file %s\n", filename);
                 machine->WriteRegister(2, -1);

@@ -26,12 +26,21 @@ AddressSpace::AddressSpace(OpenFile *executable_file, SpaceId spaceId)
     #ifdef SWAP
         char* swapFile = new char[30];
         sprintf(swapFile, "userprog/swap/SWAP.%d", spaceId);
+        #ifdef FILESYS
+        if(!fileSystem->Create(swapFile, 0, true)) {
+        #else
         if(!fileSystem->Create(swapFile, 0)) {
+        #endif
             DEBUG('a', "Error: Swap file not created.\n");
         }
+
         // We can have the approach of open the file every time we write in swap, but for testing we are forcing the OS to have
         // very poor number of physical pages.
+        #ifdef FILESYS
+        openSwapFile = fileSystem->Open(swapFile, true);
+        #else
         openSwapFile = fileSystem->Open(swapFile);
+        #endif
 
         delete [] swapFile;
         if(openSwapFile == nullptr) {

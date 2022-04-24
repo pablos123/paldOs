@@ -26,7 +26,12 @@ StartProcess(const char *filename)
 {
     ASSERT(filename != nullptr);
 
+    #ifdef FILESYS
+    OpenFile *executable = fileSystem->Open(filename, true);
+    #else
     OpenFile *executable = fileSystem->Open(filename);
+    #endif
+
     if (executable == nullptr) {
         printf("Unable to open file %s\n", filename);
         return;
