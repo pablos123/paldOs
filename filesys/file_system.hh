@@ -134,23 +134,32 @@ public:
     /// List all the files and their contents.
     void Print();
 
+    /// Create a directory
+    bool CreateDir(const char* name);
+
+    /// Change the current directory
+    bool ChangeDir(const char* name);
+
+    /// Print the current directory
+    void PrintDir();
+
+    /// Get the free map
     OpenFile* GetFreeMap();
 
+    /// Get the current directory size
     unsigned GetDirectorySize();
 
+    /// Set the current directory size
     void SetDirectorySize(unsigned newSize);
 
 private:
-    OpenFile *freeMapFile;  ///< Bit map of free disk blocks, represented as a
-                            ///< file.
-    OpenFile *directoryFile;  ///< “Root” directory -- list of file names,
-                              ///< represented as a file.
+    OpenFile *freeMapFile;  ///< Bit map of free disk blocks, represented as a file.
 
-    unsigned directorySize;  ///< number of entries of the root directory
+    OpenFile *directoryFile;  ///< CurrentDirectory -- list of file names of the current directory, represented as a file.
 
+    unsigned directorySize;  ///< number of entries of the current directory
 };
 
 #endif
-
 
 #endif

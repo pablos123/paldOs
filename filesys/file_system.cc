@@ -203,6 +203,8 @@ FileSystem::Create(const char *name, unsigned dummyParam, bool isBin) // Dummy p
     bool success = true;
     filesysCreateLock->Acquire();
 
+    //abrimos el file del current directory
+    // dir->FetchFrom(currentdirectoryfile);
     Directory *dir = new Directory(directorySize);
     dir->FetchFrom(directoryFile);
 
@@ -235,10 +237,6 @@ FileSystem::Create(const char *name, unsigned dummyParam, bool isBin) // Dummy p
             freeMap->WriteBack(freeMapFile);
             dir->WriteBack(directoryFile);
 
-            Directory *dirTest = new Directory(directorySize);
-            dirTest->FetchFrom(directoryFile);
-            DEBUG('w',"The writed table is: \n");
-            PrintTable(*dirTest->GetRaw());
             // To make sure that removed is false because in the same execution of nachos
             // we can have this situation:
             // 1: nachos creates a file in sector x
@@ -261,6 +259,135 @@ FileSystem::Create(const char *name, unsigned dummyParam, bool isBin) // Dummy p
     return success;
 }
 
+
+bool
+FileSystem::CreateDir(const char *name)
+{
+    ASSERT(name != nullptr);
+
+    DEBUG('f', "Creating directory %s\n", name);
+
+    bool success = true;
+    filesysCreateLock->Acquire();
+
+    // Make a temporal copy of the current directory
+    Directory *dir = new Directory(directorySize);
+    dir->FetchFrom(directoryFile);
+
+    if (dir->Find(name) != -1) {
+        DEBUG('f',"File is already in directory\n");
+        success = false;  // File is already in directory.
+    } else {
+        // Creates a copy of the freeMapFile
+        Bitmap *freeMap = new Bitmap(NUM_SECTORS);
+        freeMap->FetchFrom(freeMapFile);
+
+        int sector = freeMap->Find();
+        if (sector == -1) {
+            DEBUG('f', "There is not enough disk space for the file's FH\n");
+            success = false;
+        }
+
+        if(!dir->Add(name, sector)) {
+            success = false;
+        } else if(success) {
+
+            FileHeader *dirHeader = new FileHeader;
+            dirHeader->GetRaw()->nextFileHeader = 0;
+            dirHeader->GetRaw()->numBytes = 0;
+            dirHeader->GetRaw()->numSectors = 0;
+
+            success = dirHeader->Allocate(freeMap, DIRECTORY_FILE_SIZE);
+
+            if(!success){
+                DEBUG('f', "There is not enough space for a new directory\n");
+                delete freeMap;
+                delete dirHeader;
+                delete dir;
+                return success;
+            }
+
+            DEBUG('w', "First FH initialized. FH first sector: %u, Num sectors: %u\n", sector, dirHeader->GetRaw()->numSectors);
+
+            dirHeader->WriteBack(sector);
+            freeMap->WriteBack(freeMapFile);
+
+            // Create the new directory
+            Directory  *newDir = new Directory(NUM_DIR_ENTRIES);
+            OpenFile* newDirectoryFile = new OpenFile(sector);
+            // Flush to the disk the table estructure
+            newDir->WriteBack(newDirectoryFile, true);
+
+            //update the current directory
+            dir->WriteBack(directoryFile);
+
+            // To make sure that removed is false because in the same execution of nachos
+            // we can have this situation:
+            // 1: nachos creates a file in sector x
+            // 2: we delete this file, so sector x have removed = true
+            // 3: nachos creates again a file in sector x
+            openFilesTable[sector]->removed = false;
+            openFilesTable[sector]->removing = false;
+            openFilesTable[sector]->removeLock = new Lock("Remove Lock");
+            openFilesTable[sector]->writeLock = nullptr;
+            openFilesTable[sector]->closeLock = nullptr;
+            openFilesTable[sector]->count = 0;
+
+            DEBUG('f',"File created successfully!\n");
+            delete dirHeader;
+        }
+        delete freeMap;
+    }
+    filesysCreateLock->Release();
+    delete dir;
+    return success;
+}
+
+bool
+FileSystem::ChangeDir(const char* name) {
+
+    ASSERT(name != nullptr);
+
+    DEBUG('f', "Changing current directory to: %s\n", name);
+
+    bool success = true;
+
+    DEBUG('9', "the directory size before changing is: %u\n", directorySize);
+    // Make a temporal copy of the current directory
+    Directory *dir = new Directory(directorySize);
+    dir->FetchFrom(directoryFile);
+
+    if (dir->Find(name) != -1) {
+        DEBUG('f',"Dir %s found!\n", name);
+
+        OpenFile* currentDirectoryFile = Open(name);
+        OpenFile* openFileToDelete = directoryFile;
+
+        directoryFile = currentDirectoryFile;
+
+        delete openFileToDelete;
+
+        unsigned result = dir->FetchFrom(directoryFile);
+        DEBUG('9', "the result of the read after changing is: %u\n", result);
+        directorySize = unsigned(result/ sizeof (DirectoryEntry));
+        DEBUG('9', "the directory size after changing is: %u\n", directorySize);
+        /// cambiar el directorySize
+    } else {
+        DEBUG('f',"The directory does not exists...\n");
+        success = false;  // File is already in directory.
+    }
+
+    return success;
+}
+
+void
+FileSystem::PrintDir() {
+    DEBUG('f', "Printing directory...\n");
+    Directory  *dir     = new Directory(directorySize); // we dont want to create a new Directory
+    dir->FetchFrom(directoryFile);
+
+    dir->Print();
+}
 
 OpenFile*
 FileSystem::GetFreeMap() {

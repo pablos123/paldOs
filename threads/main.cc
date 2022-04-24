@@ -98,6 +98,7 @@
 void Copy(const char *unixFile, const char *nachosFile);
 void BigCopy(const char *unixFile, const char *nachosFile);
 void CopyExactFileHeaderSize(const char *unixFile, const char *nachosFile);
+void DirectoryTest();
 void Print(const char *file);
 void PerformanceTest(void);
 void PerformanceTestSync(void);
@@ -229,6 +230,8 @@ srand(time(NULL));
             PerformanceTestSync();
         } else if (!strcmp(*argv, "-tfc")) {  // Concurrent create a lot of files test.
             FileTestCreate();
+        } else if (!strcmp(*argv, "-td")) {  // Test hierarchy directories.
+            DirectoryTest();
         }
 #endif
 #ifdef NETWORK

@@ -497,7 +497,6 @@ OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position)
     buf = new char [numSectors * SECTOR_SIZE];
     for (unsigned i = firstSector; i <= lastSector; i++) {
         unsigned sectorToRead = hdr->ByteToSector(i * SECTOR_SIZE);
-        DEBUG('9', "Sector to read in ReadAt: %u\n", sectorToRead);
         synchDisk->ReadSector(sectorToRead,
                               &buf[(i - firstSector) * SECTOR_SIZE]);
     }
