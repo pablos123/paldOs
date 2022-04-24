@@ -91,7 +91,7 @@ class OpenFile {
 public:
 
     /// Open a file whose header is located at `sector` on the disk.
-    OpenFile(int sector);
+    OpenFile(int sector, bool isBin = false);
 
     /// Close the file.
     ~OpenFile();
@@ -124,6 +124,11 @@ public:
     int currentSector;
     unsigned seekPosition;  ///< Current position within the file.
     int sector;
+
+    /// Binary manipulation
+    int file;
+    unsigned currentOffset;
+    bool isBin;
 };
 
 #endif

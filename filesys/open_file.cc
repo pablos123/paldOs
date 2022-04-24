@@ -22,35 +22,45 @@
 /// memory while the file is open.
 ///
 /// * `sector` is the location on disk of the file header for this file.
-OpenFile::OpenFile(int sectorParam)
+OpenFile::OpenFile(int sectorParam, bool isBinParam)
 {
-    hdr = new FileHeader;
-    hdr->FetchFrom(sectorParam);
-    seekPosition = 0;
-    sector = sectorParam;
-    currentSector = sectorParam;
-    if(openFilesTable[sector]->count == 0) {    // no one else has the file open
-        Lock* writeLock = new Lock("Write Lock");
-        openFilesTable[sector]->writeLock = writeLock;
+    isBin = isBinParam;
+    if(isBin){
+        file = sectorParam; // when called this int will be the fileDescriptor
+        currentOffset = 0;
+    } else {
+        hdr = new FileHeader;
+        hdr->FetchFrom(sectorParam);
+        seekPosition = 0;
+        sector = sectorParam;
+        currentSector = sectorParam;
+        if(openFilesTable[sector]->count == 0) {    // no one else has the file open
+            Lock* writeLock = new Lock("Write Lock");
+            openFilesTable[sector]->writeLock = writeLock;
 
-        if( openFilesTable[sector]->removeLock == nullptr ) { // We do not have a removelock yet
-            Lock* removeLock = new Lock("Remove Lock");
-            openFilesTable[sector]->removeLock = removeLock;
+            if( openFilesTable[sector]->removeLock == nullptr ) { // We do not have a removelock yet
+                Lock* removeLock = new Lock("Remove Lock");
+                openFilesTable[sector]->removeLock = removeLock;
+            }
+            if( openFilesTable[sector]->closeLock == nullptr ) { // We do not have a removelock yet
+                Lock* closeLock = new Lock("Close Lock");
+                openFilesTable[sector]->closeLock = closeLock;
+            }
         }
-        if( openFilesTable[sector]->closeLock == nullptr ) { // We do not have a removelock yet
-            Lock* closeLock = new Lock("Close Lock");
-            openFilesTable[sector]->closeLock = closeLock;
-        }
+        openFilesTable[sector]->count++; // add one user to the count of the threads that have the file open
     }
-    openFilesTable[sector]->count++; // add one user to the count of the threads that have the file open
 }
 
 /// Close a Nachos file, de-allocating any in-memory data structures.
 OpenFile::~OpenFile()
 {
+    if(isBin) {
+        SystemDep::Close(file);
+        return;
+    }
+
     DEBUG('f', "Removing open file\n");
     // Decrease the counter meaning one less open file for this sector
-    #ifdef FILESYS
     openFilesTable[sector]->closeLock->Acquire();
     if(openFilesTable[sector]->count > 0)
         openFilesTable[sector]->count--;
@@ -59,7 +69,6 @@ OpenFile::~OpenFile()
         return;
     }
     openFilesTable[sector]->closeLock->Release();
-
 
     // If this is the last open file of this sector free the lock
     DEBUG('f', "The count for the file is: %d\n", openFilesTable[sector]->count);
@@ -74,7 +83,6 @@ OpenFile::~OpenFile()
 
         delete openFilesTable[sector]->writeLock;
     }
-    #endif
     delete hdr;
 }
 
@@ -110,13 +118,19 @@ OpenFile::Seek(unsigned position)
 int
 OpenFile::Read(char *into, unsigned numBytes, bool isDirectory)
 {
+    ASSERT(into != nullptr);
+    ASSERT(numBytes > 0);
+
+    if(isBin){
+        int numRead = ReadAt(into, numBytes, currentOffset);
+        currentOffset += numRead;
+        return numRead;
+    }
+
     if(isDirectory) {
         hdr->FetchFrom(sector);
         seekPosition = 0;
     }
-
-    ASSERT(into != nullptr);
-    ASSERT(numBytes > 0);
 
     int result = 0;
 
@@ -160,6 +174,12 @@ OpenFile::Write(const char *from, unsigned numBytes, bool isDirectory)
 
     ASSERT(from != nullptr);
     ASSERT(numBytes > 0);
+
+    if(isBin) {
+        int numWritten = WriteAt(from, numBytes, currentOffset);
+        currentOffset += numWritten;
+        return numWritten;
+    }
 
     openFilesTable[sector]->writeLock->Acquire();
 
@@ -450,6 +470,11 @@ OpenFile::ReadAt(char *into, unsigned numBytes, unsigned position)
     ASSERT(into != nullptr);
     ASSERT(numBytes > 0);
 
+    if(isBin) {
+        SystemDep::Lseek(file, position, 0);
+        return SystemDep::ReadPartial(file, into, numBytes);
+    }
+
     unsigned fileLength = hdr->FileLength(); // raw.numBytes (size): 416
     unsigned firstSector, lastSector, numSectors;
     char *buf;
@@ -488,6 +513,12 @@ OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position)
 {
     ASSERT(from != nullptr);
     ASSERT(numBytes > 0);
+
+    if(isBin) {
+        SystemDep::Lseek(file, position, 0);
+        SystemDep::WriteFile(file, from, numBytes);
+        return numBytes;
+    }
 
     unsigned fileLength = hdr->FileLength();
     unsigned firstSector, lastSector, numSectors;
@@ -537,6 +568,10 @@ OpenFile::WriteAt(const char *from, unsigned numBytes, unsigned position)
 unsigned
 OpenFile::Length() const
 {
+    if(isBin) {
+        SystemDep::Lseek(file, 0, 2);
+        return SystemDep::Tell(file);
+    }
     return hdr->FileLength();
 }
 
