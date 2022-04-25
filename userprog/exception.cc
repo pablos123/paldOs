@@ -397,16 +397,16 @@ SyscallHandler(ExceptionType _et)
             } else {
                 OpenFile* file = currentThread->GetOpenedFilesTable()->Get(fid);
 
-                int bytesReaded = file->Read(buffer, nbytes);
+                int bytesRead = file->Read(buffer, nbytes);
 
-                DEBUG('e', "Readed: %s, nrobytes: %d de %d, fromfileid: %d, fileaddr: %p\n", buffer, bytesReaded, nbytes, fid, file);
+                DEBUG('e', "Read: %s, nrobytes: %d de %d, fromfileid: %d, fileaddr: %p\n", buffer, bytesRead, nbytes, fid, file);
 
-                if(bytesReaded <= 0) {
-                    DEBUG('e', "error in read: wrong bytes readed\n");
+                if(bytesRead <= 0) {
+                    DEBUG('e', "error in read: wrong bytes read\n");
                     machine->WriteRegister(2, 0);
                 } else {
                     WriteBufferToUser(buffer, usrStringAddr, nbytes);
-                    machine->WriteRegister(2, bytesReaded);
+                    machine->WriteRegister(2, bytesRead);
                 }
             }
             break;
@@ -471,11 +471,58 @@ SyscallHandler(ExceptionType _et)
             int usrStringAddr = machine->ReadRegister(4);
             DEBUG('e', "`Ls` requested.\n");
             char* lsResult = new char[40];
-            fileSystem->Ls(lsResult);
+            unsigned bytesRead = fileSystem->Ls(lsResult);
 
-            WriteBufferToUser(lsResult, usrStringAddr, 40);
+            if(bytesRead)
+                WriteBufferToUser(lsResult, usrStringAddr, 40);
 
             delete [] lsResult;
+            #endif
+
+            break;
+        }
+
+        case SC_CD: {
+
+            #ifdef FILESYS
+
+            int dirNameAddr = machine->ReadRegister(4);
+
+            if (dirNameAddr == 0) {
+                DEBUG('e', "Error in cd: address to dirname string is null.\n");
+                machine->WriteRegister(2, 1);
+                break;
+            }
+
+            char* dirname = new char[FILE_NAME_MAX_LEN + 1];
+
+            if (!ReadStringFromUser(dirNameAddr, dirname, FILE_NAME_MAX_LEN + 1)) {
+                DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
+                    FILE_NAME_MAX_LEN);
+                delete [] dirname;
+                machine->WriteRegister(2, 1);
+                break;
+            }
+
+            bool successChanging = fileSystem->ChangeDir(dirname);
+
+            if(! successChanging) {
+                DEBUG('e', "Error: directory not found.\n");
+                machine->WriteRegister(2, 1);
+                delete [] dirname;
+                break;
+            }
+            delete [] dirname;
+            #endif
+
+            machine->WriteRegister(2, 0);
+
+            break;
+        }
+
+        case SC_PWD: {
+
+            #ifdef FILESYS
             #endif
 
             break;

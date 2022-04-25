@@ -32,7 +32,7 @@
 #define SC_READ    14
 #define SC_WRITE   15
 #define SC_LSDIR   16
-#define SC_CDDIR   17
+#define SC_CD      17
 #define SC_PWD     18
 
 
@@ -127,6 +127,9 @@ int Close(OpenFileId id);
 
 /// Show the content of the current directory
 void Ls(char *buffer);
+
+// Change the current directory to the dirname directory
+int Cd(char *dirname);
 
 #endif
 

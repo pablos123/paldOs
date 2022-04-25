@@ -388,11 +388,12 @@ FileSystem::PrintDir() {
     dir->Print();
 }
 
-void
+unsigned
 FileSystem::Ls(char* into) {
     Directory  *dir     = new Directory(directorySize);
     dir->FetchFrom(directoryFile);
-    dir->PrintNames(into);
+    unsigned bytesRead = dir->PrintNames(into);
+    return bytesRead;
 }
 
 OpenFile*

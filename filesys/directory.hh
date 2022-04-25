@@ -60,7 +60,8 @@ public:
     void Print() const;
 
     /// Write in the buffer the names of the dir entries of the current directory
-    void PrintNames(char* into = nullptr) const;
+    /// Returns the bytes writed
+    unsigned PrintNames(char* into = nullptr) const;
 
     bool FindDir(const char* name);
 

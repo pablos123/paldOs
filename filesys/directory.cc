@@ -302,29 +302,34 @@ Directory::Print() const
     delete hdr;
 }
 
-void
+unsigned
 Directory::PrintNames(char* into) const
 {
     FileHeader *hdr = new FileHeader;
 
     char* temp = into;
-    printf("Directory contents:\n");
+    unsigned result = 0;
     for (unsigned i = 0; i < raw.tableSize; i++) {
         if (raw.table[i].inUse) {
             if(raw.table[i].isDirectory ) {
                 sprintf(temp, "%s/\n", raw.table[i].name);
 
-                temp+= strlen(raw.table[i].name) + 2; // into = "home/\naldu/\npab/\n"
+                unsigned bytesToAdd = strlen(raw.table[i].name) + 2;
+                temp+= bytesToAdd; // into = "home/\naldu/\npab/\n"
+                result += bytesToAdd;
             }
             else {
                 sprintf(temp, "%s\n", raw.table[i].name);
 
-                temp+= strlen(raw.table[i].name) + 1;
+                unsigned bytesToAdd = strlen(raw.table[i].name) + 1;
+                temp+= bytesToAdd;
+                result += bytesToAdd;
             }
         }
     }
 
     delete hdr;
+    return result;
 }
 
 const RawDirectory *

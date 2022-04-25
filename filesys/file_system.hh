@@ -144,7 +144,8 @@ public:
     void PrintDir();
 
     /// Write in the buffer the names of the dir entries of the current directory
-    void Ls(char* into);
+    /// Returns the bytes writed
+    unsigned Ls(char* into);
 
     /// Get the free map
     OpenFile* GetFreeMap();

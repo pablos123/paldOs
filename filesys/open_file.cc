@@ -140,7 +140,7 @@ OpenFile::Read(char *into, unsigned numBytes, bool isDirectory)
         seekPosition += result;
         numBytes -= result;
         char* temp = into + result;
-        DEBUG('w', "bytes readed: %u\n", result);
+        DEBUG('w', "bytes read: %u\n", result);
         unsigned nextSector = hdr->GetRaw()->nextFileHeader;
         DEBUG('w', "READING the next file header sector is: %u\n", nextSector);
         while(nextSector && numBytes > 0) {
@@ -150,7 +150,7 @@ OpenFile::Read(char *into, unsigned numBytes, bool isDirectory)
             temp+= result_tmp;
             numBytes -= result_tmp;
             result += result_tmp;
-            DEBUG('w', "bytes readed: %u\n", result);
+            DEBUG('w', "bytes read: %u\n", result);
             seekPosition += result_tmp;
 
             nextSector = hdr->GetRaw()->nextFileHeader;
@@ -159,7 +159,7 @@ OpenFile::Read(char *into, unsigned numBytes, bool isDirectory)
     } else {
         DEBUG('w', "going to read with read at!\n");
         result = ReadAt(into, numBytes, seekPosition);
-        DEBUG('w', "bytes readed: %u\n", result);
+        DEBUG('w', "bytes read: %u\n", result);
 
         seekPosition += result;
     }

@@ -86,7 +86,7 @@ FileReadSync(void* threadName)
             printf("Perf test: unable to read %s\n", FILE_NAME);
             break;
         }
-        printf("Readed: %s\n", buffer);
+        printf("Read: %s\n", buffer);
     }
 
     delete [] buffer;

@@ -6,10 +6,10 @@
 int
 main(int argc, char *argv[])
 {
-    //if (argc > 2)) {
-    //    Write(ARGC_ERROR, sizeof(ARGC_ERROR) - 1, CONSOLE_OUTPUT);
-    //    Exit(1);
-    //}
+    if (argc > 1) {
+        Write(ARGC_ERROR, sizeof(ARGC_ERROR) - 1, CONSOLE_OUTPUT);
+        Exit(1);
+    }
 
     //Ls(argv[0])
     char result[40];

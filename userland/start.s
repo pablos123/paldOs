@@ -140,6 +140,22 @@ Ls:
 
         .globl  Ls
         .ent    Ls
+Cd:
+        addiu   $2, $0, SC_CD
+        syscall
+        j       $31
+        .end    Cd
+
+        .globl  Cd
+        .ent    Cd
+Pwd:
+        addiu   $2, $0, SC_PWD
+        syscall
+        j       $31
+        .end    Pwd
+
+        .globl  Pwd
+        .ent    Pwd
 
 /// Dummy function to keep gcc happy.
         .globl  __main
