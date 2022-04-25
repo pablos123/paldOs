@@ -288,7 +288,7 @@ FileSystem::CreateDir(const char *name)
             success = false;
         }
 
-        if(!dir->Add(name, sector)) {
+        if(!dir->Add(name, sector, true)) {
             success = false;
         } else if(success) {
 
@@ -357,7 +357,7 @@ FileSystem::ChangeDir(const char* name) {
     Directory *dir = new Directory(directorySize);
     dir->FetchFrom(directoryFile);
 
-    if (dir->Find(name) != -1) {
+    if (dir->FindDir(name)) {
         DEBUG('f',"Dir %s found!\n", name);
 
         OpenFile* currentDirectoryFile = Open(name);
@@ -381,12 +381,14 @@ FileSystem::ChangeDir(const char* name) {
 }
 
 void
-FileSystem::PrintDir() {
+FileSystem::PrintDir(bool l) {
     DEBUG('f', "Printing directory...\n");
     Directory  *dir     = new Directory(directorySize); // we dont want to create a new Directory
     dir->FetchFrom(directoryFile);
-
-    dir->Print();
+    if(l)   // ls -l
+        dir->Print();
+    else // ls
+        dir->PrintNames();
 }
 
 OpenFile*

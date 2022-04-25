@@ -32,7 +32,7 @@ class Directory {
 public:
 
     /// Initialize an empty directory with space for `size` files.
-    Directory(unsigned size, bool isNew = true);
+    Directory(unsigned size);
 
     /// De-allocate the directory.
     ~Directory();
@@ -47,7 +47,7 @@ public:
     int Find(const char *name);
 
     /// Add a file name into the directory.
-    bool Add(const char *name, int newSector);
+    bool Add(const char *name, int newSector, bool isDirectory = false);
 
     /// Remove a file from the directory.
     bool Remove(const char *name);
@@ -58,6 +58,11 @@ public:
     /// Verbose print of the contents of the directory -- all the file names
     /// and their contents.
     void Print() const;
+
+    /// Print only the file names of the dir entries in the directory
+    void PrintNames() const;
+
+    bool FindDir(const char* name);
 
     /// Get the raw directory structure.
     ///

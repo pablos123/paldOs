@@ -141,7 +141,7 @@ public:
     bool ChangeDir(const char* name);
 
     /// Print the current directory
-    void PrintDir();
+    void PrintDir(bool l = false);
 
     /// Get the free map
     OpenFile* GetFreeMap();

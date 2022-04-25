@@ -35,7 +35,7 @@
 /// otherwise, we need to call FetchFrom in order to initialize it from disk.
 ///
 /// * `size` is the number of entries in the directory.
-Directory::Directory(unsigned size, bool isNew)
+Directory::Directory(unsigned size)
 {
     ASSERT(size > 0);
     raw.table = new DirectoryEntry [size];
@@ -43,6 +43,7 @@ Directory::Directory(unsigned size, bool isNew)
     raw.tableSize = size;
     for (unsigned i = 0; i < raw.tableSize; i++) {
         raw.table[i].inUse = false;
+        raw.table[i].isDirectory = false;
     }
 }
 
@@ -134,6 +135,23 @@ Directory::Find(const char *name)
     return -1;
 }
 
+bool
+Directory::FindDir(const char *name)
+{
+    ASSERT(name != nullptr);
+    DEBUG('0', "Finding file in directory...\n");
+    DEBUG('0', "Current table size of the directory: %u\n", raw.tableSize);
+    for (unsigned i = 0; i < raw.tableSize; i++) {
+        DEBUG('0', "Entry in use: %d, entryFileName: %s\n", raw.table[i].inUse, raw.table[i].name);
+        if (raw.table[i].inUse && !strncmp(raw.table[i].name, name, FILE_NAME_MAX_LEN)
+            && raw.table[i].isDirectory) {
+
+            return true;
+        }
+    }
+    return false;
+}
+
 /// Debug function for the raw table
 void
 PrintTableDir(RawDirectory raw) {
@@ -151,7 +169,7 @@ PrintTableDir(RawDirectory raw) {
 /// * `name` is the name of the file being added.
 /// * `newSector` is the disk sector containing the added file's header.
 bool
-Directory::Add(const char *name, int newSector)
+Directory::Add(const char *name, int newSector, bool isDirectory)
 {
     ASSERT(name != nullptr);
 
@@ -159,15 +177,17 @@ Directory::Add(const char *name, int newSector)
         return false;
     }
 
-    DEBUG('w', "adding %s\n", name);
-    DEBUG('w', "table size %u\n", raw.tableSize);
-    DEBUG('w', "table memory: %p\n", &raw.table);
-    if(raw.tableSize > 100)
-        PrintTableDir(raw);
+    //if(raw.tableSize > 100)
+    //    PrintTableDir(raw);
+
     unsigned i = 0;
     for (; i < raw.tableSize; i++) {
         if (!raw.table[i].inUse) {
             raw.table[i].inUse = true;
+
+            if(isDirectory)
+                raw.table[i].isDirectory = true;
+
             strncpy(raw.table[i].name, name, FILE_NAME_MAX_LEN);
             raw.table[i].sector = newSector;
             DEBUG('w', "%s added in index: %u\n", raw.table[i].name, i);
@@ -206,6 +226,9 @@ Directory::Add(const char *name, int newSector)
 
     // Now we can mark the deseared entry to create
     raw.table[i].inUse = true;
+    if(isDirectory)
+        raw.table[i].isDirectory = true;
+
     strncpy(raw.table[i].name, name, FILE_NAME_MAX_LEN);
     raw.table[i].sector = newSector;
 
@@ -257,7 +280,7 @@ Directory::Print() const
 
     printf("Directory contents:\n");
     DEBUG('0', "printing with table size: %u\n", raw.tableSize);
-    for (unsigned i = 0; i < raw.tableSize; i++) {  // !!!!!!!!!
+    for (unsigned i = 0; i < raw.tableSize; i++) {
         if (raw.table[i].inUse) {
             printf("\nDirectory entry:\n"
                    "    name: %s\n"
@@ -273,6 +296,24 @@ Directory::Print() const
                 hdr->Print(nullptr);
                 nextSector = hdr->GetRaw()->nextFileHeader;
             }
+        }
+    }
+    printf("\n");
+    delete hdr;
+}
+
+void
+Directory::PrintNames() const
+{
+    FileHeader *hdr = new FileHeader;
+
+    printf("Directory contents:\n");
+    for (unsigned i = 0; i < raw.tableSize; i++) {  // !!!!!!!!!
+        if (raw.table[i].inUse) {
+            if(raw.table[i].isDirectory )
+                printf( "%s/   ", raw.table[i].name);
+            else
+                printf( "%s   ", raw.table[i].name);
         }
     }
     printf("\n");
