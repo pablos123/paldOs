@@ -16,8 +16,8 @@ main(int argc, char *argv[])
         Write(ARGC_ERROR, sizeof(ARGC_ERROR) - 1, CONSOLE_OUTPUT);
         Exit(1);
     }
-    
-    int to_copy_file =  Create(argv[1]);
+
+    int to_copy_file =  Create(argv[1], 0);
     OpenFileId copied_file;
     if(to_copy_file) {
         Write(CREATE_ERROR, sizeof(CREATE_ERROR) - 1, CONSOLE_OUTPUT);

@@ -29,7 +29,7 @@ main(int argc, char *argv[])
         Exit(1);
     }
 
-    if(argc == 2) { 
+    if(argc == 2) {
         if(second_file > 0) {
             print_file(second_file);
         } else{
@@ -50,7 +50,7 @@ static void print_file(OpenFileId fid) {
         c[0] = '\0';
         nb = Read(c, 1, fid);
         Write(c, 1, CONSOLE_OUTPUT);
-        
+
     }
 
     c[0] = '\n'; //convencion de cat

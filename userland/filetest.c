@@ -13,7 +13,7 @@
 int
 main(void) {
 
-    Create("test.txt");
+    Create("test.txt", 0);
 
     OpenFileId o = Open("test.txt");
 
@@ -22,4 +22,3 @@ main(void) {
     Close(o);
     // Not reached.
 }
-

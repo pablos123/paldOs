@@ -236,6 +236,8 @@ SyscallHandler(ExceptionType _et)
 
         case SC_CREATE: {
             int filenameAddr = machine->ReadRegister(4);
+            bool isDirectory = machine->ReadRegister(5);
+
             if (filenameAddr == 0) {
                 DEBUG('e', "Error in Create: address to filename string is null.\n");
                 machine->WriteRegister(2, 1);
@@ -251,11 +253,20 @@ SyscallHandler(ExceptionType _et)
                 break;
             }
 
-            if(!fileSystem->Create(filename, 0)){
+            #ifdef FILESYS
+            if(isDirectory && !fileSystem->CreateDir(filename)){
                 DEBUG('e', "Error: File not created.\n");
                 machine->WriteRegister(2, 1);
                 break;
             }
+            #endif
+
+            if(! isDirectory && !fileSystem->Create(filename, 0)){
+                DEBUG('e', "Error: File not created.\n");
+                machine->WriteRegister(2, 1);
+                break;
+            }
+
             machine->WriteRegister(2, 0);
 
             DEBUG('e', "File `%s` created.\n", filename);

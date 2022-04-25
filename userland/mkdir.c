@@ -1,9 +1,7 @@
-/// Creates files specified on the command line.
-
 #include "syscall.h"
 
 #define ARGC_ERROR    "Error: missing argument.\n"
-#define CREATE_ERROR  "Error: could not create file.\n"
+#define CREATE_ERROR  "Error: could not create directory.\n"
 
 int
 main(int argc, char *argv[])
@@ -15,7 +13,7 @@ main(int argc, char *argv[])
 
     int success = 1;
     for (unsigned i = 0; i < argc; i++) {
-        if (Create(argv[i], 0)) {
+        if (Create(argv[i], 1)) {
             Write(CREATE_ERROR, sizeof(CREATE_ERROR) - 1, CONSOLE_OUTPUT);
             success = 0;
         }

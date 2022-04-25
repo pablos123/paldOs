@@ -37,6 +37,10 @@ userland/touch
 userland/cat
 userland/cp
 userland/rm
+userland/mkdir
+userland/ls
+userland/lsl
+userland/cd
 userprog/swap/SWAP.*
 filesys/DISK
 DISK
