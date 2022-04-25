@@ -103,6 +103,7 @@ StartProcess(void * voidargv)
         DEBUG('e', "argvaddr is null!: %p\n", argv);
     }
 
+    DEBUG('e', "writing into register 4 the argc: %u\n", argc);
     machine->WriteRegister(4, argc);
 
     machine->Run();  // Jump to the user progam.
@@ -203,10 +204,10 @@ SyscallHandler(ExceptionType _et)
 
             newThread->space = space;
 
-#ifndef DEMAND_LOADING
+            #ifndef DEMAND_LOADING
             DEBUG('e', "Deleting executable...\n");
             delete executable;
-#endif
+            #endif
 
             newThread->Fork(StartProcess, (void *) argv);
 
@@ -464,6 +465,22 @@ SyscallHandler(ExceptionType _et)
             break;
         }
 
+        case SC_LSDIR: {
+
+            #ifdef FILESYS
+            int usrStringAddr = machine->ReadRegister(4);
+            DEBUG('e', "`Ls` requested.\n");
+            char* lsResult = new char[40];
+            fileSystem->Ls(lsResult);
+
+            WriteBufferToUser(lsResult, usrStringAddr, 40);
+
+            delete [] lsResult;
+            #endif
+
+            break;
+        }
+
         default:
             fprintf(stderr, "Unexpected system call: id %d.\n", scid);
             ASSERT(false);
@@ -475,11 +492,10 @@ SyscallHandler(ExceptionType _et)
 
 static void TLBPageFaultHandler(ExceptionType exc) {
 
-#ifndef USE_TLB //Si no uso tlb entonces este error no deberíamos catchearlo (por ahora...)
-
+    #ifndef USE_TLB
     DefaultHandler(exc);
+    #else
 
-#else
     int vpnAddress = machine->ReadRegister(BAD_VADDR_REG);
 
     DEBUG('a',"There was a page fault. Searching... vpnAdress: %d \n", vpnAddress);
@@ -489,7 +505,7 @@ static void TLBPageFaultHandler(ExceptionType exc) {
 
     TranslationEntry* pageTableEntry = currentThread->space->getPageTableEntry(vpn);
 
-#ifdef DEMAND_LOADING
+    #ifdef DEMAND_LOADING
 
     pageTableEntry->valid = true;
 
@@ -498,7 +514,7 @@ static void TLBPageFaultHandler(ExceptionType exc) {
         int possibleFrame = addressesBitMap->Find();
         unsigned frame = (unsigned)possibleFrame;
         DEBUG('a',"frame to use: %u, possibleFrame: %d\n",frame, possibleFrame);
-#ifdef SWAP
+    #ifdef SWAP
         if(possibleFrame == -1) { //there aren't frames availables
             DEBUG('a', "I want to evacuate a page\n");
             DEBUG('a',"The page dirtyness is: %d\n", pageTableEntry->dirty);
@@ -509,17 +525,17 @@ static void TLBPageFaultHandler(ExceptionType exc) {
             DEBUG('a',"frame to use: %u, possibleFrame: %d\n",frame, possibleFrame);
             ASSERT(possibleFrame != -1);
         }
-#endif
+    #endif
         pageTableEntry->physicalPage = frame;
 
-#ifdef PRPOLICY_LRU
+    #ifdef PRPOLICY_LRU
         references_done++;
         coreMap[frame]->last_use_counter = references_done;
-#endif
+    #endif
 
         currentThread->space->LoadPage(vpnAddress, pageTableEntry->physicalPage);
     }
-#endif
+    #endif
 
     unsigned tlbEntry = currentThread->numFaults % TLB_SIZE;
 
@@ -534,7 +550,7 @@ static void TLBPageFaultHandler(ExceptionType exc) {
     machine->GetMMU()->tlb[tlbEntry] = *pageTableEntry;
 
     currentThread->numFaults++;
-#endif
+    #endif
 
 }
 

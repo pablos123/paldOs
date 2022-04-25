@@ -59,8 +59,8 @@ public:
     /// and their contents.
     void Print() const;
 
-    /// Print only the file names of the dir entries in the directory
-    void PrintNames() const;
+    /// Write in the buffer the names of the dir entries of the current directory
+    void PrintNames(char* into = nullptr) const;
 
     bool FindDir(const char* name);
 

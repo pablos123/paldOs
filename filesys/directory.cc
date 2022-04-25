@@ -303,20 +303,27 @@ Directory::Print() const
 }
 
 void
-Directory::PrintNames() const
+Directory::PrintNames(char* into) const
 {
     FileHeader *hdr = new FileHeader;
 
+    char* temp = into;
     printf("Directory contents:\n");
-    for (unsigned i = 0; i < raw.tableSize; i++) {  // !!!!!!!!!
+    for (unsigned i = 0; i < raw.tableSize; i++) {
         if (raw.table[i].inUse) {
-            if(raw.table[i].isDirectory )
-                printf( "%s/   ", raw.table[i].name);
-            else
-                printf( "%s   ", raw.table[i].name);
+            if(raw.table[i].isDirectory ) {
+                sprintf(temp, "%s/\n", raw.table[i].name);
+
+                temp+= strlen(raw.table[i].name) + 2; // into = "home/\naldu/\npab/\n"
+            }
+            else {
+                sprintf(temp, "%s\n", raw.table[i].name);
+
+                temp+= strlen(raw.table[i].name) + 1;
+            }
         }
     }
-    printf("\n");
+
     delete hdr;
 }
 

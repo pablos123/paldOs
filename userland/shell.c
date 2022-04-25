@@ -58,8 +58,7 @@ PrepareArguments(char *line, char **argv, unsigned argvSize)
     // If the user input have before-command trailing space it
     // will be just a forking error
 
-    unsigned argCount;
-    argCount = 0;
+    unsigned argCount = 0;
 
     if(argvSize > MAX_ARG_COUNT || line == NULL || argv == NULL) {
         return 1;

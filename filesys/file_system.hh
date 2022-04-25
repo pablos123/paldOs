@@ -140,8 +140,11 @@ public:
     /// Change the current directory
     bool ChangeDir(const char* name);
 
-    /// Print the current directory
-    void PrintDir(bool l = false);
+    /// Print the current directory in verbose mode for debugging
+    void PrintDir();
+
+    /// Write in the buffer the names of the dir entries of the current directory
+    void Ls(char* into);
 
     /// Get the free map
     OpenFile* GetFreeMap();

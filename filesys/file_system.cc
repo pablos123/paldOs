@@ -381,14 +381,18 @@ FileSystem::ChangeDir(const char* name) {
 }
 
 void
-FileSystem::PrintDir(bool l) {
+FileSystem::PrintDir() {
     DEBUG('f', "Printing directory...\n");
-    Directory  *dir     = new Directory(directorySize); // we dont want to create a new Directory
+    Directory  *dir     = new Directory(directorySize);
     dir->FetchFrom(directoryFile);
-    if(l)   // ls -l
-        dir->Print();
-    else // ls
-        dir->PrintNames();
+    dir->Print();
+}
+
+void
+FileSystem::Ls(char* into) {
+    Directory  *dir     = new Directory(directorySize);
+    dir->FetchFrom(directoryFile);
+    dir->PrintNames(into);
 }
 
 OpenFile*

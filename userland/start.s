@@ -132,6 +132,14 @@ Close:
         syscall
         j       $31
         .end    Close
+Ls:
+        addiu   $2, $0, SC_LSDIR
+        syscall
+        j       $31
+        .end    Ls
+
+        .globl  Ls
+        .ent    Ls
 
 /// Dummy function to keep gcc happy.
         .globl  __main
