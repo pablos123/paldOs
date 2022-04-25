@@ -30,7 +30,6 @@ switch*.s
 /userland/sort
 /userland/tinyshell
 /userland/*.coff
-bin/readnoff
 userland/echo
 userland/tiny_shell
 userland/touch
@@ -38,10 +37,13 @@ userland/cat
 userland/cp
 userland/rm
 userland/mkdir
+userland/rmdir
 userland/ls
 userland/lsl
 userland/cd
 userland/write
+userland/pwd
 userprog/SWAP/SWAP.*
+bin/readnoff
 filesys/DISK
 DISK

@@ -123,7 +123,7 @@ public:
     OpenFile *Open(const char *name, bool isBin = false);
 
     /// Delete a file (UNIX `unlink`).
-    bool Remove(const char *name);
+    bool Remove(const char *name, bool callingFromRemoveDir = false);
 
     /// List all the files in the file system.
     void List();
@@ -158,6 +158,9 @@ public:
 
     /// Get the current directory name
     char* GetCurrentDirName();
+
+    /// Remove a directory
+    int RemoveDir(const char* name);
 
 private:
     OpenFile *freeMapFile;  ///< Bit map of free disk blocks, represented as a file.

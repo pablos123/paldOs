@@ -464,19 +464,27 @@ FileSystem::SetDirectorySize(unsigned newDirectorySize) {
 ///
 /// * `name` is the text name of the file to be removed.
 bool
-FileSystem::Remove(const char *name)
+FileSystem::Remove(const char *name, bool callingFromRemoveDir)
 {
     ASSERT(name != nullptr);
 
     Directory *dir = new Directory(directorySize);
     dir->FetchFrom(directoryFile);
-    int sector = dir->Find(name);   // first sector
+    int sector = dir->Find(name);
 
     if (sector == -1) {
        delete dir;
        DEBUG('f',"File to remove not found\n");
-       return false;  // file not found
+       return false;
     }
+
+    // We are calling this method from the RemoveDir! We want to delete the directory
+    if(dir->FindDir(name) && ! callingFromRemoveDir) {
+       delete dir;
+       DEBUG('f',"File to remove not found\n");
+       return false;
+    }
+
     // For supporting ad-hoc calls to this function
     if(openFilesTable[sector]->removeLock != nullptr)
         openFilesTable[sector]->removeLock->Acquire();
@@ -533,6 +541,46 @@ FileSystem::Remove(const char *name)
     openFilesTable[sector]->removing = false;
     DEBUG('f', "File removed successfully!\n");
     return true;
+}
+
+int
+FileSystem::RemoveDir(const char *name)
+{
+    ASSERT(name != nullptr);
+
+    DEBUG('f', "Removing directory %s...\n", name);
+
+    // Make a temporal copy of the current directory
+    Directory *dir = new Directory(directorySize);
+    dir->FetchFrom(directoryFile);
+
+    if (dir->FindDir(name)) {
+        DEBUG('f',"Dir %s found!\n", name);
+        OpenFile* directoryFileToRemove = Open(name);
+
+        Directory *dummyForTableSize = new Directory(2000);
+        unsigned tableSize = dummyForTableSize->FetchFrom(directoryFileToRemove, 1);
+        delete dummyForTableSize;
+
+        Directory *dirToRemove = new Directory(tableSize);
+        dirToRemove->FetchFrom(directoryFileToRemove);
+
+        for(unsigned i = 0; i < tableSize; ++i) {
+            if(dirToRemove->GetRaw()->table[i].inUse) {
+                delete dirToRemove;
+                return -1;
+            }
+        }
+        // There are no entries in use, we can then delete the directory
+        directoryFileToRemove->Close();
+        Remove(name, true);
+
+    } else {
+        DEBUG('f',"The directory does not exists...\n");
+        return -2;  // File is already in directory.
+    }
+
+    return 0;
 }
 
 /// List all the files in the file system directory.

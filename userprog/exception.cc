@@ -277,6 +277,8 @@ SyscallHandler(ExceptionType _et)
         case SC_REMOVE:{
             DEBUG('e',"About to remove a file...\n");
             int filenameAddr = machine->ReadRegister(4);
+            bool isDirectory = machine->ReadRegister(5);
+
             if (filenameAddr == 0) {
                 DEBUG('e', "Error in remove: address to filename string is null.\n");
                 machine->WriteRegister(2, 1);
@@ -291,7 +293,22 @@ SyscallHandler(ExceptionType _et)
                 machine->WriteRegister(2, 1);
                 break;
             }
-            if(!fileSystem->Remove(filename)){
+
+            #ifdef FILESYS
+            if(isDirectory) {
+                if(fileSystem->RemoveDir(filename) == -1){
+                    DEBUG('e', "Error: Directory not empty.\n");
+                    machine->WriteRegister(2, -1);
+                    break;
+                } else if(fileSystem->RemoveDir(filename) == -2) {
+                    DEBUG('e', "Error: Directory does not exist.\n");
+                    machine->WriteRegister(2, -2);
+                    break;
+                }
+            }
+            #endif
+
+            if(!isDirectory && !fileSystem->Remove(filename)){
                 DEBUG('e', "Error: File %s not removed.\n",filename);
                 machine->WriteRegister(2, 1);
                 break;
@@ -300,7 +317,6 @@ SyscallHandler(ExceptionType _et)
             machine->WriteRegister(2, 0);
             DEBUG('e', "File `%s` removed.\n", filename);
             break;
-
         }
 
 

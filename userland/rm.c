@@ -13,7 +13,7 @@ main(int argc, char *argv[])
 
     int success = 1;
     for (unsigned i = 0; i < argc; i++) {
-        if (Remove(argv[i])) {
+        if (Remove(argv[i], 0)) {
             success = 0;
         }
     }

@@ -105,7 +105,7 @@ typedef int OpenFileId;
 int Create(const char *name, int isDirectory);
 
 /// Remove the Nachos file named `name`.
-int Remove(const char *name);
+int Remove(const char *name, int isDirectory);
 
 /// Open the Nachos file `name`, and return an `OpenFileId` that can be used
 /// to read and write to the file.
