@@ -8,8 +8,8 @@ unsigned strlen(const char *s) {
 
 char strcmpp(const char *s1, const char *s2) {
     unsigned iter = 0;
-    for(;   s1[iter] != '\0' 
-         && s2[iter] != '\0' 
+    for(;   s1[iter] != '\0'
+         && s2[iter] != '\0'
          && s1[iter] == s2[iter]; ++iter);
 
     return s1[iter] == '\0' && s2[iter] == '\0' ? 1 : 0;

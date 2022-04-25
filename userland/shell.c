@@ -84,6 +84,66 @@ PrepareArguments(char *line, char **argv, unsigned argvSize)
     return 0;
 }
 
+
+SpaceId ExecuteAlias(char* line, char* argv[], int joinable) {
+
+    SpaceId result = 0;
+
+    /// Utils
+    if(strcmpp(line, "echo"))
+        result = Exec("userland/echo", argv, joinable);
+
+    else if(strcmpp(line, "exit"))
+        result = Exec("userland/halt", argv, joinable);
+
+    else if(strcmpp(line, "halt"))
+        result = Exec("userland/halt", argv, joinable);
+
+    else if(strcmpp(line, "sort"))
+        result = Exec("userland/sort", argv, joinable);
+
+    else if(strcmpp(line, "cat"))
+        result = Exec("userland/cat", argv, joinable);
+
+
+    // Filesystem realated
+    else if(strcmpp(line, "touch"))
+        result = Exec("userland/touch", argv, joinable);
+
+    else if(strcmpp(line, "create"))
+        result = Exec("userland/touch", argv, joinable);
+
+    else if(strcmpp(line, "rm"))
+        result = Exec("userland/rm", argv, joinable);
+
+    else if(strcmpp(line, "cp"))
+        result = Exec("userland/cp", argv, joinable);
+
+    else if(strcmpp(line, "ls"))
+        result = Exec("userland/ls", argv, joinable);
+
+    else if(strcmpp(line, "lsl"))
+        result = Exec("userland/lsl", argv, joinable);
+
+    else if(strcmpp(line, "cd"))
+        result = Exec("userland/cd", argv, joinable);
+
+    else if(strcmpp(line, "mkdir"))
+        result = Exec("userland/mkdir", argv, joinable);
+
+    else if(strcmpp(line, "rmdir"))
+        result = Exec("userland/rmdir", argv, joinable);
+
+
+    else
+        result = Exec(line, argv, joinable);
+
+    return result;
+}
+
+
+
+
 int
 main(void)
 {
@@ -107,21 +167,20 @@ main(void)
             continue;
         }
 
-        //convencion: &command args
+        //convention: &command args
         //Excecute a given program with the argvs
+
         if(line[0] == '&') { //Execute in the background
-            const SpaceId newProc = Exec(&line[1], argv, 0);
+
+            const SpaceId newProc = ExecuteAlias(&line[1], argv, 0);
 
             if(newProc < 0) {
                 WriteError("error forking child", OUTPUT);
                 continue;
             }
         } else { //Execute with join
-            const SpaceId newProc = Exec(line, argv, 1);
 
-            if(strcmpp(line, "exit")) {
-                Exec("userland/halt", argv, 1);
-            }
+            const SpaceId newProc = ExecuteAlias(line, argv, 1);
 
             if(newProc < 0) {
                 WriteError("error forking child", OUTPUT);

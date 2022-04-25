@@ -244,7 +244,7 @@ SyscallHandler(ExceptionType _et)
 
             char* filename = new char[FILE_NAME_MAX_LEN + 1];
             if (!ReadStringFromUser(filenameAddr,
-                                    filename, sizeof filename)) {
+                                    filename, FILE_NAME_MAX_LEN + 1)) {
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
                       FILE_NAME_MAX_LEN);
                 machine->WriteRegister(2, 1);
