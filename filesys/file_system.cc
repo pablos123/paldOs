@@ -396,6 +396,9 @@ FileSystem::Ls(char* into) {
     return bytesRead;
 }
 
+//char*
+//FileSystem::GetCurrentDirName() {}
+
 OpenFile*
 FileSystem::GetFreeMap() {
     return freeMapFile;

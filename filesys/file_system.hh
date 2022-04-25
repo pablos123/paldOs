@@ -156,6 +156,9 @@ public:
     /// Set the current directory size
     void SetDirectorySize(unsigned newSize);
 
+    /// Get the current directory name
+    char* GetCurrentDirName();
+
 private:
     OpenFile *freeMapFile;  ///< Bit map of free disk blocks, represented as a file.
 

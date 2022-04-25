@@ -170,7 +170,7 @@ AddressSpace::LoadPage(unsigned vpnAddress, unsigned physicalPage) {
     int vpn = vpnAddress / PAGE_SIZE;
     unsigned vpnAddressToRead = vpn * PAGE_SIZE;
 
-    unsigned readed = 0; // I need to ensure that i have readed PAGE_SIZE bytes
+    unsigned read = 0; // I need to ensure that i have read PAGE_SIZE bytes
 
     if(pageTable[vpn].dirty) {
         DEBUG('a',"Reading from swap at position %d...\n", vpn * PAGE_SIZE);
@@ -183,33 +183,33 @@ AddressSpace::LoadPage(unsigned vpnAddress, unsigned physicalPage) {
             DEBUG('a',"Amount to be read: %d \n", toRead);
             exe.ReadCodeBlock(&mainMemory[physicalAddressToWrite], PAGE_SIZE, vpnAddressToRead);
 
-            readed += toRead; //to check if there is some data left to read
+            read += toRead; //to check if there is some data left to read
         }
 
-        if (initDataSize > 0 && vpnAddressToRead + readed < dataVirtualAddr + initDataSize &&
-            readed != PAGE_SIZE) {
+        if (initDataSize > 0 && vpnAddressToRead + read < dataVirtualAddr + initDataSize &&
+            read != PAGE_SIZE) {
 
-            // uint32_t toRead = PAGE_SIZE - readed; // We're not sure if we need to the check cases like: |code segment... |data segment: 128 ... 128 12|. Suppose we didnt read any code bytes, so
+            // uint32_t toRead = PAGE_SIZE - read; // We're not sure if we need to the check cases like: |code segment... |data segment: 128 ... 128 12|. Suppose we didnt read any code bytes, so
             //                                         // here we're reading 128 bytes intead of just 12, maybe we're reaing garbage in some point. So we think of:
 
-            uint32_t toRead = (dataVirtualAddr + initDataSize) - (vpnAddressToRead + readed) < (PAGE_SIZE - readed) ?
-                                    (dataVirtualAddr + initDataSize) - (vpnAddressToRead + readed)
+            uint32_t toRead = (dataVirtualAddr + initDataSize) - (vpnAddressToRead + read) < (PAGE_SIZE - read) ?
+                                    (dataVirtualAddr + initDataSize) - (vpnAddressToRead + read)
                                 :
-                                    PAGE_SIZE - readed;
+                                    PAGE_SIZE - read;
 
             DEBUG('a', "Reading %d of data...\n", toRead);
 
-            readed ? //if read any bytes in the code section and i have not completed the PAGE_SIZE
-                exe.ReadDataBlock(&mainMemory[physicalAddressToWrite + readed], toRead,  0)
+            read ? //if read any bytes in the code section and i have not completed the PAGE_SIZE
+                exe.ReadDataBlock(&mainMemory[physicalAddressToWrite + read], toRead,  0)
             :
                 exe.ReadDataBlock(&mainMemory[physicalAddressToWrite], toRead, vpnAddressToRead - codeSize);
 
-            readed += toRead;
+            read += toRead;
         }
     }
 
     if(vpnAddressToRead > codeSize + initDataSize) { // We are reading from the stack
-        readed = PAGE_SIZE; // memset already done previously
+        read = PAGE_SIZE; // memset already done previously
     };
 
 #ifdef SWAP

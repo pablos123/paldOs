@@ -467,9 +467,9 @@ SyscallHandler(ExceptionType _et)
 
         case SC_LSDIR: {
 
+            DEBUG('e', "`Ls` requested.\n");
             #ifdef FILESYS
             int usrStringAddr = machine->ReadRegister(4);
-            DEBUG('e', "`Ls` requested.\n");
             char* lsResult = new char[40];
             unsigned bytesRead = fileSystem->Ls(lsResult);
 
@@ -484,8 +484,8 @@ SyscallHandler(ExceptionType _et)
 
         case SC_CD: {
 
+            DEBUG('e', "`Cd` requested.\n");
             #ifdef FILESYS
-
             int dirNameAddr = machine->ReadRegister(4);
 
             if (dirNameAddr == 0) {
@@ -522,6 +522,7 @@ SyscallHandler(ExceptionType _et)
 
         case SC_PWD: {
 
+            DEBUG('e', "`Pwd` requested.\n");
             #ifdef FILESYS
             #endif
 
