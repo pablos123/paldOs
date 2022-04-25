@@ -25,7 +25,7 @@ AddressSpace::AddressSpace(OpenFile *executable_file, SpaceId spaceId)
     exeFile = executable_file;
     #ifdef SWAP
         char* swapFile = new char[30];
-        sprintf(swapFile, "userprog/swap/SWAP.%d", spaceId);
+        sprintf(swapFile, "userprog/SWAP/SWAP.%d", spaceId);
         #ifdef FILESYS
         if(!fileSystem->Create(swapFile, 0, true)) {
         #else

@@ -42,6 +42,6 @@ userland/ls
 userland/lsl
 userland/cd
 userland/write
-userprog/swap/SWAP.*
+userprog/SWAP/SWAP.*
 filesys/DISK
 DISK
