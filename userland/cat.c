@@ -6,7 +6,7 @@
 #define OPEN_ERROR1   "Error: could not open the first file.\n"
 #define OPEN_ERROR2   "Error: could not open the second file.\n"
 
-static void print_file(OpenFileId fid);
+static void PrintFile(OpenFileId fid);
 
 int
 main(int argc, char *argv[])
@@ -16,22 +16,19 @@ main(int argc, char *argv[])
         Exit(1);
     }
 
-    OpenFileId second_file = -1;
-    if(argc == 2) {
-        second_file = Open(argv[1]);
-    }
     const OpenFileId first_file = Open(argv[0]);
 
     if(first_file > 0) {
-        print_file(first_file);
+        PrintFile(first_file);
     } else{
         Write(OPEN_ERROR1, sizeof(OPEN_ERROR1) - 1, CONSOLE_OUTPUT);
         Exit(1);
     }
 
     if(argc == 2) {
+        OpenFileId second_file = Open(argv[1]);
         if(second_file > 0) {
-            print_file(second_file);
+            PrintFile(second_file);
         } else{
             Write(OPEN_ERROR2, sizeof(OPEN_ERROR2) - 1, CONSOLE_OUTPUT);
             Exit(1);
@@ -42,19 +39,15 @@ main(int argc, char *argv[])
 }
 
 
-static void print_file(OpenFileId fid) {
+static void PrintFile(OpenFileId fid) {
 
     int nb = 1;
     char c[1] = {'\0'};
-    while(nb != 0){ //lo hacemos para leer muchos bytes sin necesidad de memoria estatica grande
+    while(nb != 0){ // For reading without big static memory
         c[0] = '\0';
         nb = Read(c, 1, fid);
         Write(c, 1, CONSOLE_OUTPUT);
-
     }
-
-    c[0] = '\n'; //convencion de cat
-    Write(c, 1, CONSOLE_OUTPUT);
 
     Close(fid);
     return;

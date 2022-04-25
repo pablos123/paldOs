@@ -1,24 +1,12 @@
 /// Outputs arguments entered on the command line.
 
 #include "syscall.h"
-
-
-unsigned
-StringLength(const char *s)
-{
-    // What if `s` is null?
-
-    unsigned i;
-    for (i = 0; s[i] != '\0'; i++) {}
-    return i;
-}
+#include "lib.h"
 
 int
 PrintString(const char *s)
 {
-    // What if `s` is null?
-
-    unsigned len = StringLength(s);
+    unsigned len = strlen(s);
     return Write(s, len, CONSOLE_OUTPUT);
 }
 

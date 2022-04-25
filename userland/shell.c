@@ -105,6 +105,9 @@ SpaceId ExecuteAlias(char* line, char* argv[], int joinable) {
     else if(strcmpp(line, "cat"))
         result = Exec("userland/cat", argv, joinable);
 
+    else if(strcmpp(line, "cat>"))
+        result = Exec("userland/write", argv, joinable);
+
 
     // Filesystem realated
     else if(strcmpp(line, "touch"))

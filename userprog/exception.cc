@@ -255,7 +255,7 @@ SyscallHandler(ExceptionType _et)
 
             #ifdef FILESYS
             if(isDirectory && !fileSystem->CreateDir(filename)){
-                DEBUG('e', "Error: File not created.\n");
+                DEBUG('e', "Error: Directory not created.\n");
                 machine->WriteRegister(2, 1);
                 break;
             }
@@ -284,7 +284,7 @@ SyscallHandler(ExceptionType _et)
 
             char* filename = new char[FILE_NAME_MAX_LEN + 1];
             if (!ReadStringFromUser(filenameAddr,
-                                    filename, sizeof filename)) {
+                                    filename, FILE_NAME_MAX_LEN + 1)) {
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
                       FILE_NAME_MAX_LEN);
                 machine->WriteRegister(2, 1);
@@ -314,7 +314,7 @@ SyscallHandler(ExceptionType _et)
 
             char* filename = new char[FILE_NAME_MAX_LEN + 1];
 
-            if (!ReadStringFromUser(filenameAddr, filename, sizeof filename)) {
+            if (!ReadStringFromUser(filenameAddr, filename, FILE_NAME_MAX_LEN + 1)) {
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
                     FILE_NAME_MAX_LEN);
                 machine->WriteRegister(2, -1);
