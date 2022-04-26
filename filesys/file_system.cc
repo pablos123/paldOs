@@ -201,7 +201,42 @@ FileSystem::Create(const char *name, unsigned dummyParam, bool isBin) // Dummy p
     }
 
     bool success = true;
+    bool changeDir = false;
+
     filesysCreateLock->Acquire();
+    OpenFile* directoryFileBackup;
+    unsigned directorySizeBackup;
+    char* nameCopy;
+
+    if(name[0] == '/') {
+        // You cannot create the root directory!
+        if(name[1] == '\0')
+            return false;
+
+        nameCopy = new char[150];
+        sprintf(nameCopy, "%s", name);
+
+        int lastSlashFound = 0;
+        int i = 1;
+        for(; name[i] != '\0'; ++i)
+            if(name[i] == '/')
+                lastSlashFound = i;
+
+        nameCopy[lastSlashFound] = '\0';
+
+        directoryFileBackup = directoryFile;
+        directorySizeBackup = directorySize;
+
+        if(!( (strlen(nameCopy) == 0 && ChangeDir("/")) ||
+              (strlen(nameCopy) > 0 && ChangeDir(nameCopy)) ))
+        {
+            delete [] nameCopy;
+            return false;
+        }
+        name = &nameCopy[lastSlashFound + 1];
+        DEBUG('f', "The directory to create is: %s\n", name);
+        changeDir = true;
+    }
 
     Directory *dir = new Directory(directorySize);
     dir->FetchFrom(directoryFile);
@@ -252,6 +287,13 @@ FileSystem::Create(const char *name, unsigned dummyParam, bool isBin) // Dummy p
         }
         delete freeMap;
     }
+
+    if( changeDir ) {
+        directoryFile = directoryFileBackup;
+        directorySize = directorySizeBackup;
+        delete [] nameCopy;
+    }
+
     filesysCreateLock->Release();
     delete dir;
     return success;
@@ -266,7 +308,41 @@ FileSystem::CreateDir(const char *name)
     DEBUG('f', "Creating directory %s\n", name);
 
     bool success = true;
+    bool changeDir = false;
+
     filesysCreateLock->Acquire();
+    OpenFile* directoryFileBackup;
+    unsigned directorySizeBackup;
+    char* nameCopy;
+    if(name[0] == '/') {
+        // You cannot create the root directory!
+        if(name[1] == '\0')
+            return false;
+
+        nameCopy = new char[150];
+        sprintf(nameCopy, "%s", name);
+
+        int lastSlashFound = 0;
+        int i = 1;
+        for(; name[i] != '\0'; ++i)
+            if(name[i] == '/')
+                lastSlashFound = i;
+
+        nameCopy[lastSlashFound] = '\0';
+
+        directoryFileBackup = directoryFile;
+        directorySizeBackup = directorySize;
+
+        if(!( (strlen(nameCopy) == 0 && ChangeDir("/")) ||
+              (strlen(nameCopy) > 0 && ChangeDir(nameCopy)) ))
+        {
+            delete [] nameCopy;
+            return false;
+        }
+        name = &nameCopy[lastSlashFound + 1];
+        DEBUG('f', "The directory to create is: %s\n", name);
+        changeDir = true;
+    }
 
     // Make a temporal copy of the current directory
     Directory *dir = new Directory(directorySize);
@@ -336,8 +412,17 @@ FileSystem::CreateDir(const char *name)
         }
         delete freeMap;
     }
+
+    if(changeDir) {
+        directoryFile = directoryFileBackup;
+        directorySize = directorySizeBackup;
+        delete [] nameCopy;
+    }
+
     filesysCreateLock->Release();
     delete dir;
+
+
     return success;
 }
 

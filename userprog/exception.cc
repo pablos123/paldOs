@@ -486,11 +486,11 @@ SyscallHandler(ExceptionType _et)
             DEBUG('e', "`Ls` requested.\n");
             #ifdef FILESYS
             int usrStringAddr = machine->ReadRegister(4);
-            char* lsResult = new char[40];
+            char* lsResult = new char[200];
             unsigned bytesRead = fileSystem->Ls(lsResult);
 
             if(bytesRead)
-                WriteBufferToUser(lsResult, usrStringAddr, 40);
+                WriteBufferToUser(lsResult, usrStringAddr, 200);
 
             delete [] lsResult;
             #endif

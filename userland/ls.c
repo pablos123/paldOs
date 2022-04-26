@@ -11,8 +11,7 @@ main(int argc, char *argv[])
         Exit(1);
     }
 
-    //Ls(argv[0])
-    char result[40];
+    char result[200];
     Ls(result);
 
     Write(result, strlen(result), CONSOLE_OUTPUT);

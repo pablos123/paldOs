@@ -274,7 +274,7 @@ Initialize(int argc, char **argv)
 
 #ifdef FILESYS
     synchDisk = new SynchDisk("DISK");
-    openFilesTable = new OpenFileEntry[NUM_SECTORS]; // por ahora lo multiplicamos por 1 pq no hay jerarquias en los directorios
+    openFilesTable = new OpenFileEntry[NUM_SECTORS];
     for(unsigned i = 0; i < NUM_SECTORS; ++i) {
         openFilesTable[i] = new struct _openFileEntry;
         openFilesTable[i]->removeLock = nullptr;
@@ -308,7 +308,7 @@ Initialize(int argc, char **argv)
 void
 Cleanup()
 {
-    DEBUG('i', "Cleaning up...\n");
+    DEBUG('7', "Cleaning up...\n");
 
     // 2007, Jose Miguel Santos Espino
     delete preemptiveScheduler;
@@ -325,7 +325,9 @@ Cleanup()
 #endif
 
 #ifdef SWAP
-    for(unsigned i = 0; i < NUM_PHYS_PAGES; ++i) delete coreMap[i];
+    for(unsigned i = 0; i < NUM_PHYS_PAGES; ++i) {
+        delete coreMap[i];
+    }
     delete [] coreMap;
 #endif
 
@@ -334,7 +336,7 @@ Cleanup()
 #endif
 
 #ifdef FILESYS
-    for(unsigned i = 0; i < NUM_DIR_ENTRIES; ++i) {
+    for(unsigned i = 0; i < NUM_SECTORS; ++i) {
         if(openFilesTable[i]->removeLock != nullptr) {
             delete openFilesTable[i]->removeLock;
         }
@@ -351,7 +353,6 @@ Cleanup()
     delete timer;
     delete scheduler;
     delete interrupt;
-    delete stats;
 
     exit(0);
 }
