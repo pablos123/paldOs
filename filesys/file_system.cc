@@ -745,7 +745,7 @@ FileSystem::RemoveDir(const char *name)
 
     } else {
         DEBUG('f',"The directory does not exists...\n");
-        return -2;  // File is already in directory.
+        return -2;  // File is not in the directory
     }
 
     return 0;

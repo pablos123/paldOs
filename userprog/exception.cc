@@ -296,11 +296,12 @@ SyscallHandler(ExceptionType _et)
 
             #ifdef FILESYS
             if(isDirectory) {
-                if(fileSystem->RemoveDir(filename) == -1){
+                int result = fileSystem->RemoveDir(filename);
+                if( result == -1){
                     DEBUG('e', "Error: Directory not empty.\n");
                     machine->WriteRegister(2, -1);
                     break;
-                } else if(fileSystem->RemoveDir(filename) == -2) {
+                } else if( result == -2) {
                     DEBUG('e', "Error: Directory does not exist.\n");
                     machine->WriteRegister(2, -2);
                     break;

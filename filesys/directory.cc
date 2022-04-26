@@ -257,6 +257,7 @@ Directory::Remove(const char *name)
         return false;  // name not in directory
     }
     raw.table[i].inUse = false;
+    raw.table[i].isDirectory = false;
     return true;
 }
 
