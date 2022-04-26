@@ -191,7 +191,7 @@ FileSystem::Create(const char *name, unsigned dummyParam, bool isBin) // Dummy p
 
     DEBUG('f', "Creating file %s, size 0\n", name);
 
-    if(isBin){
+    if(isBin) {
         int fileDescriptor = SystemDep::OpenForWrite(name);
             if (fileDescriptor == -1) {
                 return false;
@@ -203,8 +203,6 @@ FileSystem::Create(const char *name, unsigned dummyParam, bool isBin) // Dummy p
     bool success = true;
     filesysCreateLock->Acquire();
 
-    //abrimos el file del current directory
-    // dir->FetchFrom(currentdirectoryfile);
     Directory *dir = new Directory(directorySize);
     dir->FetchFrom(directoryFile);
 
@@ -343,38 +341,123 @@ FileSystem::CreateDir(const char *name)
     return success;
 }
 
+
+
+// 1) Changedir va a ir hacia el directorio que quiero ir recursivamente
+
+// 2) Entonces mkdir como rmdir o touch llaman a changedir, crean el archivo y luego cambian de nuevo al actual
+
+
 bool
 FileSystem::ChangeDir(const char* name) {
 
     ASSERT(name != nullptr);
-
     DEBUG('f', "Changing current directory to: %s\n", name);
 
     bool success = true;
 
-    DEBUG('9', "the directory size before changing is: %u\n", directorySize);
-    // Make a temporal copy of the current directory
-    Directory *dir = new Directory(directorySize);
-    dir->FetchFrom(directoryFile);
+    if(name[0] == '/') {
+        char* nameCopy = new char[150];
+        sprintf(nameCopy, "%s", &name[1]);
 
-    if (dir->FindDir(name)) {
-        DEBUG('f',"Dir %s found!\n", name);
 
-        OpenFile* currentDirectoryFile = Open(name);
-        OpenFile* openFileToDelete = directoryFile;
+        char* threadSafe;  // to contextualize in strtok
+        char* token;
+        token = strtok_r(nameCopy, "/", &threadSafe); // si name = home/aldu/ => tokens = [home, aldu]
 
-        directoryFile = currentDirectoryFile;
+        char** splittedName = new char*[20];
 
-        delete openFileToDelete;
+        splittedName[0] = new char[10];
+        sprintf(splittedName[0], "%s", token);
 
-        unsigned result = dir->FetchFrom(directoryFile);
-        DEBUG('9', "the result of the read after changing is: %u\n", result);
-        directorySize = unsigned(result/ sizeof (DirectoryEntry));
-        DEBUG('9', "the directory size after changing is: %u\n", directorySize);
-        /// cambiar el directorySize
+        int count = 1;
+        while(token != NULL) {
+            token = strtok_r(NULL, "/", &threadSafe); // si name = home/aldu/ => tokens = [home, aldu]
+            splittedName[count] = new char[10];
+            sprintf(splittedName[count], "%s", token);
+            count++;
+        }
+
+        delete [] nameCopy;
+
+        OpenFile* backupDirFile = directoryFile;
+        unsigned backupDirSize = directorySize;
+
+        DEBUG('f', "The directory count is: %d\n", count);
+
+        // Load the root directory
+        OpenFile* rootDirFile = new OpenFile(DIRECTORY_SECTOR);
+
+        Directory *dummyForTableSize = new Directory(2000);
+        unsigned tableSize = dummyForTableSize->FetchFrom(rootDirFile, 1);
+
+        Directory* currDir = new Directory(tableSize);
+        currDir->FetchFrom(rootDirFile);
+
+        directoryFile = rootDirFile;
+        directorySize = tableSize;
+        for(int i = 0; i < count - 1; i++) {
+            DEBUG('f',"Directory to search: %s\n", splittedName[i]);
+            if(currDir->FindDir(splittedName[i])) {
+                DEBUG('f',"Directory %s found!\n", splittedName[i]);
+
+                // Open the next directory
+                OpenFile* tmpOpen = directoryFile;
+                // We need to set the current directory for searching to open files
+                directoryFile = Open(splittedName[i]);
+                delete tmpOpen;
+
+                // Get the table size of the next directory
+                tableSize = dummyForTableSize->FetchFrom(directoryFile, 1);
+                DEBUG('f', "Size of %s directory: %u\n", splittedName[i], tableSize);
+                directorySize = tableSize;
+
+                // Load the next directory
+                Directory* tmpDir = currDir;
+
+                currDir = new Directory(tableSize);
+                currDir->FetchFrom(directoryFile);
+
+                delete tmpDir;
+
+            } else {
+                DEBUG('f',"The directory %s does not exists...\n", splittedName[i]);
+                success = false;
+                break;
+            }
+        }
+        // Deallocate memory
+        for(int i = 0; i < count - 1; ++i) {
+            delete [] splittedName[i];
+        }
+        delete [] splittedName;
+        delete currDir;
+        delete dummyForTableSize;
+        if(!success) {
+            directoryFile = backupDirFile;
+            directorySize = backupDirSize;
+        }
     } else {
-        DEBUG('f',"The directory does not exists...\n");
-        success = false;  // File is already in directory.
+        // Make a temporal copy of the current directory
+        Directory *dir = new Directory(directorySize);
+        dir->FetchFrom(directoryFile);
+
+        if (dir->FindDir(name)) {
+            DEBUG('f',"Dir %s found!\n", name);
+
+            OpenFile* currentDirectoryFile = Open(name);
+            OpenFile* openFileToDelete = directoryFile;
+
+            directoryFile = currentDirectoryFile;
+
+            delete openFileToDelete;
+
+            unsigned result = dir->FetchFrom(directoryFile);
+            directorySize = unsigned(result / sizeof (DirectoryEntry));
+        } else {
+            DEBUG('f',"The directory does not exists...\n");
+            success = false;  // File is already in directory.
+        }
     }
 
     return success;
