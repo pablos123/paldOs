@@ -33,8 +33,6 @@
 #define SC_WRITE   15
 #define SC_LSDIR   16
 #define SC_CD      17
-#define SC_PWD     18
-
 
 #ifndef IN_ASM
 

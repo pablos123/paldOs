@@ -537,15 +537,6 @@ SyscallHandler(ExceptionType _et)
             break;
         }
 
-        case SC_PWD: {
-
-            DEBUG('e', "`Pwd` requested.\n");
-            #ifdef FILESYS
-            #endif
-
-            break;
-        }
-
         default:
             fprintf(stderr, "Unexpected system call: id %d.\n", scid);
             ASSERT(false);

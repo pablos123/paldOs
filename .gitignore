@@ -42,7 +42,7 @@ userland/ls
 userland/lsl
 userland/cd
 userland/write
-userland/pwd
+userland/help
 userprog/SWAP/SWAP.*
 bin/readnoff
 filesys/DISK
