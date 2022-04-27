@@ -138,7 +138,7 @@ public:
     bool CreateDir(const char* name);
 
     /// Change the current directory
-    bool ChangeDir(const char* name);
+    bool ChangeDir(const char* name, bool onlyChange = true);
 
     /// Print the current directory in verbose mode for debugging
     void PrintDir();

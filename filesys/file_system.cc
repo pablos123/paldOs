@@ -210,8 +210,10 @@ FileSystem::Create(const char *name, unsigned dummyParam, bool isBin) // Dummy p
 
     if(name[0] == '/') {
         // You cannot create the root directory!
-        if(name[1] == '\0')
+        if(name[1] == '\0') {
+            filesysCreateLock->Release();
             return false;
+        }
 
         nameCopy = new char[150];
         sprintf(nameCopy, "%s", name);
@@ -227,15 +229,15 @@ FileSystem::Create(const char *name, unsigned dummyParam, bool isBin) // Dummy p
         directoryFileBackup = directoryFile;
         directorySizeBackup = directorySize;
 
-        if(!( (strlen(nameCopy) == 0 && ChangeDir("/")) ||
-              (strlen(nameCopy) > 0 && ChangeDir(nameCopy)) ))
+        if(!( (strlen(nameCopy) == 0 && ChangeDir("/", false)) ||
+              (strlen(nameCopy) > 0 && ChangeDir(nameCopy, false)) ))
         {
             delete [] nameCopy;
             filesysCreateLock->Release();
             return false;
         }
         name = &nameCopy[lastSlashFound + 1];
-        DEBUG('f', "The directory to create is: %s\n", name);
+        DEBUG('f', "The file to create is: %s\n", name);
         changeDir = true;
     }
 
@@ -317,8 +319,10 @@ FileSystem::CreateDir(const char *name)
     char* nameCopy;
     if(name[0] == '/') {
         // You cannot create the root directory!
-        if(name[1] == '\0')
+        if(name[1] == '\0') {
+            filesysCreateLock->Release();
             return false;
+        }
 
         nameCopy = new char[150];
         sprintf(nameCopy, "%s", name);
@@ -334,8 +338,8 @@ FileSystem::CreateDir(const char *name)
         directoryFileBackup = directoryFile;
         directorySizeBackup = directorySize;
 
-        if(!( (strlen(nameCopy) == 0 && ChangeDir("/")) ||
-              (strlen(nameCopy) > 0 && ChangeDir(nameCopy)) ))
+        if(!( (strlen(nameCopy) == 0 && ChangeDir("/", false)) ||
+              (strlen(nameCopy) > 0 && ChangeDir(nameCopy, false)) ))
         {
             delete [] nameCopy;
             filesysCreateLock->Release();
@@ -354,6 +358,7 @@ FileSystem::CreateDir(const char *name)
         DEBUG('f',"File is already in directory\n");
         success = false;  // File is already in directory.
     } else {
+        DEBUG('f', "Begining creation of %s...\n", name);
         // Creates a copy of the freeMapFile
         Bitmap *freeMap = new Bitmap(NUM_SECTORS);
         freeMap->FetchFrom(freeMapFile);
@@ -380,7 +385,8 @@ FileSystem::CreateDir(const char *name)
                 delete freeMap;
                 delete dirHeader;
                 delete dir;
-                return success;
+                filesysCreateLock->Release();
+                return false;
             }
 
             DEBUG('w', "First FH initialized. FH first sector: %u, Num sectors: %u\n", sector, dirHeader->GetRaw()->numSectors);
@@ -416,7 +422,9 @@ FileSystem::CreateDir(const char *name)
     }
 
     if(changeDir) {
+        OpenFile* tmpOpen = directoryFile;
         directoryFile = directoryFileBackup;
+        delete tmpOpen;
         directorySize = directorySizeBackup;
         delete [] nameCopy;
     }
@@ -429,19 +437,14 @@ FileSystem::CreateDir(const char *name)
 }
 
 
-
-// 1) Changedir va a ir hacia el directorio que quiero ir recursivamente
-
-// 2) Entonces mkdir como rmdir o touch llaman a changedir, crean el archivo y luego cambian de nuevo al actual
-
-
 bool
-FileSystem::ChangeDir(const char* name) {
+FileSystem::ChangeDir(const char* name, bool onlyChange) {
 
     ASSERT(name != nullptr);
     DEBUG('f', "Changing current directory to: %s\n", name);
 
     bool success = true;
+    DEBUG('f', "Only change? %d", onlyChange);
 
     if(name[0] == '/') {
         char* nameCopy = new char[150];
@@ -513,16 +516,19 @@ FileSystem::ChangeDir(const char* name) {
                 break;
             }
         }
+
         // Deallocate memory
-        for(int i = 0; i < count - 1; ++i) {
+        for(int i = 0; i < count - 1; ++i)
             delete [] splittedName[i];
-        }
         delete [] splittedName;
         delete currDir;
         delete dummyForTableSize;
         if(!success) {
             directoryFile = backupDirFile;
             directorySize = backupDirSize;
+            //por que no puedo eliminar el root dir?
+        } else if (onlyChange) {
+            delete backupDirFile;
         }
     } else {
         // Make a temporal copy of the current directory
@@ -545,6 +551,7 @@ FileSystem::ChangeDir(const char* name) {
             DEBUG('f',"The directory does not exists...\n");
             success = false;  // File is already in directory.
         }
+        delete dir;
     }
 
     return success;
@@ -738,6 +745,7 @@ FileSystem::RemoveDir(const char *name)
 
         for(unsigned i = 0; i < tableSize; ++i) {
             if(dirToRemove->GetRaw()->table[i].inUse) {
+                directoryFileToRemove->Close();
                 delete dirToRemove;
                 return -1;
             }
