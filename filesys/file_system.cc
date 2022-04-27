@@ -215,7 +215,7 @@ FileSystem::Create(const char *name, unsigned dummyParam, bool isBin) // Dummy p
             return false;
         }
 
-        nameCopy = new char[150];
+        nameCopy = new char[FILE_PATH_MAX_LEN];
         sprintf(nameCopy, "%s", name);
 
         int lastSlashFound = 0;
@@ -292,7 +292,9 @@ FileSystem::Create(const char *name, unsigned dummyParam, bool isBin) // Dummy p
     }
 
     if( changeDir ) {
+        OpenFile* tmpOpen = directoryFile;
         directoryFile = directoryFileBackup;
+        delete tmpOpen;
         directorySize = directorySizeBackup;
         delete [] nameCopy;
     }
@@ -324,7 +326,7 @@ FileSystem::CreateDir(const char *name)
             return false;
         }
 
-        nameCopy = new char[150];
+        nameCopy = new char[FILE_PATH_MAX_LEN];
         sprintf(nameCopy, "%s", name);
 
         int lastSlashFound = 0;
@@ -446,7 +448,7 @@ FileSystem::ChangeDir(const char* name, bool onlyChange) {
     DEBUG('f', "Only change? %d", onlyChange);
 
     if(name[0] == '/') {
-        char* nameCopy = new char[150];
+        char* nameCopy = new char[FILE_PATH_MAX_LEN];
         sprintf(nameCopy, "%s", &name[1]);
 
 
@@ -454,15 +456,15 @@ FileSystem::ChangeDir(const char* name, bool onlyChange) {
         char* token;
         token = strtok_r(nameCopy, "/", &threadSafe); // si name = home/aldu/ => tokens = [home, aldu]
 
-        char** splittedName = new char*[20];
+        char** splittedName = new char*[MAX_DIR_LEVEL];
 
-        splittedName[0] = new char[10];
+        splittedName[0] = new char[FILE_PATH_MAX_LEN];
         sprintf(splittedName[0], "%s", token);
 
         int count = 1;
         while(token != NULL) {
             token = strtok_r(NULL, "/", &threadSafe); // si name = home/aldu/ => tokens = [home, aldu]
-            splittedName[count] = new char[10];
+            splittedName[count] = new char[FILE_PATH_MAX_LEN];
             sprintf(splittedName[count], "%s", token);
             count++;
         }

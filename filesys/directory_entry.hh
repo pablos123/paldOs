@@ -9,7 +9,8 @@
 
 /// For simplicity, we assume file names are <= 9 characters long.
 const unsigned FILE_NAME_MAX_LEN = 20;
-const unsigned FILE_PATH_MAX_LEN = FILE_NAME_MAX_LEN * 10;
+const unsigned MAX_DIR_LEVEL = 10;
+const unsigned FILE_PATH_MAX_LEN = FILE_NAME_MAX_LEN * MAX_DIR_LEVEL;
 
 /// The following class defines a "directory entry", representing a file in
 /// the directory.  Each entry gives the name of the file, and where the
