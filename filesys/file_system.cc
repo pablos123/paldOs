@@ -135,7 +135,7 @@ FileSystem::FileSystem(bool format)
         directoryFile = new OpenFile(DIRECTORY_SECTOR);
         // Get the current size of the directory table, this is necessry since we
         // support 'unlimited' directory headers in the directory
-        Directory  *dir = new Directory(2000); // we dont want to create a new Directory
+        Directory  *dir = new Directory(MAX_DIR_ENTRIES); // we dont want to create a new Directory
         unsigned result = dir->FetchFrom(directoryFile, true);
         directorySize = result;
         delete dir;
@@ -477,7 +477,7 @@ FileSystem::ChangeDir(const char* name, bool onlyChange) {
         // Load the root directory
         OpenFile* rootDirFile = new OpenFile(DIRECTORY_SECTOR);
 
-        Directory *dummyForTableSize = new Directory(2000);
+        Directory *dummyForTableSize = new Directory(MAX_DIR_ENTRIES);
         unsigned tableSize = dummyForTableSize->FetchFrom(rootDirFile, 1);
 
         Directory* currDir = new Directory(tableSize);
@@ -525,7 +525,6 @@ FileSystem::ChangeDir(const char* name, bool onlyChange) {
         if(!success) {
             directoryFile = backupDirFile;
             directorySize = backupDirSize;
-            //por que no puedo eliminar el root dir?
         } else if (onlyChange) {
             delete backupDirFile;
         }
@@ -736,7 +735,7 @@ FileSystem::RemoveDir(const char *name)
         DEBUG('f',"Dir %s found!\n", name);
         OpenFile* directoryFileToRemove = Open(name);
 
-        Directory *dummyForTableSize = new Directory(2000);
+        Directory *dummyForTableSize = new Directory(MAX_DIR_ENTRIES);
         unsigned tableSize = dummyForTableSize->FetchFrom(directoryFileToRemove, 1);
         delete dummyForTableSize;
 

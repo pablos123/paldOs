@@ -1,6 +1,6 @@
 #include "lib.h"
 
-#define MAX_LINE_SIZE  60
+#define MAX_LINE_SIZE  300
 #define MAX_ARG_COUNT  32
 #define ARG_SEPARATOR  ' '
 
@@ -116,6 +116,12 @@ SpaceId ExecuteAlias(char* line, char** argv, int joinable) {
     else if(strcmpp(line, "matmult"))
         result = Exec("userland/matmult", argv, joinable);
 
+    else if(strcmpp(line, "help"))
+        result = Exec("userland/help", argv, joinable);
+
+    else if(strcmpp(line, "filetest"))
+        result = Exec("userland/filetest", argv, joinable);
+
 
     // Filesystem realated
     else if(strcmpp(line, "touch"))
@@ -141,9 +147,6 @@ SpaceId ExecuteAlias(char* line, char** argv, int joinable) {
 
     else if(strcmpp(line, "rmdir"))
         result = Exec("userland/rmdir", argv, joinable);
-
-    else if(strcmpp(line, "help"))
-        result = Exec("userland/help", argv, joinable);
 
 
     else

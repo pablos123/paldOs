@@ -6,6 +6,7 @@
 #ifndef NACHOS_USERPROG_TRANSFER__HH
 #define NACHOS_USERPROG_TRANSFER__HH
 
+const unsigned LSDIR_OUTPUT = 200;
 
 /// Copy a byte array from virtual machine to host.
 void ReadBufferFromUser(int userAddress, char *outBuffer,

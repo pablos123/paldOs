@@ -14,7 +14,7 @@ void ReadBufferFromUser(int userAddress, char *outBuffer,
 {
     ASSERT(userAddress != 0);
     ASSERT(outBuffer != nullptr);
-    ASSERT(byteCount > 0 && byteCount < 201);
+    ASSERT(byteCount > 0 && byteCount <= LSDIR_OUTPUT);
 
     unsigned count = 0;
 
@@ -64,7 +64,7 @@ void WriteBufferToUser(const char *buffer, int userAddress,
 {
     ASSERT(userAddress != 0);
     ASSERT(buffer != nullptr);
-    ASSERT(byteCount > 0 && byteCount < 201);
+    ASSERT(byteCount > 0 && byteCount <= LSDIR_OUTPUT);
 
     unsigned count = 0;
 

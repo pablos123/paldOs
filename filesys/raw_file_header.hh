@@ -29,6 +29,9 @@ const unsigned TIMES_FH_FITS = int(NUM_SECTORS / (NUM_DIRECT + 1));
 const unsigned FILE_DATA_SECTORS = NUM_SECTORS - TIMES_FH_FITS;
 const unsigned MAX_FILE_SIZE = FILE_DATA_SECTORS * SECTOR_SIZE;
 
+//// Max dir entries in the disk, for calculating the tableSize of directories when changing directories.
+const unsigned MAX_DIR_ENTRIES = unsigned(MAX_FILE_SIZE / 32);
+
 struct RawFileHeader {
     unsigned numBytes;  ///< Number of bytes in the file.
     unsigned numSectors;  ///< Number of data sectors in the file.

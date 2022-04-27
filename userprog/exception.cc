@@ -245,11 +245,11 @@ SyscallHandler(ExceptionType _et)
                 break;
             }
 
-            char* filename = new char[FILE_NAME_MAX_LEN + 1];
+            char* filename = new char[FILE_PATH_MAX_LEN + 1];
             if (!ReadStringFromUser(filenameAddr,
-                                    filename, FILE_NAME_MAX_LEN + 1)) {
+                                    filename, FILE_PATH_MAX_LEN + 1)) {
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
-                      FILE_NAME_MAX_LEN);
+                      FILE_PATH_MAX_LEN);
                 machine->WriteRegister(2, 1);
                 break;
             }
@@ -365,7 +365,12 @@ SyscallHandler(ExceptionType _et)
             DEBUG('e', "`Close` requested for id %u.\n", fid);
 
             if(currentThread->GetOpenedFilesTable()->HasKey(fid) && fid != 0 && fid != 1) {
+                #ifdef FILESYS
+                currentThread->GetOpenedFilesTable()->Get(fid)->Close();
+                #endif
+
                 currentThread->GetOpenedFilesTable()->Remove(fid);
+
                 DEBUG('e', "File closed successfully!\n");
                 machine->WriteRegister(2, 0);
 
@@ -487,11 +492,11 @@ SyscallHandler(ExceptionType _et)
             DEBUG('e', "`Ls` requested.\n");
             #ifdef FILESYS
             int usrStringAddr = machine->ReadRegister(4);
-            char* lsResult = new char[200];
+            char* lsResult = new char[LSDIR_OUTPUT];
             unsigned bytesRead = fileSystem->Ls(lsResult);
 
             if(bytesRead)
-                WriteBufferToUser(lsResult, usrStringAddr, 200);
+                WriteBufferToUser(lsResult, usrStringAddr, LSDIR_OUTPUT);
 
             delete [] lsResult;
             #endif
@@ -511,11 +516,11 @@ SyscallHandler(ExceptionType _et)
                 break;
             }
 
-            char* dirname = new char[FILE_NAME_MAX_LEN + 1];
+            char* dirname = new char[FILE_PATH_MAX_LEN + 1];
 
-            if (!ReadStringFromUser(dirNameAddr, dirname, FILE_NAME_MAX_LEN + 1)) {
+            if (!ReadStringFromUser(dirNameAddr, dirname, FILE_PATH_MAX_LEN + 1)) {
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
-                    FILE_NAME_MAX_LEN);
+                    FILE_PATH_MAX_LEN);
                 delete [] dirname;
                 machine->WriteRegister(2, 1);
                 break;
