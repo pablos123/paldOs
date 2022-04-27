@@ -60,9 +60,8 @@ PrepareArguments(char *line, char **argv, unsigned argvSize)
 
     unsigned argCount = 0;
 
-    if(argvSize > MAX_ARG_COUNT || line == NULL || argv == NULL) {
+    if(argvSize > MAX_ARG_COUNT || line == NULL || argv == NULL)
         return 1;
-    }
 
     for (unsigned i = 0; line[i] != '\0'; i++) {
         if (line[i] == ARG_SEPARATOR) {
@@ -80,13 +79,17 @@ PrepareArguments(char *line, char **argv, unsigned argvSize)
     }
 
     argv[argCount] = NULL;
+
     return 0;
 }
 
 
-SpaceId ExecuteAlias(char* line, char* argv[], int joinable) {
+SpaceId ExecuteAlias(char* line, char** argv, int joinable) {
 
     SpaceId result = 0;
+
+    if(argv[0] == NULL)
+        argv = NULL;
 
     /// Utils
     if(strcmpp(line, "echo"))
@@ -107,6 +110,9 @@ SpaceId ExecuteAlias(char* line, char* argv[], int joinable) {
     else if(strcmpp(line, "cat>"))
         result = Exec("userland/write", argv, joinable);
 
+    else if(strcmpp(line, "matmult"))
+        result = Exec("userland/matmult", argv, joinable);
+
 
     // Filesystem realated
     else if(strcmpp(line, "touch"))
@@ -124,9 +130,6 @@ SpaceId ExecuteAlias(char* line, char* argv[], int joinable) {
     else if(strcmpp(line, "ls"))
         result = Exec("userland/ls", argv, joinable);
 
-    else if(strcmpp(line, "lsl"))
-        result = Exec("userland/lsl", argv, joinable);
-
     else if(strcmpp(line, "cd"))
         result = Exec("userland/cd", argv, joinable);
 
@@ -136,15 +139,15 @@ SpaceId ExecuteAlias(char* line, char* argv[], int joinable) {
     else if(strcmpp(line, "rmdir"))
         result = Exec("userland/rmdir", argv, joinable);
 
+    else if(strcmpp(line, "help"))
+        result = Exec("userland/help", argv, joinable);
+
 
     else
         result = Exec(line, argv, joinable);
 
     return result;
 }
-
-
-
 
 int
 main(void)

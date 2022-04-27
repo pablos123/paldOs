@@ -1,5 +1,3 @@
-/// Outputs arguments entered on the command line.
-
 #include "syscall.h"
 #include "lib.h"
 

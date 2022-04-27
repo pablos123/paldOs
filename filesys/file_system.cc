@@ -231,6 +231,7 @@ FileSystem::Create(const char *name, unsigned dummyParam, bool isBin) // Dummy p
               (strlen(nameCopy) > 0 && ChangeDir(nameCopy)) ))
         {
             delete [] nameCopy;
+            filesysCreateLock->Release();
             return false;
         }
         name = &nameCopy[lastSlashFound + 1];
@@ -337,6 +338,7 @@ FileSystem::CreateDir(const char *name)
               (strlen(nameCopy) > 0 && ChangeDir(nameCopy)) ))
         {
             delete [] nameCopy;
+            filesysCreateLock->Release();
             return false;
         }
         name = &nameCopy[lastSlashFound + 1];
@@ -636,6 +638,7 @@ FileSystem::Remove(const char *name, bool callingFromRemoveDir)
 {
     ASSERT(name != nullptr);
 
+    // Load the current directory
     Directory *dir = new Directory(directorySize);
     dir->FetchFrom(directoryFile);
     int sector = dir->Find(name);
