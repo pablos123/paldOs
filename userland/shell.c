@@ -110,6 +110,9 @@ SpaceId ExecuteAlias(char* line, char** argv, int joinable) {
     else if(strcmpp(line, "cat>"))
         result = Exec("userland/write", argv, joinable);
 
+    else if(strcmpp(line, "write"))
+        result = Exec("userland/write", argv, joinable);
+
     else if(strcmpp(line, "matmult"))
         result = Exec("userland/matmult", argv, joinable);
 

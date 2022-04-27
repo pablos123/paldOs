@@ -51,5 +51,7 @@ main(int argc, char *argv[])
         }
     }
 
+    PrintChar('\n', fileToWrite);
+
     Close(fileToWrite);
 }
