@@ -318,7 +318,6 @@ Cleanup()
 #endif
 
 #ifdef USER_PROGRAM
-    delete consoleSys;
     delete runningProcesses;
     delete addressesBitMap;
     delete machine;

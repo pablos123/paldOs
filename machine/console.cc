@@ -98,7 +98,7 @@ Console::~Console()
 /// character has been grabbed out of the buffer by the Nachos kernel).
 /// Invoke the “read” interrupt handler, once the character has been put into
 /// the buffer.
-    void
+void
 Console::CheckCharAvail()
 {
     char c;
