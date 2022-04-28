@@ -50,14 +50,14 @@ void
 Condition::Wait()
 {
     DEBUG('t', "Thread %s waiting...\n", currentThread->GetName());
-    ASSERT(conditionLock->IsHeldByCurrentThread()); //tiene que tener agarrado el candado
+    ASSERT(conditionLock->IsHeldByCurrentThread());
 
-    Semaphore* new_semaphore = new Semaphore("dummy", 0); //esto lo iniciamos en 0 para dormir.
+    Semaphore* new_semaphore = new Semaphore("dummy", 0); // We need to sleep right away
 
     queue->Append(new_semaphore);
 
-    conditionLock->Release(); //aca hago el yield que es lo mismo
-    new_semaphore->P(); //lo mandamos a dormir
+    conditionLock->Release(); // Yielding thread...
+    new_semaphore->P(); // Go to sleep
 
     conditionLock->Acquire();
 }
@@ -74,9 +74,6 @@ Condition::Signal()
 void
 Condition::Broadcast()
 {
-    while(!queue->IsEmpty()) {
+    while(!queue->IsEmpty())
         Signal();
-    }
-
-    // delete semaphore?
 }

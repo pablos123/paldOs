@@ -454,7 +454,7 @@ FileSystem::ChangeDir(const char* name, bool onlyChange) {
 
         char* threadSafe;  // to contextualize in strtok
         char* token;
-        token = strtok_r(nameCopy, "/", &threadSafe); // si name = home/aldu/ => tokens = [home, aldu]
+        token = strtok_r(nameCopy, "/", &threadSafe);
 
         char** splittedName = new char*[MAX_DIR_LEVEL];
 
@@ -463,7 +463,7 @@ FileSystem::ChangeDir(const char* name, bool onlyChange) {
 
         int count = 1;
         while(token != NULL) {
-            token = strtok_r(NULL, "/", &threadSafe); // si name = home/aldu/ => tokens = [home, aldu]
+            token = strtok_r(NULL, "/", &threadSafe);
             splittedName[count] = new char[FILE_PATH_MAX_LEN];
             sprintf(splittedName[count], "%s", token);
             count++;

@@ -314,7 +314,7 @@ Directory::PrintNames(char* into) const
                 sprintf(temp, "%s/\n", raw.table[i].name);
 
                 unsigned bytesToAdd = strlen(raw.table[i].name) + 2;
-                temp+= bytesToAdd; // into = "home/\naldu/\npab/\n"
+                temp+= bytesToAdd;
                 result += bytesToAdd;
             }
             else {

@@ -11,7 +11,8 @@
 # limitation of liability and disclaimer of warranty provisions.
 
 DEFINES      = -DUSER_PROGRAM -DVMEM -DFILESYS_NEEDED -DFILESYS \
-               -DUSE_TLB -DDFS_TICKS_FIX -DDEMAND_LOADING -DSWAP -DPRPOLICY_LRU
+               -DUSE_TLB -DDFS_TICKS_FIX -DDEMAND_LOADING -DSWAP -DPRPOLICY_LRU \
+               -DMULTILEVEL_PRIORITY_QUEUE
 INCLUDE_DIRS = -I.. -I../bin -I../vm -I../userprog -I../threads -I../machine
 HDR_FILES    = $(THREAD_HDR) $(USERPROG_HDR) $(VMEM_HDR) $(FILESYS_HDR)
 SRC_FILES    = $(THREAD_SRC) $(USERPROG_SRC) $(VMEM_SRC) $(FILESYS_SRC)

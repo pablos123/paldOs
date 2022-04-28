@@ -23,17 +23,14 @@
 
 Lock::Lock(const char *debugName)
 {
-    name = debugName; //este name no me gusta mucho peeeero, depende tamben cuanto usemos este name no??
-                            //entonces tenemos la discusion de si menos memoria por no poner el name o mayor
-                            //reutilizacion al ponerlo.
+    name = debugName;
 
-    lock = new Semaphore(debugName, 1); //ya lo tenemos aca me parece.
+    lock = new Semaphore(debugName, 1);
 
-    lockOwner = nullptr; //nadie es dueño del lock... todavia
+    lockOwner = nullptr;
 
     oldPriority = 0;
-
-} //esto parece que tambien pero no me acuerdo
+}
 
 Lock::~Lock()
 {
@@ -68,13 +65,14 @@ Lock::Acquire()
     size_t currentPriority = currentThread->GetPriority();
     if(ownerPriority < currentPriority){
         oldPriority = ownerPriority;
-        lockOwner->SetPriority(currentPriority);   //le subimos al de baja prioridad para que termine de usar el lock mas rapido
+        lockOwner->SetPriority(currentPriority);   //Subimos la prioridad
+                                                   //del proceso con menos prioridad para que
+                                                   //termine de ultilizar el lock mas rapido.
         scheduler->ModifyPriority(lockOwner);
     }
 #endif
 
-    lock->P(); //Primero resto el semaforo dado que puede pasar que no pueda entrar pero cambio el dueño igual
-               //therefore hay alta explotacion con el assert
+    lock->P();
 
     lockOwner = currentThread;
 }
@@ -84,11 +82,8 @@ Lock::Release()
 {
     ASSERT(this->IsHeldByCurrentThread());
 
-    lockOwner = nullptr;//esto es representativo para la funcion del lock :)
-                        //aunque no es necesario. Si es necesario! :D aldu la mas grande
-    //currentThread->Yield(); lo sacamos ya que en las variables de condicion, en Wait() se llama a
-    // P() y esta cuando hace Sleep() ya hace un relinquish/yield del CPU. Entonces,
-    //cuando hacemos Realease() no deberíamos "duplicar" este relinquish
+    lockOwner = nullptr;
+
 #ifdef MULTILEVEL_PRIORITY_QUEUE
     if(currentThread->GetPriority() != oldPriority){
         currentThread->SetPriority(oldPriority);
