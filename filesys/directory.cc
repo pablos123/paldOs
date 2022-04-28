@@ -62,7 +62,6 @@ Directory::FetchFrom(OpenFile *file, bool needTableSize)
     ASSERT(file != nullptr);
     DEBUG('0', "getting data fom disk...\n");
     DEBUG('0', "raw table memory is: %p\n", raw.table);
-    DEBUG('w', "table size  BEFORE READINNNGGGG is: %d\n", raw.tableSize);
     int result = file->Read((char *) raw.table,
                 raw.tableSize * sizeof (DirectoryEntry), true);
 
@@ -89,7 +88,6 @@ Directory::WriteBack(OpenFile *file, bool firstTime)
     else {
         DEBUG('0', "writing back to disk...\n");
         unsigned bytesToWrite = raw.tableSize * sizeof (DirectoryEntry);
-        DEBUG('w', "table size for writing is: %u\n", raw.tableSize);
         DEBUG('0',"Target bytes to write: %u\n", bytesToWrite);
         int result = file->Write((char *) raw.table, bytesToWrite, true);
         DEBUG('0', "bytes writed: %d\n", result);
@@ -155,11 +153,11 @@ Directory::FindDir(const char *name)
 /// Debug function for the raw table
 void
 PrintTableDir(RawDirectory raw) {
-    DEBUG('w', "DEBUG TABLEE\n\n", raw.tableSize);
-    DEBUG('w', "table size: %u\n", raw.tableSize);
+    DEBUG('0', "DEBUG TABLE\n\n", raw.tableSize);
+    DEBUG('0', "table size: %u\n", raw.tableSize);
     for (unsigned i = 100; i < raw.tableSize; i++)
-        DEBUG('w', "Index: %u, InUse? %d Name: %s\n",i,raw.table[i].inUse,raw.table[i].name);
-    DEBUG('w', "\n\n");
+        DEBUG('0', "Index: %u, InUse? %d Name: %s\n",i,raw.table[i].inUse,raw.table[i].name);
+    DEBUG('0', "\n\n");
 }
 
 /// Add a file into the directory.  Return true if successful; return false

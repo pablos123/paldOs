@@ -29,12 +29,12 @@ typedef struct {
 } Test;
 
 static const Test TESTS[] = {
-    { &ThreadTestSimple,            "simple",          "Simple thread interleaving" },
-    { &ThreadTestGarden,            "garden",          "Ornamental garden" },
-    { &ThreadTestGardenSemaphore,   "gardensemaphore", "Ornamental garden (with semaphores)"},
-    { &ThreadTestGardenLocks,       "gardenlocks",     "Ornamental Garden (with locks)" },
-    { &ThreadTestChannel,           "channeltest",     "Channel Test"},
-    { &MultilevelPriorityQueueTest, "mlevelqueue",     "Multilevel priority queue"},
+    { &ThreadTestSimple,            "", "Simple thread interleaving test." },
+    { &ThreadTestGarden,            "", "Ornamental garden test." },
+    { &ThreadTestGardenSemaphore,   "", "Ornamental garden test (with semaphores)."},
+    { &ThreadTestGardenLocks,       "", "Ornamental Garden test (with locks)." },
+    { &ThreadTestChannel,           "", "Channel test."},
+    { &MultilevelPriorityQueueTest, "", "Multilevel priority queue test."},
 };
 static const unsigned NUM_TESTS = sizeof TESTS / sizeof TESTS[0];
 

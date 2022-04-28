@@ -308,8 +308,6 @@ Initialize(int argc, char **argv)
 void
 Cleanup()
 {
-    DEBUG('7', "Cleaning up...\n");
-
     // 2007, Jose Miguel Santos Espino
     delete preemptiveScheduler;
 

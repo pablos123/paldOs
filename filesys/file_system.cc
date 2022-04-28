@@ -604,11 +604,10 @@ FileSystem::Open(const char *name, bool isBin)
     Directory *dir = new Directory(directorySize);
     OpenFile  *openFile = nullptr;
 
-    DEBUG('0', "Opening file %s\n", name);
+    DEBUG('f', "Opening file %s\n", name);
     dir->FetchFrom(directoryFile);
     int sector = dir->Find(name);
 
-    DEBUG('w', "the sector found is: %d!!\n", sector);
     if (sector >= 0 && !openFilesTable[sector]->removing) { // `name` was found in directory.
         openFile = new OpenFile(sector);
     }

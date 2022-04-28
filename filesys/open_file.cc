@@ -296,7 +296,7 @@ OpenFile::Write(const char *from, unsigned numBytes, bool isDirectory)
 
 
     if (numBytes > 0) {
-        DEBUG('w',"a new file header is needed!!!!!!!\n");
+        DEBUG('w',"a new file header is needed!!!\n");
 
         //Create a list of sectors for all the fileheaders
         unsigned totalSectors = DivRoundUp(numBytes, SECTOR_SIZE);
@@ -326,7 +326,7 @@ OpenFile::Write(const char *from, unsigned numBytes, bool isDirectory)
         firstHeader->GetRaw()->numBytes = 0;
         firstHeader->GetRaw()->numSectors = 0;
 
-        DEBUG('9', "alocating again...\n");
+        DEBUG('w', "allocating again...\n");
         success = firstHeader->Allocate(freeMap, bytesToAllocate);
         if(!success) {
             DEBUG('w', "Error al querer alocar el frist header!\n");
@@ -376,7 +376,7 @@ OpenFile::Write(const char *from, unsigned numBytes, bool isDirectory)
 
             bytesToAllocate = numBytes <  maxSize ? numBytes : maxSize;
 
-            DEBUG('w', "Creating a new file header!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+            DEBUG('w', "Creating a new file header!!!!\n");
             FileHeader *newFileHeader = new FileHeader;
             newFileHeader->GetRaw()->nextFileHeader = 0;
             newFileHeader->GetRaw()->numBytes = 0;
