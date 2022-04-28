@@ -12,7 +12,6 @@
 
 
 #include "thread_test_garden.hh"
-#include "thread_test_prod_cons.hh"
 #include "thread_test_simple.hh"
 #include "thread_test_channel.hh"
 #include "multilevel_priority_queue_test.hh"
@@ -34,8 +33,7 @@ static const Test TESTS[] = {
     { &ThreadTestGarden,            "garden",          "Ornamental garden" },
     { &ThreadTestGardenSemaphore,   "gardensemaphore", "Ornamental garden (with semaphores)"},
     { &ThreadTestGardenLocks,       "gardenlocks",     "Ornamental Garden (with locks)" },
-    { &ThreadTestProdCons,          "prodcons",        "Producer/Consumer (with condition variables)" },
-    { &ThreadTestChannel,           "channeltest",     "Chanel Test"},
+    { &ThreadTestChannel,           "channeltest",     "Channel Test"},
     { &MultilevelPriorityQueueTest, "mlevelqueue",     "Multilevel priority queue"},
 };
 static const unsigned NUM_TESTS = sizeof TESTS / sizeof TESTS[0];
