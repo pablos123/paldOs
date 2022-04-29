@@ -57,10 +57,8 @@ FileWriteSync(void* threadName)
     for (unsigned i = 0; i < FILE_SIZE; i += CONTENT_SIZE) {
         DEBUG('f', "THREAD Writing %s, with %s thread\n", (char *)threadName, (char *)threadName);
         unsigned numBytes = (unsigned)openFile->Write(CONTENTS, CONTENT_SIZE);
-        if (numBytes < CONTENT_SIZE) {
-            fprintf(stderr, "Perf test: unable to write %s\n", FILE_NAME);
+        if (numBytes < CONTENT_SIZE)
             break;
-        }
     }
 
     delete openFile;
@@ -82,10 +80,8 @@ FileReadSync(void* threadName)
     char *buffer = new char [CONTENT_SIZE];
     for (unsigned i = 0; i < FILE_SIZE; i += CONTENT_SIZE) {
         int numBytes = openFile->Read(buffer, CONTENT_SIZE);
-        if (numBytes < 10 || strncmp(buffer, CONTENTS, CONTENT_SIZE)) {
-            printf("Perf test: unable to read %s\n", FILE_NAME);
+        if (numBytes < 10 || strncmp(buffer, CONTENTS, CONTENT_SIZE))
             break;
-        }
     }
 
     delete [] buffer;

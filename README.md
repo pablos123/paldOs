@@ -10,7 +10,6 @@ paldOS is an operating system based on Nachos.
 ## What paldOs offer:
 ### Thread managment and concurrency
 Starting from semaphores provided by Nachos we implemented other tools for thread managment and concurrency.
-- Semaphores
 - Locks
 - Condition variables
 - Channels
