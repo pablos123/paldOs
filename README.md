@@ -51,11 +51,13 @@ Some of the programs that you can run as an user are:
 
 **Dependencies**
 
-gcc-mipsel-linux-gnu
+(Debian based)
+
+`g++ cpp gcc g++-11 gcc-11 cmake make gcc-mipsel-linux-gnu`
 
 **Compiling**
 
-Just write `make` in the repository path.
+Run `make` in the repository path.
 
 # Using paldOS
 
@@ -104,6 +106,7 @@ Filesystem test:
 - Create a file, open it, write a bunch of chunks of bytes, read a bunch of chunks of bytes, close the file and remove the file.
 
 `filesys/nachos -tfs` concurrent performance test for the filesystem:
+
 - Create, write, read, close and remove but do it concurrently.
 
 `filesys/nachos -tfc` create a lot of files to fit all the possible sectors in the disk.
@@ -113,6 +116,10 @@ Filesystem test:
 ## Executing paldOs
 
 To execute paldOS run:
+
+`filesys/nachos -f` to format the disk (this is important to have a running filesystem!).
+
+Then run the binary in filesys with the shell program:
 
 `filesys/nachos -x userland/shell`
 
