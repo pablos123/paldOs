@@ -197,11 +197,11 @@ srand(time(NULL));
             ASSERT(argc > 2);
             Copy(*(argv + 1), *(argv + 2));
             argCount = 3;
-        } else if (!strcmp(*argv, "-bcp")) {  // Print a Nachos file.
+        } else if (!strcmp(*argv, "-bcp")) {
             ASSERT(argc > 2);
             BigCopy(*(argv + 1), *(argv + 2));
             argCount = 3;
-        } else if (!strcmp(*argv, "-cpe")) {  // Print a Nachos file.
+        } else if (!strcmp(*argv, "-cpe")) {
             ASSERT(argc > 2);
             CopyExactFileHeaderSize(*(argv + 1), *(argv + 2));
             argCount = 3;

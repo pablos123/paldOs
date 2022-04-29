@@ -9,12 +9,10 @@
 #include <string.h>
 
 void DirectoryTest() {
-    fileSystem->PrintDir(); // List the dir entries in the current directory
     printf("Creating tmp directory..\n");
     fileSystem->CreateDir("tmp"); // Create a directory in the root dir
     printf("Creating home directory..\n");
     fileSystem->CreateDir("home"); // Create a directory in the root dir
-    fileSystem->PrintDir(); // List the dir entries in the current directory
     printf("Changing current directory to home directory..\n");
     fileSystem->ChangeDir("home"); // Changing directories
 
@@ -30,17 +28,8 @@ void DirectoryTest() {
     fileSystem->CreateDir("usuario5"); // Create a directory in the home dir
     fileSystem->CreateDir("usuario6"); // Create a directory in the home dir
     fileSystem->CreateDir("usuario7"); // Create a directory in the home dir
-    fileSystem->CreateDir("usuario8"); // Create a directory in the home dir
-    fileSystem->CreateDir("usuario9"); // Create a directory in the home dir
-    fileSystem->CreateDir("usuario10"); // Create a directory in the home dir
-    fileSystem->CreateDir("usuario11"); // Create a directory in the home dir
-
-    fileSystem->PrintDir(); // List the dir entries in the current directory
-    fileSystem->ChangeDir("usuario9");
-    fileSystem->CreateDir("usuario11"); // Create a directory in the home dir
 
     fileSystem->Create("not_a_directory");
-    fileSystem->PrintDir(); // List the dir entries in the current directory
     printf("Trying to enter in something that is not a directory...\n");
     int success = fileSystem->ChangeDir("not_a_directory");
     if(!success) printf("Mmmm... cannot enter, not a directory!\n");

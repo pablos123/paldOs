@@ -146,6 +146,12 @@ PerformanceTestSync()
 
     if (!fileSystem->Create(FILE_NAME)) {
         fprintf(stderr, "Perf test: cannot create %s\n", FILE_NAME);
+        delete [] name;
+        delete [] name1;
+        delete [] name2;
+        delete [] name3;
+        delete [] name4;
+        delete [] name5;
         return;
     }
 
