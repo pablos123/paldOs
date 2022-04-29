@@ -8,29 +8,68 @@
 #include <stdio.h>
 #include <string.h>
 
-void DirectoryTest() {
+void
+DirectoryTest() {
+
     printf("Creating tmp directory..\n");
     fileSystem->CreateDir("tmp"); // Create a directory in the root dir
+
+    printf("Creating bin directory..\n");
+    fileSystem->CreateDir("bin"); // Create a directory in the root dir
+
+    printf("Creating bin directory..\n");
+    fileSystem->CreateDir("bin"); // Create a directory in the root dir
+
+    printf("Creating simulated binaries..\n");
+    fileSystem->Create("/bin/cat"); // Create a directory in the root dir
+    fileSystem->Create("/bin/cd"); // Create a directory in the root dir
+    fileSystem->Create("/bin/ls"); // Create a directory in the root dir
+    fileSystem->Create("/bin/touch"); // Create a directory in the root dir
+    fileSystem->Create("/bin/echo"); // Create a directory in the root dir
+
+    printf("Creating lib directory..\n");
+    fileSystem->CreateDir("lib"); // Create a directory in the root dir
+
+    printf("Creating proc directory..\n");
+    fileSystem->CreateDir("proc"); // Create a directory in the root dir
+
+    printf("Creating simulated procs..\n");
+    fileSystem->Create("/proc/proc0"); // Create a directory in the root dir
+    fileSystem->Create("/proc/proc1"); // Create a directory in the root dir
+    fileSystem->Create("/proc/proc2"); // Create a directory in the root dir
+    fileSystem->Create("/proc/proc3"); // Create a directory in the root dir
+    fileSystem->Create("/proc/proc4"); // Create a directory in the root dir
+
+    printf("Creating root directory..\n");
+    fileSystem->CreateDir("root"); // Create a directory in the root dir
+
+    printf("Creating lost+found directory..\n");
+    fileSystem->CreateDir("lost+found"); // Create a directory in the root dir
+
+    printf("Creating usr directory..\n");
+    fileSystem->CreateDir("usr"); // Create a directory in the root dir
+
+    printf("Creating etc directory..\n");
+    fileSystem->CreateDir("etc"); // Create a directory in the root dir
+
     printf("Creating home directory..\n");
     fileSystem->CreateDir("home"); // Create a directory in the root dir
+
     printf("Changing current directory to home directory..\n");
-    fileSystem->ChangeDir("home"); // Changing directories
+    fileSystem->ChangeDir("/home"); // Changing directories
 
-    printf("Creating the aldu and pab directory in the current directory...\n");
-    fileSystem->CreateDir("aldu"); // Create a directory in the home dir
-    fileSystem->CreateDir("pab"); // Create a directory in the home dir
-
+    printf("Creating a bunch of user's home...\n");
     /// Create a lot of directories in the current directory
-    fileSystem->CreateDir("usuario1"); // Create a directory in the home dir
-    fileSystem->CreateDir("usuario2"); // Create a directory in the home dir
-    fileSystem->CreateDir("usuario3"); // Create a directory in the home dir
-    fileSystem->CreateDir("usuario4"); // Create a directory in the home dir
-    fileSystem->CreateDir("usuario5"); // Create a directory in the home dir
-    fileSystem->CreateDir("usuario6"); // Create a directory in the home dir
-    fileSystem->CreateDir("usuario7"); // Create a directory in the home dir
-
-    fileSystem->Create("not_a_directory");
-    printf("Trying to enter in something that is not a directory...\n");
-    int success = fileSystem->ChangeDir("not_a_directory");
-    if(!success) printf("Mmmm... cannot enter, not a directory!\n");
+    fileSystem->CreateDir("user1"); // Create a directory in the home dir
+    fileSystem->CreateDir("user2"); // Create a directory in the home dir
+    fileSystem->CreateDir("user3"); // Create a directory in the home dir
+    fileSystem->CreateDir("user4"); // Create a directory in the home dir
+    fileSystem->CreateDir("user5"); // Create a directory in the home dir
+    fileSystem->CreateDir("user6"); // Create a directory in the home dir
+    fileSystem->CreateDir("user7"); // Create a directory in the home dir
+    fileSystem->CreateDir("user8"); // Create a directory in the home dir
+    fileSystem->CreateDir("user9"); // Create a directory in the home dir
+    fileSystem->CreateDir("user10"); // Create a directory in the home dir
+    fileSystem->CreateDir("user11"); // Create a directory in the home dir
+    fileSystem->CreateDir("user12"); // Create a directory in the home dir
 }

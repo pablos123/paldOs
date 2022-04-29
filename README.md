@@ -1,6 +1,8 @@
-# paldOs
+# paldOS
 
-paldOs is an operating system based on Nachos.
+paldOS is an operating system based on Nachos.
+
+![](./paldOs_usecase.gif "paldOs!")
 
 ## Nachos
 **Not Another Completely Heuristic Operating System**, or **Nachos**, is instructional software for teaching undergraduate, and potentially graduate level operating systems courses. It was developed at the University of California, Berkeley, designed by Thomas Anderson, and is used by numerous schools around the world.
@@ -25,7 +27,7 @@ We implemented some virtual memory upgrades:
 
 ### Filesystem
 Nachos provides a very limited file system and we build around that a lot of nice features:
-- Larger and extensible files (Up to the disk space)
+- Larger and extensible files (up to the disk space)
 - Directory hierarchy
 
 ### Userland
@@ -43,7 +45,7 @@ Some of the programs that you can run as an user are:
 - exit
 - help
 
-> Note: the final version of the nachOS with all the mentioned features is in the filesys/ folder.
+> Note: the final version of the nachOS with all the mentioned features is in the filesys/ directory.
 
 # Install
 
@@ -55,7 +57,7 @@ gcc-mipsel-linux-gnu
 
 Just write `make` in the repository path.
 
-# Using paldOs
+# Using paldOS
 
 ## Testing
 
@@ -105,6 +107,83 @@ Filesystem test:
 - Create, write, read, close and remove but do it concurrently.
 
 `filesys/nachos -tfc` create a lot of files to fit all the possible sectors in the disk.
+
+`filesys/nachos -td` test the hierarchy of the file system creating a buch of directories and travelling through them. Simulates the Linux directory format.
+
+## Executing paldOs
+
+To execute paldOS run:
+
+`filesys/nachos -x userland/shell`
+
+### Userland
+
+To execute any of the following commands as a background process prepend the '&' character to it!
+
+paldOs provides the `help` command to help you navigate paldOs, you can type help in the console to see the available commands:
+
+```terminal
+--> help
+
+`help`: Print this message and exit.
+
+`ls`: Print the content of the current working directory.
+
+`cd`: Change the current directory, supports an absolute path or a directory in the current working directory.
+
+     $ cd home    |    $ cd /home/usr    |    $ cd /
+
+
+`touch`: Create one or more files, supports an absolute path or a name in the current working directory.
+
+`create`: Alias for touch.
+
+     $ touch /home/usr/file1 file2 /home/usr1/file1    |    $ create hello_world
+
+
+`write`: Write a chunk of text into a file.
+
+`cat>`: Alias for write.
+
+     $ write file1 example text    |    $ cat> file2 example text
+
+
+`cp`: Copy the content to one file in the current path to another file.
+
+     $ cp file1 file1_cpy
+
+
+`cat`: Concat two files and print the content in the terminal, can take one or two files.
+
+     $ cat file1    |    $ cat file1 file2
+
+
+`mkdir`: Create a directory, supports an absolute path or a name in the current directory.
+
+     $ mkdir /home/usr/dir1 dir2 /home/usr1/dir2
+
+
+`rm`: Remove one or more files in the current working directory.
+
+     $ rm file1 file2 ... file_n
+
+
+`rmdir`: Remove one or more directories in the current working directory.
+
+     $ rmdir dir1 dir2 ... dir_n
+
+
+`echo`: Print the input to stdout.
+
+`filetest`: Creates a file with the string 'hello_world' in it.
+
+`sort`: Stress the virtual memory by sorting an array.
+
+`matmult`: Stress the virtual memory by multiplying two matrices.
+
+`halt`: Halt the machine and exit.
+
+```
 
 ## Further reading
 - https://en.wikipedia.org/wiki/Not_Another_Completely_Heuristic_Operating_System

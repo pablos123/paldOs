@@ -205,7 +205,6 @@ FileSystem::Create(const char *name, unsigned dummyParam, bool isBin) // Dummy p
 
     filesysCreateLock->Acquire();
     OpenFile* directoryFileBackup;
-    unsigned directorySizeBackup;
     char* nameCopy;
 
     if(name[0] == '/') {
@@ -227,7 +226,6 @@ FileSystem::Create(const char *name, unsigned dummyParam, bool isBin) // Dummy p
         nameCopy[lastSlashFound] = '\0';
 
         directoryFileBackup = directoryFile;
-        directorySizeBackup = directorySize;
 
         if(!( (strlen(nameCopy) == 0 && ChangeDir("/", false)) ||
               (strlen(nameCopy) > 0 && ChangeDir(nameCopy, false)) ))
@@ -295,7 +293,12 @@ FileSystem::Create(const char *name, unsigned dummyParam, bool isBin) // Dummy p
         OpenFile* tmpOpen = directoryFile;
         directoryFile = directoryFileBackup;
         delete tmpOpen;
-        directorySize = directorySizeBackup;
+
+        Directory *dummyForTableSize = new Directory(MAX_DIR_ENTRIES);
+        unsigned tableSize = dummyForTableSize->FetchFrom(directoryFile, 1);
+        delete dummyForTableSize;
+
+        directorySize = tableSize;
         delete [] nameCopy;
     }
 
@@ -317,7 +320,6 @@ FileSystem::CreateDir(const char *name)
 
     filesysCreateLock->Acquire();
     OpenFile* directoryFileBackup;
-    unsigned directorySizeBackup;
     char* nameCopy;
     if(name[0] == '/') {
         // You cannot create the root directory!
@@ -338,7 +340,6 @@ FileSystem::CreateDir(const char *name)
         nameCopy[lastSlashFound] = '\0';
 
         directoryFileBackup = directoryFile;
-        directorySizeBackup = directorySize;
 
         if(!( (strlen(nameCopy) == 0 && ChangeDir("/", false)) ||
               (strlen(nameCopy) > 0 && ChangeDir(nameCopy, false)) ))
@@ -427,7 +428,12 @@ FileSystem::CreateDir(const char *name)
         OpenFile* tmpOpen = directoryFile;
         directoryFile = directoryFileBackup;
         delete tmpOpen;
-        directorySize = directorySizeBackup;
+
+        Directory *dummyForTableSize = new Directory(MAX_DIR_ENTRIES);
+        unsigned tableSize = dummyForTableSize->FetchFrom(directoryFile, 1);
+        delete dummyForTableSize;
+
+        directorySize = tableSize;
         delete [] nameCopy;
     }
 
@@ -479,8 +485,9 @@ FileSystem::ChangeDir(const char* name, bool onlyChange) {
         // Load the root directory
         OpenFile* rootDirFile = new OpenFile(DIRECTORY_SECTOR);
 
-        Directory *dummyForTableSize = new Directory(MAX_DIR_ENTRIES);
-        unsigned tableSize = dummyForTableSize->FetchFrom(rootDirFile, 1);
+        Directory *dummyForRootTableSize = new Directory(MAX_DIR_ENTRIES);
+        unsigned tableSize = dummyForRootTableSize->FetchFrom(rootDirFile, 1);
+        delete dummyForRootTableSize;
 
         Directory* currDir = new Directory(tableSize);
         currDir->FetchFrom(rootDirFile);
@@ -499,7 +506,10 @@ FileSystem::ChangeDir(const char* name, bool onlyChange) {
                 delete tmpOpen;
 
                 // Get the table size of the next directory
+                Directory *dummyForTableSize = new Directory(MAX_DIR_ENTRIES);
                 tableSize = dummyForTableSize->FetchFrom(directoryFile, 1);
+                delete dummyForTableSize;
+
                 DEBUG('f', "Size of %s directory: %u\n", splittedName[i], tableSize);
                 directorySize = tableSize;
 
@@ -523,7 +533,6 @@ FileSystem::ChangeDir(const char* name, bool onlyChange) {
             delete [] splittedName[i];
         delete [] splittedName;
         delete currDir;
-        delete dummyForTableSize;
         if(!success) {
             directoryFile = backupDirFile;
             directorySize = backupDirSize;
@@ -538,6 +547,7 @@ FileSystem::ChangeDir(const char* name, bool onlyChange) {
         if (dir->FindDir(name)) {
             DEBUG('f',"Dir %s found!\n", name);
 
+
             OpenFile* currentDirectoryFile = Open(name);
             OpenFile* openFileToDelete = directoryFile;
 
@@ -545,8 +555,10 @@ FileSystem::ChangeDir(const char* name, bool onlyChange) {
 
             delete openFileToDelete;
 
-            unsigned result = dir->FetchFrom(directoryFile);
-            directorySize = unsigned(result / sizeof (DirectoryEntry));
+            Directory *dummyForTableSize = new Directory(MAX_DIR_ENTRIES);
+            unsigned tableSize = dummyForTableSize->FetchFrom(directoryFile, 1);
+            directorySize = tableSize;
+            delete dummyForTableSize;
         } else {
             DEBUG('f',"The directory does not exists...\n");
             success = false;  // File is already in directory.

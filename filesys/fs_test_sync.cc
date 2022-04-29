@@ -45,7 +45,7 @@ static const unsigned FILE_SIZE = 200000;
 static void
 FileWriteSync(void* threadName)
 {
-    printf("Sequential write of %u byte file, in %u byte chunks\n",
+    printf("Concurrent write of %u byte file, in %u byte chunks\n",
            FILE_SIZE, CONTENT_SIZE);
 
     OpenFile *openFile = fileSystem->Open(FILE_NAME);
@@ -70,7 +70,7 @@ static void
 FileReadSync(void* threadName)
 {
     DEBUG('t', "Executing %s thread\n", (char *)threadName);
-    printf("Sequential read of %u byte file, in %u byte chunks\n",
+    printf("Concurrent read of %u byte file, in %u byte chunks\n",
            FILE_SIZE, CONTENT_SIZE);
 
     OpenFile *openFile = fileSystem->Open(FILE_NAME);
@@ -86,7 +86,6 @@ FileReadSync(void* threadName)
             printf("Perf test: unable to read %s\n", FILE_NAME);
             break;
         }
-        printf("Read: %s\n", buffer);
     }
 
     delete [] buffer;
