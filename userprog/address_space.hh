@@ -26,7 +26,7 @@
 #endif
 
 
-const unsigned USER_STACK_SIZE = 1256;  ///< Increase this as necessary!
+const unsigned USER_STACK_SIZE = 2048;  ///< Increase this as necessary!
 
 class AddressSpace {
 public:

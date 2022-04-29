@@ -63,7 +63,7 @@ Thread::Thread(const char *threadName, bool isJoinable, size_t priorityParam)
     openedFilesTable->Add(nullptr); //for console output
 
     spaceId = runningProcesses->Add(this);
-    DEBUG('t', "The spaceId asigned for the thread %s is: %d\n", name, spaceId);
+    DEBUG('p', "The spaceId asigned for the thread %s is: %d\n", name, spaceId);
     DEBUG('t', "The assigned priority is: %d\n", priority);
 
 #endif
@@ -90,23 +90,22 @@ Thread::~Thread()
                                        STACK_SIZE * sizeof *stack);
     }
 
-    if(joinable) delete joinChannel;
-
 #ifdef USER_PROGRAM
-#ifdef DEMAND_LOADING
-#ifdef SWAP
-    runningProcesses->Remove(spaceId);
-#endif
-#endif
     if(space != nullptr) delete space;
     for(int i = 0; openedFilesTable->HasKey(i); ++i) {
         delete openedFilesTable->Get(i);
     }
     delete openedFilesTable;
 #endif
+
+    if(joinable) delete joinChannel;
+
+#ifdef FILESYS
+    delete removeChannel;
+#endif
 }
 
-//Gets the thread's priority
+//Gets the thread's spaceId
 int
 Thread::GetSpaceId()
 {
@@ -148,7 +147,7 @@ Thread::Fork(VoidFunctionPtr func, void *arg)
 {
     ASSERT(func != nullptr);
 
-    DEBUG('t', "Forking thread \"%s\"\n", name);
+    DEBUG('p', "Forking thread \"%s\"\n", name);
 
     StackAllocate(func, arg);
 
@@ -194,7 +193,7 @@ Thread::GetName() const
 void
 Thread::Print() const
 {
-    DEBUG('t', "name of the new thread: %s\n", name);
+    DEBUG('p', "Name of the thread: %s\n", name);
 }
 
 /// Called by `ThreadRoot` when a thread is done executing the forked
@@ -230,7 +229,7 @@ Thread::Finish(int st)
     DEBUG('t', "Finishing thread \"%s\"\n", name);
 
     threadToBeDestroyed = currentThread;
-    DEBUG('t', "FUNCTION FINISH: Putting the thread \"%s\" to be destroyed.\n", threadToBeDestroyed->GetName());
+    DEBUG('e', "FUNCTION FINISH: Putting the thread \"%s\" to be destroyed.\n", threadToBeDestroyed->GetName());
 
     Sleep(consoleRunning);  // Invokes `SWITCH`.
     // Not reached.
@@ -293,9 +292,8 @@ Thread::Sleep(bool consoleRunning)
     Thread *nextThread;
     status = BLOCKED;
     // Wait for another thread to come in
-    while ((nextThread = scheduler->FindNextToRun()) == nullptr) {
+    while ((nextThread = scheduler->FindNextToRun()) == nullptr)
         interrupt->Idle(consoleRunning);  // No one to run, wait for an interrupt.
-    }
 
     scheduler->Run(nextThread);  // Returns when we have been signalled.
 }

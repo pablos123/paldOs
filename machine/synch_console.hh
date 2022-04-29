@@ -8,7 +8,7 @@
 
 class SynchConsole {
 public:
-   
+
     SynchConsole(const char *readFile, const char *writeFile);
 
     ~SynchConsole();
@@ -19,8 +19,6 @@ public:
     void ReadAvailSynch();
     void WriteDoneSynch();
 
-    Console* GetConsole();
-
 private:
     Console *console;
     Semaphore *readAvail;
@@ -29,4 +27,4 @@ private:
     Lock *lockWrite;
 };
 
-#endif 
+#endif

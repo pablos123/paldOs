@@ -225,18 +225,21 @@ Initialize(int argc, char **argv)
     stats = new Statistics;      // Collect statistics.
     interrupt = new Interrupt;   // Start up interrupt handling.
     scheduler = new Scheduler;   // Initialize the ready queue.
+#ifndef USER_PROGRAM
     if (randomYield)             // Start the timer (if needed).
         timer = new Timer(TimerInterruptHandler, 0, randomYield);
+#else
+    timer = new Timer(TimerInterruptHandler, 0, randomYield);
+    runningProcesses = new Table<Thread*>;
+#endif
+
 
     threadToBeDestroyed = nullptr;
 
-#ifdef USER_PROGRAM
-    runningProcesses = new Table<Thread*>;
-#endif
     // We did not explicitly allocate the current thread we are running in.
     // But if it ever tries to give up the CPU, we better have a `Thread`
     // object to save its state.
-    currentThread = new Thread("main", false, 1);
+    currentThread = new Thread("main", false, 0);
     currentThread->SetStatus(RUNNING);
 
     interrupt->Enable();
@@ -255,9 +258,6 @@ Initialize(int argc, char **argv)
     SetExceptionHandlers();
 
     consoleSys = new SynchConsole(nullptr, nullptr);
-
-    if(! randomYield)
-        timer = new Timer(TimerInterruptHandler, 0, false); //fixed time slicing every TIMER_TICKS
 #endif
 
 #ifdef SWAP

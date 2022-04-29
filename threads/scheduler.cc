@@ -45,12 +45,9 @@ Scheduler::ReadyToRun(Thread *thread)
 {
     ASSERT(thread != nullptr);
 
-    DEBUG('t', "Putting thread %s on ready list\n",  (char*)thread->GetName());
-
     thread->SetStatus(READY);
 #ifdef MULTILEVEL_PRIORITY_QUEUE
     readyList->SortedInsertInverted(thread, thread->GetPriority());
-    DEBUG('t', "Sorted insert invert put %s first.\n", readyList->Head()->GetName());
 #else
     readyList->Append(thread);
 #endif
@@ -65,7 +62,7 @@ Scheduler::ReadyToRun(Thread *thread)
 Thread *
 Scheduler::FindNextToRun()
 {
-    return readyList->Pop();    //hay que cambiar esto por la correción que nos dieron?
+    return readyList->Pop();
 }
 
 ///Gets the ready list.
@@ -93,15 +90,15 @@ Scheduler::Run(Thread *nextThread)
     Thread *oldThread = currentThread;
 
 #ifdef USER_PROGRAM  // Ignore until running user programs.
-    if (currentThread->space != nullptr) {
+    if (currentThread->space) {
         // If this thread is a user program, save the user's CPU registers.
         currentThread->SaveUserState();
         currentThread->space->SaveState();
     }
 #endif
 
-    DEBUG('t', "Switching from thread \"%s\" to thread \"%s\"\n",
-          (const char*)oldThread->GetName(), (const char*)nextThread->GetName());
+    //DEBUG('t', "Switching from thread \"%s\" to thread \"%s\"\n",
+    //      (const char*)oldThread->GetName(), (const char*)nextThread->GetName());
 
     oldThread->CheckOverflow();  // Check if the old thread had an undetected
                                  // stack overflow.
@@ -123,7 +120,8 @@ Scheduler::Run(Thread *nextThread)
     // now (for example, in `Thread::Finish`), because up to this point, we
     // were still running on the old thread's stack!
     if (threadToBeDestroyed != nullptr) {
-        DEBUG('t', "SCHEDULER: Thread to be destroyed %s\n", threadToBeDestroyed->GetName());
+        DEBUG('p', "SCHEDULER: Thread to be destroyed %s, with spaceId %d\n", threadToBeDestroyed->GetName(), threadToBeDestroyed->GetSpaceId());
+        scheduler->Print();
         delete threadToBeDestroyed;
         threadToBeDestroyed = nullptr;
     }
@@ -151,7 +149,7 @@ ThreadPrint(Thread *t)
 void
 Scheduler::Print()
 {
-    printf("Ready list contents:\n");
+    DEBUG('p', "Ready list contents:\n");
     readyList->Apply(ThreadPrint);
 }
 

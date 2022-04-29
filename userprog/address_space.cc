@@ -172,10 +172,12 @@ AddressSpace::LoadPage(unsigned vpnAddress, unsigned physicalPage) {
 
     unsigned read = 0; // I need to ensure that i have read PAGE_SIZE bytes
 
+    #ifdef SWAP
     if(pageTable[vpn].dirty) {
         DEBUG('a',"Reading from swap at position %d...\n", vpn * PAGE_SIZE);
         openSwapFile->ReadAt(&mainMemory[physicalAddressToWrite], PAGE_SIZE, vpn * PAGE_SIZE);
     } else { //read from the exe file
+    #endif
         if (codeSize > 0 && vpnAddressToRead < codeSize) {
             DEBUG('a', "Reading code...\n");
             uint32_t toRead = codeSize - vpnAddressToRead < PAGE_SIZE ? codeSize - vpnAddressToRead : PAGE_SIZE;
@@ -186,8 +188,7 @@ AddressSpace::LoadPage(unsigned vpnAddress, unsigned physicalPage) {
             read += toRead; //to check if there is some data left to read
         }
 
-        if (initDataSize > 0 && vpnAddressToRead + read < dataVirtualAddr + initDataSize &&
-            read != PAGE_SIZE) {
+        if (initDataSize > 0 && vpnAddressToRead + read < dataVirtualAddr + initDataSize && read != PAGE_SIZE) {
 
             // uint32_t toRead = PAGE_SIZE - read; // We're not sure if we need to the check cases like: |code segment... |data segment: 128 ... 128 12|. Suppose we didnt read any code bytes, so
             //                                         // here we're reading 128 bytes intead of just 12, maybe we're reaing garbage in some point. So we think of:
@@ -206,7 +207,9 @@ AddressSpace::LoadPage(unsigned vpnAddress, unsigned physicalPage) {
 
             read += toRead;
         }
+    #ifdef SWAP
     }
+    #endif
 
     if(vpnAddressToRead > codeSize + initDataSize) { // We are reading from the stack
         read = PAGE_SIZE; // memset already done previously
@@ -220,10 +223,10 @@ AddressSpace::LoadPage(unsigned vpnAddress, unsigned physicalPage) {
 
     DEBUG('a',"Marking physical page %u, with virtualPage %u from process %d in the coremap\n", physicalPage, vpn, addressSpaceId);
 
-    DEBUG('a',"State of the coremap: \n");
-    for(unsigned i = 0; i < NUM_PHYS_PAGES; i++){
-        DEBUG('a',"Physical page: %u, spaceId: %d, virtualPage of the mentioned process: %u \n", i, coreMap[i]->spaceId, coreMap[i]->virtualPage);
-    }
+    //DEBUG('a',"State of the coremap: \n");
+    //for(unsigned i = 0; i < NUM_PHYS_PAGES; i++){
+    //    DEBUG('a',"Physical page: %u, spaceId: %d, virtualPage of the mentioned process: %u \n", i, coreMap[i]->spaceId, coreMap[i]->virtualPage);
+    //}
 #endif
 
     DEBUG('a', "Finished loading page! :)\n");

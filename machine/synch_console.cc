@@ -80,10 +80,3 @@ SynchConsole::WriteConsole(char ch)
     writeDone->P();   // wait for interrupt
     lockWrite->Release();
 }
-
-/// Gets the private attribute console
-Console*
-SynchConsole::GetConsole()
-{
-    return console;
-}

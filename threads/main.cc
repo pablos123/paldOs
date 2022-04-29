@@ -133,7 +133,6 @@ main(int argc, char **argv)
 {
 #ifdef MULTILEVEL_PRIORITY_QUEUE
     DEBUG('t', "Usando multicolas con prioridad...\n");
-    printf("Usando multicolas con prioridad...\n");
 #endif
     int argCount;  // The number of arguments for a particular command.
 

@@ -90,20 +90,17 @@ StartProcess(void * voidargv)
         DEBUG('e', "argv is not null and argc is: %d \n", argc);
 
         if(argc) {
-            //Load a1 register (5)
             int argvaddr = machine->ReadRegister(STACK_REG);
             //Lo ultimo que hace WriteArgs es dejar el sp dentro de STACK_REG
             //luego de haber cargado todos los argumentos.
-            machine->WriteRegister(STACK_REG, argvaddr - 24); //convencion de MIPS, restandole 24 seteo el stack pointer 24 bytes más abajo.
+            machine->WriteRegister(STACK_REG, argvaddr - 24);
+            //convencion de MIPS, restandole 24 seteo el stack pointer 24 bytes más abajo.
 
-            DEBUG('e', "argvaddr is: %d\n", argvaddr);
             machine->WriteRegister(5, argvaddr);
         }
-    } else {
-        DEBUG('e', "argvaddr is null!: %p\n", argv);
     }
 
-    DEBUG('e', "writing into register 4 the argc: %u\n", argc);
+    DEBUG('e', "Executing the program with argc = %u\n", argc);
     machine->WriteRegister(4, argc);
 
     machine->Run();  // Jump to the user progam.
@@ -170,6 +167,7 @@ SyscallHandler(ExceptionType _et)
             if (! ReadStringFromUser(processAddr, filename, FILE_NAME_MAX_LEN + 1)) {
                 DEBUG('e', "Error: filename string too long (maximum is %u bytes).\n",
                       FILE_NAME_MAX_LEN);
+                delete [] filename;
                 machine->WriteRegister(2, -1);
                 break;
             }
@@ -193,6 +191,7 @@ SyscallHandler(ExceptionType _et)
 
             if (executable == nullptr) {
                 DEBUG('e', "Unable to open file %s\n", filename);
+                delete [] filename;
                 machine->WriteRegister(2, -1);
                 break;
             }
@@ -219,10 +218,10 @@ SyscallHandler(ExceptionType _et)
         case SC_JOIN: {
             SpaceId spaceId = machine->ReadRegister(4);
 
-            DEBUG('e', "Joining process %d\n", spaceId);
+            DEBUG('p', "Joining process %d\n", spaceId);
 
             if(! runningProcesses->HasKey(spaceId)){
-                DEBUG('e',"Error en Join: id del proceso inexistente");
+                DEBUG('p',"Error en Join: id del proceso inexistente, id = %d\n", spaceId);
                 machine->WriteRegister(2, -1);
                 break;
             }
@@ -403,13 +402,13 @@ SyscallHandler(ExceptionType _et)
                 break;
             }
 
-            char buffer[nbytes + 1];
+            char* buffer = new char[nbytes + 1];
 
             if(fid == CONSOLE_INPUT) {
+                DEBUG('e', "Reading console input...\n");
 
-                for(int i = 0; i < nbytes; i++) {
+                for(int i = 0; i < nbytes; i++)
                     buffer[i] = consoleSys->ReadConsole();
-                }
 
                 WriteBufferToUser(buffer, usrStringAddr, nbytes);
                 machine->WriteRegister(2, nbytes);
@@ -431,6 +430,9 @@ SyscallHandler(ExceptionType _et)
                     machine->WriteRegister(2, bytesRead);
                 }
             }
+
+            delete [] buffer;
+
             break;
         }
 
@@ -458,12 +460,10 @@ SyscallHandler(ExceptionType _et)
 
             char* buffer = new char[nbytes + 1];
             ReadBufferFromUser(usrStringAddr, buffer, nbytes);
-            DEBUG('e', "Write: %s, nrobytes: %d, hacia: %d\n", buffer, nbytes, usrStringAddr);
 
             if(fid == CONSOLE_OUTPUT) {
-                for(int i = 0; i < nbytes; i++) {
+                for(int i = 0; i < nbytes; i++)
                     consoleSys->WriteConsole(buffer[i]);
-                }
 
                 machine->WriteRegister(2, nbytes);
             } else if(!currentThread->GetOpenedFilesTable()->HasKey(fid)) {
@@ -483,6 +483,8 @@ SyscallHandler(ExceptionType _et)
                     DEBUG('e', "SUCESS! %d writed \n", bytesWrited);
                 }
             }
+
+            delete [] buffer;
 
             break;
         }
@@ -554,6 +556,7 @@ SyscallHandler(ExceptionType _et)
 static void TLBPageFaultHandler(ExceptionType exc) {
 
     #ifndef USE_TLB
+    DEBUG('f', "not using tlb, going to the default handler...\n");
     DefaultHandler(exc);
     #else
 
