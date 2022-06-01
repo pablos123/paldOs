@@ -204,29 +204,18 @@ AddressSpace::LoadPage(unsigned vpnAddress, unsigned physicalPage) {
                 exe.ReadDataBlock(&mainMemory[physicalAddressToWrite + read], toRead,  0)
             :
                 exe.ReadDataBlock(&mainMemory[physicalAddressToWrite], toRead, vpnAddressToRead - codeSize);
-
-            read += toRead;
         }
     #ifdef SWAP
     }
     #endif
 
-    if(vpnAddressToRead > codeSize + initDataSize) { // We are reading from the stack
-        read = PAGE_SIZE; // memset already done previously
-    };
-
 #ifdef SWAP
-    // //Update the coremap
+    //Update the coremap
     CoreMapEntry chosenCoreMapEntry = coreMap[physicalPage];
     chosenCoreMapEntry->spaceId = addressSpaceId;
     chosenCoreMapEntry->virtualPage = vpn;
 
     DEBUG('a',"Marking physical page %u, with virtualPage %u from process %d in the coremap\n", physicalPage, vpn, addressSpaceId);
-
-    //DEBUG('a',"State of the coremap: \n");
-    //for(unsigned i = 0; i < NUM_PHYS_PAGES; i++){
-    //    DEBUG('a',"Physical page: %u, spaceId: %d, virtualPage of the mentioned process: %u \n", i, coreMap[i]->spaceId, coreMap[i]->virtualPage);
-    //}
 #endif
 
     DEBUG('a', "Finished loading page! :)\n");
@@ -241,6 +230,8 @@ AddressSpace::EvacuatePage() {
     SpaceId victimSpace = coreMap[victim]->spaceId;
 
     if(runningProcesses->HasKey(victimSpace)) { // the victim process is alive
+        // Get the virtual page entry associated with the physical entry of the
+        // victim frame process
         TranslationEntry* entry = runningProcesses->Get(victimSpace)->space->getPageTableEntry(coreMap[victim]->virtualPage);
 
         for(unsigned i = 0; i < TLB_SIZE; ++i) { // save the bits if the page is in the TLB
@@ -250,13 +241,14 @@ AddressSpace::EvacuatePage() {
             }
         }
 
-        //if dirty, we put the midified virtualPage into the N block of the swap file
+        //if dirty, we put the modified virtualPage into the N block of the swap file
         DEBUG('a', "In evacuate page, the entry is: \n dirty: %d\n valid: %d\n", entry->dirty, entry->valid);
         if(entry->dirty) {
             char *mainMemory = machine->GetMMU()->mainMemory;
             unsigned physicalAddressToWrite = victim * PAGE_SIZE;
             DEBUG('a',"Writing into swap...\n");
-            runningProcesses->Get(coreMap[victim]->spaceId)->space->openSwapFile->WriteAt(&mainMemory[physicalAddressToWrite], PAGE_SIZE, coreMap[victim]->virtualPage * PAGE_SIZE);   //save the evacuated information in the N file block
+            //save the evacuated information in the N file block
+            runningProcesses->Get(coreMap[victim]->spaceId)->space->openSwapFile->WriteAt(&mainMemory[physicalAddressToWrite], PAGE_SIZE, coreMap[victim]->virtualPage * PAGE_SIZE);
         }
         // we do not update the coremap here because it always has to happen, regardless there is an EvacuatePage or not
 
@@ -275,7 +267,8 @@ AddressSpace::PickVictim() {
 #elif PRPOLICY_LRU
     if(references_done == UINT_MAX) {
         references_done = 0;
-        for(unsigned i = 0; i < NUM_PHYS_PAGES; i++)    // to avoid using the same frame once the UINT_MAX is reached
+        // Reset all the counters for consistency
+        for(unsigned i = 0; i < NUM_PHYS_PAGES; i++)
             coreMap[i]->last_use_counter = 0;
     }
 
