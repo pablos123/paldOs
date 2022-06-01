@@ -44,7 +44,7 @@ Some of the programs that you can run as an user are:
 - exit
 - help
 
-> Note: the final version of the nachOS with all the mentioned features is in the filesys/ directory.
+> Note: the final version of paldOS with all the mentioned features is in the filesys/ directory.
 
 # Install
 
